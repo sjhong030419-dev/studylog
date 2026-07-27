@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  --font-cute: 'Do Hyeon', sans-serif;
+  --font-pixel: 'Press Start 2P', monospace;
+
+  --color-pastel-pink: #ffd6e8;
+  --color-pastel-lavender: #e3d9ff;
+  --color-pastel-mint: #c9f5e0;
+  --color-pastel-yellow: #ffe9ab;
+  --color-pastel-blue: #d3ebff;
+  --color-pastel-peach: #ffd9c2;
+  --color-ink: #4a4458;
+  --color-ink-soft: #8a819c;
+}
+
+html,
+body {
+  margin: 0;
+  font-family: var(--font-cute);
+  background: linear-gradient(180deg, #fdf6ff 0%, #eef4ff 100%);
+  color: var(--color-ink);
+}
+
+#root {
+  min-height: 100svh;
+}
+
+.pixel-crisp {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+@keyframes avatar-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes avatar-sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+@keyframes avatar-breathe {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.04); }
+}
+
+@keyframes pencil-scribble {
+  0%, 100% { transform: rotate(-18deg) translateY(0); }
+  50% { transform: rotate(8deg) translateY(-2px); }
+}
+
+@keyframes zzz-float {
+  0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translate(10px, -26px) scale(1.1); opacity: 0; }
+}
+
+@keyframes sparkle-float {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.9; }
+  50% { transform: translateY(-8px) scale(1.15); opacity: 1; }
+}
+
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(0.1); }
+}
+
+.animate-avatar-bob { animation: avatar-bob 1.1s ease-in-out infinite; }
+.animate-avatar-sway { animation: avatar-sway 2.6s ease-in-out infinite; }
+.animate-avatar-breathe { animation: avatar-breathe 2.2s ease-in-out infinite; }
+.animate-pencil { animation: pencil-scribble 0.5s ease-in-out infinite; }
+.animate-zzz { animation: zzz-float 2.4s ease-in infinite; }
+.animate-sparkle { animation: sparkle-float 1.8s ease-in-out infinite; }
+.animate-blink { animation: blink 4s ease-in-out infinite; }

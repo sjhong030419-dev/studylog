@@ -1,0 +1,138 @@
+import { useState } from 'react'
+import { DotAvatar } from '../avatar/DotAvatar'
+import { usePointsStore } from '../../store/pointsStore'
+import { AD_BONUS_POINTS, AD_DAILY_LIMIT, useShopStore } from '../../store/shopStore'
+import type { ShopCategory } from '../../types'
+
+const CATEGORY_LABEL: Record<ShopCategory, string> = {
+  hair: '헤어',
+  outfit: '옷',
+  accessory: '액세서리',
+  background: '배경',
+}
+
+const CATEGORIES: ShopCategory[] = ['hair', 'outfit', 'accessory', 'background']
+
+export function AvatarShop() {
+  const items = useShopStore((s) => s.items)
+  const ownedItemIds = useShopStore((s) => s.ownedItemIds)
+  const equipped = useShopStore((s) => s.equipped)
+  const adWatchesToday = useShopStore((s) => s.adWatchesToday)
+  const checkoutLoading = useShopStore((s) => s.checkoutLoading)
+  const purchaseWithPoints = useShopStore((s) => s.purchaseWithPoints)
+  const purchaseWithCash = useShopStore((s) => s.purchaseWithCash)
+  const equipItem = useShopStore((s) => s.equipItem)
+  const unequipCategory = useShopStore((s) => s.unequipCategory)
+  const watchAdForBonus = useShopStore((s) => s.watchAdForBonus)
+
+  const balance = usePointsStore((s) => s.balance())
+
+  const [category, setCategory] = useState<ShopCategory>('hair')
+
+  const equippedHair = items.find((i) => i.id === equipped.hair)
+  const equippedOutfit = items.find((i) => i.id === equipped.outfit)
+  const equippedAccessory = items.find((i) => i.id === equipped.accessory)
+  const equippedBackground = items.find((i) => i.id === equipped.background)
+
+  const categoryItems = items.filter((i) => i.category === category)
+
+  async function handleBuy(itemId: string, priceType: 'points' | 'cash') {
+    if (priceType === 'points') {
+      purchaseWithPoints(itemId)
+    } else {
+      await purchaseWithCash(itemId)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col items-center gap-4 px-4 py-10">
+      <h1 className="font-cute text-3xl text-ink">아바타 상점 🛍️</h1>
+
+      <div className="bg-white/70 backdrop-blur rounded-3xl shadow-lg px-8 py-6 flex flex-col items-center gap-2">
+        <DotAvatar
+          status="resting"
+          pixelSize={16}
+          outfitColor={equippedOutfit?.colorHex}
+          hairEmoji={equippedHair?.emoji}
+          accessoryEmoji={equippedAccessory?.emoji}
+          backgroundColor={equippedBackground?.colorHex}
+        />
+        <span className="font-pixel text-ink text-sm">보유 {balance}P</span>
+      </div>
+
+      <button
+        type="button"
+        onClick={watchAdForBonus}
+        disabled={adWatchesToday >= AD_DAILY_LIMIT || checkoutLoading}
+        className="font-cute text-xs px-4 py-2 rounded-full bg-pastel-mint text-ink shadow disabled:opacity-50"
+      >
+        {checkoutLoading
+          ? '광고 재생 중...'
+          : `📺 광고 보고 +${AD_BONUS_POINTS}P 받기 (오늘 ${adWatchesToday}/${AD_DAILY_LIMIT})`}
+      </button>
+
+      <div className="flex gap-2">
+        {CATEGORIES.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => setCategory(c)}
+            className={`font-cute px-3 py-1.5 rounded-full border text-sm ${
+              category === c ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
+            }`}
+          >
+            {CATEGORY_LABEL[c]}
+          </button>
+        ))}
+      </div>
+
+      <div className="w-full max-w-sm grid grid-cols-2 gap-3">
+        {categoryItems.map((item) => {
+          const owned = ownedItemIds.includes(item.id)
+          const isEquipped = equipped[item.category] === item.id
+          return (
+            <div
+              key={item.id}
+              className={`rounded-2xl px-3 py-3 shadow-sm flex flex-col items-center gap-1.5 ${
+                isEquipped ? 'bg-pastel-yellow' : 'bg-white/70'
+              }`}
+            >
+              <span className="text-2xl">{item.emoji}</span>
+              <span className="font-cute text-ink text-xs text-center">{item.name}</span>
+              <span className="font-pixel text-[10px] text-ink-soft">
+                {item.priceType === 'points' ? `${item.price}P` : `₩${item.price.toLocaleString()}`}
+              </span>
+
+              {owned ? (
+                <button
+                  type="button"
+                  onClick={() => (isEquipped ? unequipCategory(item.category) : equipItem(item.id))}
+                  className={`font-cute text-[11px] px-3 py-1 rounded-full w-full ${
+                    isEquipped ? 'bg-ink text-white' : 'bg-white border border-ink/20 text-ink'
+                  }`}
+                >
+                  {isEquipped ? '착용중' : '착용하기'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleBuy(item.id, item.priceType)}
+                  disabled={
+                    checkoutLoading || (item.priceType === 'points' && balance < item.price)
+                  }
+                  className="font-cute text-[11px] px-3 py-1 rounded-full bg-pastel-lavender text-ink w-full disabled:opacity-50"
+                >
+                  구매하기
+                </button>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      <p className="text-ink-soft text-xs font-cute text-center max-w-sm">
+        캐시 아이템은 Stripe 테스트 모드 구조로 연결돼 있어요. 실제 결제는 발생하지 않습니다.
+      </p>
+    </div>
+  )
+}
