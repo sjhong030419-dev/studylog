@@ -8,9 +8,19 @@ const PORT = process.env.PORT || 3001
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
 const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001'
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN
 
-app.use(cors({ origin: FRONTEND_ORIGIN || true }))
+function normalizeOrigin(value) {
+  const trimmed = value.trim().replace(/\/+$/, '')
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+}
+
+const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGIN || '')
+  .split(',')
+  .map((v) => v.trim())
+  .filter(Boolean)
+  .map(normalizeOrigin)
+
+app.use(cors({ origin: FRONTEND_ORIGINS.length > 0 ? FRONTEND_ORIGINS : true }))
 app.use(express.json())
 
 app.get('/api/health', (_req, res) => {
