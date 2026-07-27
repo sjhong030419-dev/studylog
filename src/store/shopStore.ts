@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { ShopCategory, ShopItem } from '../types'
+import { apiUrl } from '../utils/apiBase'
 import { usePointsStore } from './pointsStore'
 
 export const AD_BONUS_POINTS = 5
@@ -67,7 +68,7 @@ export const useShopStore = create<ShopState>()(
 
         set({ checkoutLoading: true })
         try {
-          const res = await fetch('/api/checkout/create-session', {
+          const res = await fetch(apiUrl('/api/checkout/create-session'), {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ itemId: item.id, itemName: item.name, priceKrw: item.price }),

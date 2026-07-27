@@ -8,8 +8,9 @@ const PORT = process.env.PORT || 3001
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
 const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001'
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN
 
-app.use(cors())
+app.use(cors({ origin: FRONTEND_ORIGIN || true }))
 app.use(express.json())
 
 app.get('/api/health', (_req, res) => {

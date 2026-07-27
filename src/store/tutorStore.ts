@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { todayKey } from '../utils/time'
+import { apiUrl } from '../utils/apiBase'
 import { usePointsStore } from './pointsStore'
 
 export const FREE_DAILY_LIMIT = 5
@@ -77,7 +78,7 @@ export const useTutorStore = create<TutorState>()(
             .slice(-8)
             .map((m) => ({ role: m.role, content: m.content }))
 
-          const res = await fetch('/api/tutor', {
+          const res = await fetch(apiUrl('/api/tutor'), {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ subjectId, message: trimmed, history }),
