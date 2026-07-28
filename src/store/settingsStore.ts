@@ -19,6 +19,7 @@ interface SettingsState {
   captureDefaultRatio: CaptureRatio
   membership: MembershipPlan
   quietHours: QuietHours
+  awayDetectionEnabled: boolean
 
   toggleNotifyStudyReminder: () => void
   toggleNotifyStreakWarning: () => void
@@ -26,6 +27,7 @@ interface SettingsState {
   setTheme: (theme: Theme) => void
   setCaptureDefaultRatio: (ratio: CaptureRatio) => void
   setQuietHours: (quietHours: Partial<QuietHours>) => void
+  toggleAwayDetection: () => void
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -38,6 +40,7 @@ export const useSettingsStore = create<SettingsState>()(
       captureDefaultRatio: 'square',
       membership: 'free',
       quietHours: { enabled: false, start: '22:00', end: '07:00' },
+      awayDetectionEnabled: true,
 
       toggleNotifyStudyReminder: () =>
         set((s) => ({ notifyStudyReminder: !s.notifyStudyReminder })),
@@ -48,6 +51,7 @@ export const useSettingsStore = create<SettingsState>()(
       setCaptureDefaultRatio: (captureDefaultRatio) => set({ captureDefaultRatio }),
       setQuietHours: (quietHours) =>
         set((s) => ({ quietHours: { ...s.quietHours, ...quietHours } })),
+      toggleAwayDetection: () => set((s) => ({ awayDetectionEnabled: !s.awayDetectionEnabled })),
     }),
     { name: 'studylog-settings' },
   ),

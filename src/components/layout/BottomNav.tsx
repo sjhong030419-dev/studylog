@@ -1,4 +1,4 @@
-export type Tab = 'timer' | 'capture' | 'ranking' | 'qna' | 'tutor' | 'shop'
+export type Tab = 'timer' | 'capture' | 'stats' | 'ranking' | 'tutor' | 'shop'
 
 interface BottomNavProps {
   active: Tab
@@ -8,8 +8,8 @@ interface BottomNavProps {
 const TABS: { value: Tab; label: string; icon: string }[] = [
   { value: 'timer', label: '타이머', icon: '⏱️' },
   { value: 'capture', label: '캡처', icon: '📸' },
+  { value: 'stats', label: '통계', icon: '📊' },
   { value: 'ranking', label: '랭킹', icon: '🏆' },
-  { value: 'qna', label: '지식인', icon: '💡' },
   { value: 'tutor', label: 'AI튜터', icon: '🤖' },
   { value: 'shop', label: '상점', icon: '🛍️' },
 ]

@@ -46,6 +46,17 @@ const GRIDS: Record<AvatarStatus, string[]> = {
     '.#FFFFFF#.',
     '..######..',
   ],
+  away: [
+    '..######..',
+    '.#FFFFFF#.',
+    '#FFFFFFFF#',
+    '#FFeFFeFF#',
+    '#FFFFFFFF#',
+    '#FFFmmFFF#',
+    '#FFFFFFFF#',
+    '.#FFFFFF#.',
+    '..######..',
+  ],
 }
 
 const OUTLINE = '#4a4458'
@@ -57,24 +68,28 @@ const BODY_COLORS: Record<AvatarStatus, string> = {
   studying: '#ffe29a',
   idle: '#c9d3ff',
   resting: '#c9f5e0',
+  away: '#ffc2c2',
 }
 
 const STATUS_LABEL: Record<AvatarStatus, string> = {
   studying: '공부 중',
   idle: '자리 비움',
   resting: '휴식 중',
+  away: '어디 갔어요? 👀',
 }
 
 const STATUS_BADGE_CLASS: Record<AvatarStatus, string> = {
   studying: 'bg-pastel-yellow text-ink',
   idle: 'bg-pastel-lavender text-ink',
   resting: 'bg-pastel-mint text-ink',
+  away: 'bg-pastel-pink text-ink',
 }
 
 const STATUS_BOB_CLASS: Record<AvatarStatus, string> = {
   studying: 'animate-avatar-bob',
   idle: 'animate-avatar-sway',
   resting: 'animate-avatar-breathe',
+  away: 'animate-avatar-alert',
 }
 
 function pixelColor(char: string, status: AvatarStatus, outfitColor?: string): string | null {
@@ -230,6 +245,19 @@ export function DotAvatar({
               }}
             >
               ✨
+            </span>
+          )}
+
+          {status === 'away' && (
+            <span
+              className="absolute animate-alert-bounce"
+              style={{
+                right: -pixelSize * 0.6,
+                top: -pixelSize * 1.2,
+                fontSize: pixelSize * 1.5,
+              }}
+            >
+              ❗
             </span>
           )}
         </div>

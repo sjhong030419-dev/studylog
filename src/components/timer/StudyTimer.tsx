@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { DotAvatar } from '../avatar/DotAvatar'
 import { deriveAvatarStatus, todaySessions, useTimerStore } from '../../store/timerStore'
 import { formatDuration } from '../../utils/time'
+import { useAwayDetection } from '../../hooks/useAwayDetection'
 
 export function StudyTimer() {
   const subjects = useTimerStore((s) => s.subjects)
@@ -21,6 +22,7 @@ export function StudyTimer() {
 
   const [addingSubject, setAddingSubject] = useState(false)
   const [newSubjectName, setNewSubjectName] = useState('')
+  const [awayMessage, setAwayMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isRunning || isPaused) return
@@ -28,7 +30,22 @@ export function StudyTimer() {
     return () => clearInterval(id)
   }, [isRunning, isPaused, tick])
 
-  const status = deriveAvatarStatus({ isRunning, isPaused })
+  useAwayDetection({
+    active: isRunning && !isPaused,
+    onHide: () => pause(),
+    onShortReturn: () => resume(),
+    onLongReturn: (awaySec) => {
+      const min = Math.round(awaySec / 60)
+      setAwayMessage(
+        min < 1
+          ? `${awaySec}초 자리 비웠어요! 몰래 딴짓했죠? 👀`
+          : `${min}분 자리 비웠어요! 슬쩍 돌아왔네요 👋`,
+      )
+    },
+  })
+
+  const baseStatus = deriveAvatarStatus({ isRunning, isPaused })
+  const status = awayMessage ? 'away' : baseStatus
   const today = todaySessions(sessions)
   const todayTotalSec = today.reduce((sum, s) => sum + s.durationSec, 0)
 
@@ -48,15 +65,29 @@ export function StudyTimer() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center gap-6 px-4 py-10">
-      <h1 className="font-cute text-3xl text-ink">스터디로그 📖</h1>
-
+    <div className="flex flex-col items-center gap-6 w-full">
       <div className="bg-white/70 backdrop-blur rounded-3xl shadow-lg px-10 py-8 flex flex-col items-center gap-4">
         <DotAvatar status={status} pixelSize={16} />
         <div className="font-pixel text-3xl text-ink tracking-widest">
           {formatDuration(elapsedSec)}
         </div>
       </div>
+
+      {awayMessage && (
+        <div className="w-full max-w-sm bg-pastel-pink/70 rounded-2xl px-4 py-3 flex items-center justify-between gap-2">
+          <span className="font-cute text-ink text-sm">{awayMessage}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setAwayMessage(null)
+              resume()
+            }}
+            className="font-cute text-xs px-3 py-1.5 rounded-full bg-ink text-white shrink-0"
+          >
+            다시 집중하기 🔥
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-wrap justify-center gap-2 max-w-sm">
         {subjects.map((subject) => (

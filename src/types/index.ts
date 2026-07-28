@@ -1,4 +1,4 @@
-export type AvatarStatus = 'studying' | 'idle' | 'resting'
+export type AvatarStatus = 'studying' | 'idle' | 'resting' | 'away'
 
 export interface Subject {
   id: string
@@ -25,38 +25,6 @@ export interface PointTransaction {
   timestamp: number
 }
 
-export interface Answer {
-  id: string
-  questionId: string
-  authorName: string
-  authorIsMentor: boolean
-  body: string
-  createdAt: number
-}
-
-export interface Question {
-  id: string
-  subjectId: string
-  title: string
-  body: string
-  authorName: string
-  createdAt: number
-  answers: Answer[]
-  acceptedAnswerId: string | null
-}
-
-export type MentorBadge = 'none' | 'mentor' | 'top'
-
-export interface Mentor {
-  id: string
-  name: string
-  subjectIds: string[]
-  bio: string
-  badge: MentorBadge
-  acceptedAnswerCount: number
-  followerCount: number
-}
-
 export type ShopCategory = 'hair' | 'outfit' | 'accessory' | 'background'
 export type PriceType = 'points' | 'cash'
 
@@ -70,14 +38,9 @@ export interface ShopItem {
   colorHex?: string
 }
 
-export type NotificationType =
-  | 'rank_overtaken'
-  | 'streak_warning'
-  | 'answer_accepted'
-  | 'mentor_result'
-  | 'event'
+export type NotificationType = 'rank_overtaken' | 'streak_warning' | 'event'
 
-export type NavTarget = 'timer' | 'capture' | 'ranking' | 'qna' | 'tutor' | 'shop' | 'profile'
+export type NavTarget = 'timer' | 'capture' | 'ranking' | 'tutor' | 'shop' | 'profile'
 
 export interface AppNotification {
   id: string

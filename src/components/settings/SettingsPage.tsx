@@ -48,6 +48,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   const captureDefaultRatio = useSettingsStore((s) => s.captureDefaultRatio)
   const membership = useSettingsStore((s) => s.membership)
   const quietHours = useSettingsStore((s) => s.quietHours)
+  const awayDetectionEnabled = useSettingsStore((s) => s.awayDetectionEnabled)
 
   const toggleNotifyStudyReminder = useSettingsStore((s) => s.toggleNotifyStudyReminder)
   const toggleNotifyStreakWarning = useSettingsStore((s) => s.toggleNotifyStreakWarning)
@@ -55,6 +56,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   const setTheme = useSettingsStore((s) => s.setTheme)
   const setCaptureDefaultRatio = useSettingsStore((s) => s.setCaptureDefaultRatio)
   const setQuietHours = useSettingsStore((s) => s.setQuietHours)
+  const toggleAwayDetection = useSettingsStore((s) => s.toggleAwayDetection)
 
   const [placeholderMsg, setPlaceholderMsg] = useState<string | null>(null)
 
@@ -145,6 +147,9 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
               9:16
             </button>
           </div>
+        </Row>
+        <Row label="화면 이탈 감지">
+          <ToggleSwitch on={awayDetectionEnabled} onClick={toggleAwayDetection} />
         </Row>
       </SectionCard>
 

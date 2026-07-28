@@ -9,8 +9,6 @@ interface NotificationsPageProps {
 const TYPE_ICON: Record<NotificationType, string> = {
   rank_overtaken: '🏃',
   streak_warning: '🔥',
-  answer_accepted: '✅',
-  mentor_result: '🌟',
   event: '📣',
 }
 

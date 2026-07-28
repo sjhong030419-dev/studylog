@@ -135,3 +135,21 @@ export function stopAllSounds() {
     stopSound(id)
   }
 }
+
+export function playChime() {
+  const ctx = getContext()
+  const notes = [880, 1108.73]
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator()
+    osc.type = 'sine'
+    osc.frequency.value = freq
+    const gain = ctx.createGain()
+    const startAt = ctx.currentTime + i * 0.14
+    gain.gain.setValueAtTime(0, startAt)
+    gain.gain.linearRampToValueAtTime(0.3, startAt + 0.02)
+    gain.gain.exponentialRampToValueAtTime(0.001, startAt + 0.5)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start(startAt)
+    osc.stop(startAt + 0.55)
+  })
+}

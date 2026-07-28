@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { StudyTimer } from './components/timer/StudyTimer'
+import { TimerPage } from './components/timer/TimerPage'
 import { LogCaptureCard } from './components/capture/LogCaptureCard'
+import { StatsHubPage } from './components/stats/StatsHubPage'
 import { RankingBoard } from './components/ranking/RankingBoard'
-import { QnaPage } from './components/qna/QnaPage'
 import { AiTutorChat } from './components/tutor/AiTutorChat'
 import { AvatarShop } from './components/shop/AvatarShop'
 import { MyPage } from './components/profile/MyPage'
@@ -36,10 +36,10 @@ function App() {
 
   return (
     <div className="pb-16">
-      {tab === 'timer' && <StudyTimer />}
+      {tab === 'timer' && <TimerPage />}
       {tab === 'capture' && <LogCaptureCard />}
+      {tab === 'stats' && <StatsHubPage />}
       {tab === 'ranking' && <RankingBoard />}
-      {tab === 'qna' && <QnaPage />}
       {tab === 'tutor' && <AiTutorChat />}
       {tab === 'shop' && <AvatarShop />}
 

@@ -35,6 +35,7 @@ interface TimerState {
   resume: () => void
   stop: () => void
   tick: () => void
+  logSession: (subjectId: string, durationSec: number) => void
 }
 
 export const useTimerStore = create<TimerState>()(
@@ -81,18 +82,10 @@ export const useTimerStore = create<TimerState>()(
       },
 
       stop: () => {
-        const { isRunning, elapsedSec, selectedSubjectId, sessions } = get()
+        const { isRunning, elapsedSec, selectedSubjectId } = get()
         if (!isRunning) return
         if (elapsedSec > 0) {
-          const session: StudySession = {
-            id: `session-${Date.now()}`,
-            subjectId: selectedSubjectId,
-            startedAt: Date.now() - elapsedSec * 1000,
-            durationSec: elapsedSec,
-            dateKey: todayKey(),
-          }
-          set({ sessions: [...sessions, session] })
-          usePointsStore.getState().earnFromStudySession(elapsedSec)
+          get().logSession(selectedSubjectId, elapsedSec)
         }
         set({ isRunning: false, isPaused: false, elapsedSec: 0 })
         useAudioStore.getState().stopAllIfAutoStop()
@@ -102,6 +95,19 @@ export const useTimerStore = create<TimerState>()(
         const { isRunning, isPaused, elapsedSec } = get()
         if (!isRunning || isPaused) return
         set({ elapsedSec: elapsedSec + 1 })
+      },
+
+      logSession: (subjectId, durationSec) => {
+        if (durationSec <= 0) return
+        const session: StudySession = {
+          id: `session-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          subjectId,
+          startedAt: Date.now() - durationSec * 1000,
+          durationSec,
+          dateKey: todayKey(),
+        }
+        set({ sessions: [...get().sessions, session] })
+        usePointsStore.getState().earnFromStudySession(durationSec)
       },
     }),
     {
