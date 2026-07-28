@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-cute: 'Do Hyeon', sans-serif;
   --font-pixel: 'Press Start 2P', monospace;
@@ -22,9 +24,33 @@ body {
   color: var(--color-ink);
 }
 
+html.dark,
+html.dark body {
+  background: linear-gradient(180deg, #1c1830 0%, #14121f 100%);
+}
+
+html.dark {
+  --color-ink: #f1eef9;
+  --color-ink-soft: #b3a9cf;
+}
+
 #root {
   min-height: 100svh;
 }
+
+/* Dark-mode overrides for the "frosted white card" surfaces used throughout the app */
+.dark .bg-white\/60 { background-color: rgba(45, 40, 66, 0.6); }
+.dark .bg-white\/70 { background-color: rgba(45, 40, 66, 0.7); }
+.dark .bg-white\/80 { background-color: rgba(45, 40, 66, 0.8); }
+.dark .bg-white\/90 { background-color: rgba(45, 40, 66, 0.9); }
+.dark .bg-white\/95 { background-color: rgba(45, 40, 66, 0.95); }
+.dark .bg-white { background-color: #2d2842; }
+.dark .border-ink\/10 { border-color: rgba(241, 238, 249, 0.12); }
+.dark .border-ink\/15 { border-color: rgba(241, 238, 249, 0.16); }
+.dark .border-ink\/20 { border-color: rgba(241, 238, 249, 0.2); }
+.dark .border-ink\/30 { border-color: rgba(241, 238, 249, 0.3); }
+.dark .bg-ink\/5 { background-color: rgba(241, 238, 249, 0.08); }
+.dark .bg-ink\/10 { background-color: rgba(241, 238, 249, 0.12); }
 
 .pixel-crisp {
   image-rendering: pixelated;

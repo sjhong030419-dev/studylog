@@ -69,3 +69,22 @@ export interface ShopItem {
   emoji: string
   colorHex?: string
 }
+
+export type NotificationType =
+  | 'rank_overtaken'
+  | 'streak_warning'
+  | 'answer_accepted'
+  | 'mentor_result'
+  | 'event'
+
+export type NavTarget = 'timer' | 'capture' | 'ranking' | 'qna' | 'tutor' | 'shop' | 'profile'
+
+export interface AppNotification {
+  id: string
+  type: NotificationType
+  title: string
+  body: string
+  read: boolean
+  createdAt: number
+  linkTarget?: NavTarget
+}

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Answer, Mentor, Question } from '../types'
 import { usePointsStore } from './pointsStore'
+import { useNotificationStore } from './notificationStore'
 
 export const ASK_QUESTION_COST = 5
 export const ACCEPT_ANSWER_REWARD = 10
@@ -170,6 +171,14 @@ export const useQnaStore = create<QnaState>()(
 
         if (answer.authorName === '나') {
           usePointsStore.getState().earn(ACCEPT_ANSWER_REWARD, '답변 채택 보상')
+          useNotificationStore
+            .getState()
+            .add(
+              'answer_accepted',
+              '내 답변이 채택됐어요!',
+              `"${question.title}" 질문에서 답변이 채택돼 ${ACCEPT_ANSWER_REWARD}P를 받았어요.`,
+              'qna',
+            )
         }
       },
 
@@ -186,6 +195,9 @@ export const useQnaStore = create<QnaState>()(
         if (get().isMentor) return true
         if (get().myAcceptedAnswerCount() < MENTOR_ACCEPTED_ANSWERS_THRESHOLD) return false
         set({ isMentor: true })
+        useNotificationStore
+          .getState()
+          .add('mentor_result', '멘토 신청이 승인됐어요! 🌟', '이제 멘토 배지를 달고 답변할 수 있어요.', 'qna')
         return true
       },
     }),

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { toPng } from 'html-to-image'
 import { DotAvatar } from '../avatar/DotAvatar'
 import { todaySessions, useTimerStore } from '../../store/timerStore'
+import { useSettingsStore } from '../../store/settingsStore'
 import { formatDuration } from '../../utils/time'
 
 type Ratio = 'square' | 'story'
@@ -22,7 +23,8 @@ function formatDate(date = new Date()): string {
 export function LogCaptureCard() {
   const subjects = useTimerStore((s) => s.subjects)
   const sessions = useTimerStore((s) => s.sessions)
-  const [ratio, setRatio] = useState<Ratio>('square')
+  const captureDefaultRatio = useSettingsStore((s) => s.captureDefaultRatio)
+  const [ratio, setRatio] = useState<Ratio>(captureDefaultRatio)
   const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
