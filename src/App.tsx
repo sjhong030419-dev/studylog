@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { TimerPage } from './components/timer/TimerPage'
+import { RoomPage } from './components/room/RoomPage'
+import { RoomConnection } from './components/room/RoomConnection'
 import { LogCaptureCard } from './components/capture/LogCaptureCard'
 import { StatsHubPage } from './components/stats/StatsHubPage'
 import { RankingBoard } from './components/ranking/RankingBoard'
@@ -37,6 +39,7 @@ function App() {
   return (
     <div className="pb-16">
       {tab === 'timer' && <TimerPage />}
+      {tab === 'room' && <RoomPage />}
       {tab === 'capture' && <LogCaptureCard />}
       {tab === 'stats' && <StatsHubPage />}
       {tab === 'ranking' && <RankingBoard />}
@@ -62,6 +65,7 @@ function App() {
       </button>
       <NotificationBell onClick={() => setOverlay('notifications')} />
 
+      <RoomConnection />
       <BgmPlayer />
       <BottomNav active={tab} onChange={(next) => { setOverlay(null); setTab(next) }} />
     </div>
