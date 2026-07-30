@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { AvatarStatus, StudySession, Subject } from '../types'
+import type { StudySession, Subject } from '../types'
 import { todayKey } from '../utils/time'
 import { usePointsStore } from './pointsStore'
 import { useAudioStore } from './audioStore'
@@ -119,12 +119,6 @@ export const useTimerStore = create<TimerState>()(
     },
   ),
 )
-
-export function deriveAvatarStatus(state: Pick<TimerState, 'isRunning' | 'isPaused'>): AvatarStatus {
-  if (state.isRunning && !state.isPaused) return 'studying'
-  if (state.isPaused) return 'resting'
-  return 'idle'
-}
 
 export function todaySessions(sessions: StudySession[]): StudySession[] {
   const key = todayKey()

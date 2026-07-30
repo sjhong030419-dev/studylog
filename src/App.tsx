@@ -13,7 +13,9 @@ import { NotificationBell } from './components/notifications/NotificationBell'
 import { NotificationsPage } from './components/notifications/NotificationsPage'
 import { BgmPlayer } from './components/audio/BgmPlayer'
 import { BottomNav, type Tab } from './components/layout/BottomNav'
+import { OnboardingFlow } from './components/onboarding/OnboardingFlow'
 import { useSettingsStore } from './store/settingsStore'
+import { useProfileStore } from './store/profileStore'
 import type { NavTarget } from './types'
 
 type Overlay = 'profile' | 'settings' | 'notifications' | null
@@ -22,6 +24,7 @@ function App() {
   const [tab, setTab] = useState<Tab>('timer')
   const [overlay, setOverlay] = useState<Overlay>(null)
   const theme = useSettingsStore((s) => s.theme)
+  const onboardingCompleted = useProfileStore((s) => s.onboardingCompleted)
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
@@ -34,6 +37,14 @@ function App() {
       setOverlay(null)
       setTab(target)
     }
+  }
+
+  // Existing users always have onboardingCompleted migrated to true (see
+  // profileStore's migrate()), so this only ever gates brand-new installs.
+  // RoomConnection/BgmPlayer stay unmounted until it's done so they never
+  // join the realtime room with placeholder nickname/gender.
+  if (!onboardingCompleted) {
+    return <OnboardingFlow />
   }
 
   return (

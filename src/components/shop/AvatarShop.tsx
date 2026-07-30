@@ -1,7 +1,10 @@
 import { useState } from 'react'
-import { DotAvatar } from '../avatar/DotAvatar'
+import { CharacterView } from '../../character/components/CharacterView'
+import { useMyAvatarAppearance } from '../../hooks/useMyAvatarAppearance'
+import { useProfileStore } from '../../store/profileStore'
 import { usePointsStore } from '../../store/pointsStore'
 import { AD_BONUS_POINTS, AD_DAILY_LIMIT, useShopStore } from '../../store/shopStore'
+import { readableInkColor } from '../../utils/contrastColor'
 import type { ShopCategory } from '../../types'
 
 const CATEGORY_LABEL: Record<ShopCategory, string> = {
@@ -26,13 +29,10 @@ export function AvatarShop() {
   const watchAdForBonus = useShopStore((s) => s.watchAdForBonus)
 
   const balance = usePointsStore((s) => s.balance())
+  const gender = useProfileStore((s) => s.gender)
+  const appearance = useMyAvatarAppearance()
 
   const [category, setCategory] = useState<ShopCategory>('hair')
-
-  const equippedHair = items.find((i) => i.id === equipped.hair)
-  const equippedOutfit = items.find((i) => i.id === equipped.outfit)
-  const equippedAccessory = items.find((i) => i.id === equipped.accessory)
-  const equippedBackground = items.find((i) => i.id === equipped.background)
 
   const categoryItems = items.filter((i) => i.category === category)
 
@@ -48,16 +48,17 @@ export function AvatarShop() {
     <div className="min-h-screen flex flex-col items-center gap-4 px-4 py-10">
       <h1 className="font-cute text-3xl text-ink">아바타 상점 🛍️</h1>
 
-      <div className="bg-white/70 backdrop-blur rounded-3xl shadow-lg px-8 py-6 flex flex-col items-center gap-2">
-        <DotAvatar
-          status="resting"
-          pixelSize={16}
-          outfitColor={equippedOutfit?.colorHex}
-          hairEmoji={equippedHair?.emoji}
-          accessoryEmoji={equippedAccessory?.emoji}
-          backgroundColor={equippedBackground?.colorHex}
-        />
-        <span className="font-pixel text-ink text-sm">보유 {balance}P</span>
+      <div
+        className="backdrop-blur rounded-3xl shadow-lg px-8 py-6 flex flex-col items-center gap-2"
+        style={{ backgroundColor: appearance.backgroundColor ?? 'rgba(255,255,255,0.7)' }}
+      >
+        <CharacterView state="happy" gender={gender} appearance={appearance} size={120} />
+        <span
+          className="font-pixel text-sm"
+          style={{ color: readableInkColor(appearance.backgroundColor, 'var(--color-ink)') }}
+        >
+          보유 {balance}P
+        </span>
       </div>
 
       <button
