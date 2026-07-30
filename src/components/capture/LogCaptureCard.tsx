@@ -16,6 +16,7 @@ import { useAwayStore } from '../../store/awayStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { deriveExpLevel } from '../../character/engine/expLevel'
 import { computeDailyGoal } from '../../utils/dailyGoal'
+import { deriveLevelBeforeToday } from '../../utils/levelTransition'
 import { deriveCaptureMessage } from '../../utils/captureMessage'
 import { deriveEarnedAchievements } from '../../utils/achievements'
 import { myOverallRank } from '../../utils/ranking'
@@ -48,7 +49,7 @@ export function LogCaptureCard() {
 
   const streakCount = usePointsStore((s) => s.streakCount)
   const studyXpTotal = usePointsStore((s) => s.studyXpTotal())
-  const studyXpBeforeLastSession = usePointsStore((s) => s.studyXpTotalBeforeLastSession())
+  const studyXpBeforeTodaysLastSession = usePointsStore((s) => s.studyXpTotalBeforeTodaysLastSession())
 
   const gender = useProfileStore((s) => s.gender)
   const appearance = useMyAvatarAppearance()
@@ -95,9 +96,11 @@ export function LogCaptureCard() {
 
   const goal = computeDailyGoal(plannerTasks, sessions, todayKey())
   const level = deriveExpLevel(studyXpTotal)
-  // Only meaningful once a real study session has ever been logged — with
-  // no history, "before" isn't a real value to show (PRD §14).
-  const levelBeforeLastSession = sessions.length > 0 ? deriveExpLevel(studyXpBeforeLastSession).level : undefined
+  // Only shown when today itself actually earned Study XP AND that XP
+  // crossed a real level boundary — never derived from `sessions.length`
+  // (a past day's session must not be attributed to today's card), and
+  // never shown as a same-level "Lv.1 -> Lv.1" transition (PRD §14).
+  const levelBeforeLastSession = deriveLevelBeforeToday(studyXpTotal, studyXpBeforeTodaysLastSession)
   const { rank, total: rankTotal } = myOverallRank(todayTotalSec)
 
   const focusPercent =
