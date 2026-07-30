@@ -1,8 +1,8 @@
 /**
- * Unified character type system (docs/character-system.md). Replaces the
- * legacy `AvatarStatus` (4-state, still used by the study-room presence
- * system until it's migrated) and the previous `ChibiPose` (7-state,
- * Home-only) with one vocabulary usable across the whole app.
+ * Unified character type system (docs/character-system.md). This is
+ * already the single vocabulary used everywhere, including the study-room
+ * realtime presence system (`store/roomStore.ts`) — it replaced the legacy
+ * `AvatarStatus`/`ChibiPose` types, which no longer exist in the codebase.
  */
 
 export type Gender = 'boy' | 'girl'
@@ -62,7 +62,7 @@ export const STATE_FPS: Record<CharacterState, number> = {
 
 /** True for states with a distinct, implemented pose/expression in the SVG
  * fallback layer (docs/StudyLog_Character_System_Fix_PRD_v1.0.md §10). All
- * 12 declared states now have distinct lightweight fallback art — none of
+ * 13 declared states now have distinct lightweight fallback art — none of
  * them silently render as `idle` anymore. */
 export const STATE_HAS_ART: Record<CharacterState, boolean> = {
   idle: true,
