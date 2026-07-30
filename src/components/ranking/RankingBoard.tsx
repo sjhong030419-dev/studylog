@@ -3,44 +3,10 @@ import { todaySessions, useTimerStore } from '../../store/timerStore'
 import { usePointsStore, STREAK_MILESTONES } from '../../store/pointsStore'
 import { formatDuration } from '../../utils/time'
 import { PointHistoryList } from '../points/PointHistoryList'
+import { ALL_DUMMIES, DUMMY_SCHOOLS, FRIEND_DUMMIES, type DummySchool } from '../../utils/ranking'
 
 type Scope = 'all' | 'friends' | 'school'
 type View = 'ranking' | 'history'
-
-interface DummyEntry {
-  id: string
-  name: string
-  emoji: string
-  sec: number
-}
-
-interface DummySchool {
-  id: string
-  name: string
-  avgSec: number
-  memberCount: number
-}
-
-const FRIEND_DUMMIES: DummyEntry[] = [
-  { id: 'f1', name: '민지', emoji: '🐰', sec: 3 * 3600 + 20 * 60 },
-  { id: 'f2', name: '하늘', emoji: '🐼', sec: 2 * 3600 + 45 * 60 },
-  { id: 'f3', name: '준서', emoji: '🐣', sec: 1 * 3600 + 10 * 60 },
-]
-
-const ALL_DUMMIES: DummyEntry[] = [
-  ...FRIEND_DUMMIES,
-  { id: 'a1', name: '공스타_수아', emoji: '🦊', sec: 6 * 3600 + 5 * 60 },
-  { id: 'a2', name: '새벽별', emoji: '🐨', sec: 5 * 3600 + 12 * 60 },
-  { id: 'a3', name: '열품타장인', emoji: '🐯', sec: 4 * 3600 + 30 * 60 },
-  { id: 'a4', name: '도영', emoji: '🐸', sec: 55 * 60 },
-]
-
-const DUMMY_SCHOOLS: DummySchool[] = [
-  { id: 's1', name: '한빛고등학교', avgSec: 3 * 3600 + 40 * 60, memberCount: 128 },
-  { id: 's2', name: '서울고등학교', avgSec: 3 * 3600 + 10 * 60, memberCount: 96 },
-  { id: 's3', name: '대한고등학교', avgSec: 2 * 3600 + 50 * 60, memberCount: 74 },
-  { id: 's4', name: '미래고등학교', avgSec: 2 * 3600 + 20 * 60, memberCount: 51 },
-]
 
 function secToPoints(sec: number): number {
   return Math.floor(sec / 60)

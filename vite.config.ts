@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -13,5 +14,10 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  test: {
+    // Pure-logic unit tests only (no DOM rendering needed) — keep the
+    // testing dependency stack minimal per the remediation PRD.
+    environment: 'node',
   },
 })

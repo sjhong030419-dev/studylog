@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { DotAvatar } from '../avatar/DotAvatar'
+import { CharacterView } from '../../character/components/CharacterView'
+import { useMyAvatarAppearance } from '../../hooks/useMyAvatarAppearance'
+import { useProfileStore } from '../../store/profileStore'
 import { useTimerStore } from '../../store/timerStore'
 import { usePomodoroStore } from '../../store/pomodoroStore'
-import type { AvatarStatus } from '../../types'
+import type { CharacterState } from '../../character/types'
 
 const PRESETS = [
   { label: '25분 집중 / 5분 휴식', focus: 25, rest: 5 },
@@ -36,6 +38,8 @@ export function PomodoroTimer() {
   const [customFocus, setCustomFocus] = useState(25)
   const [customBreak, setCustomBreak] = useState(5)
   const [customRounds, setCustomRounds] = useState(4)
+  const gender = useProfileStore((s) => s.gender)
+  const appearance = useMyAvatarAppearance()
 
   useEffect(() => {
     if (phase !== 'focus' && phase !== 'break') return
@@ -43,13 +47,7 @@ export function PomodoroTimer() {
     return () => clearInterval(id)
   }, [phase, tick])
 
-  const avatarStatus: AvatarStatus = isPaused
-    ? 'resting'
-    : phase === 'focus'
-      ? 'studying'
-      : phase === 'break'
-        ? 'resting'
-        : 'idle'
+  const state: CharacterState = isPaused ? 'break' : phase === 'focus' ? 'study' : 'idle'
 
   if (phase === 'idle') {
     return (
@@ -130,7 +128,7 @@ export function PomodoroTimer() {
   if (phase === 'done') {
     return (
       <div className="flex flex-col items-center gap-4 w-full">
-        <DotAvatar status="resting" pixelSize={16} />
+        <CharacterView state="happy" gender={gender} appearance={appearance} size={140} />
         <span className="font-cute text-2xl text-ink">뽀모도로 완료! 🎉</span>
         <div className="bg-white/70 rounded-2xl px-8 py-5 shadow-sm flex flex-col items-center gap-1">
           <span className="text-ink-soft text-sm font-cute">오늘 완료한 세트</span>
@@ -150,7 +148,7 @@ export function PomodoroTimer() {
   return (
     <div className="flex flex-col items-center gap-5 w-full">
       <div className="bg-white/70 backdrop-blur rounded-3xl shadow-lg px-10 py-8 flex flex-col items-center gap-4">
-        <DotAvatar status={avatarStatus} pixelSize={16} />
+        <CharacterView state={state} gender={gender} appearance={appearance} size={140} />
         <span className="font-cute text-ink text-sm">
           {phase === 'focus' ? '🔥 집중 시간' : '☕ 휴식 시간'} · {currentRound}/{totalRounds} 세트
         </span>

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
 import { useAuthStore } from './authStore'
-import type { AvatarStatus } from '../types'
+import type { CharacterState, Gender } from '../character/types'
 
 export const DEFAULT_ROOM_ID = '00000000-0000-0000-0000-000000000001'
 
@@ -10,7 +10,8 @@ export interface SeatOccupant {
   seatIndex: number
   occupantId: string | null
   nickname: string | null
-  status: AvatarStatus
+  status: CharacterState
+  gender: Gender
   online: boolean
 }
 
@@ -20,11 +21,11 @@ interface RoomState {
   loading: boolean
   error: string | null
 
-  join: (nickname: string) => Promise<void>
+  join: (nickname: string, gender: Gender) => Promise<void>
   leaveChannels: () => void
-  claimSeat: (seatIndex: number, nickname: string) => Promise<boolean>
+  claimSeat: (seatIndex: number, nickname: string, gender: Gender) => Promise<boolean>
   releaseSeat: () => Promise<void>
-  updateMyStatus: (status: AvatarStatus, nickname: string) => void
+  updateMyStatus: (status: CharacterState, nickname: string, gender: Gender) => void
 }
 
 type SetFn = (partial: Partial<RoomState> | ((state: RoomState) => Partial<RoomState>)) => void
@@ -33,8 +34,9 @@ type GetFn = () => RoomState
 let pgChannel: RealtimeChannel | null = null
 let presenceChannel: RealtimeChannel | null = null
 let presenceReady = false
-let lastKnownStatus: AvatarStatus = 'idle'
+let lastKnownStatus: CharacterState = 'idle'
 let lastKnownNickname = ''
+let lastKnownGender: Gender = 'boy'
 let joinPromise: Promise<void> | null = null
 
 function seatCountDefault(): SeatOccupant[] {
@@ -42,7 +44,8 @@ function seatCountDefault(): SeatOccupant[] {
     seatIndex: i,
     occupantId: null,
     nickname: null,
-    status: 'idle' as AvatarStatus,
+    status: 'idle' as CharacterState,
+    gender: 'boy' as Gender,
     online: false,
   }))
 }
@@ -55,7 +58,7 @@ function teardownChannels() {
   presenceReady = false
 }
 
-async function performJoin(nickname: string, set: SetFn, get: GetFn) {
+async function performJoin(nickname: string, gender: Gender, set: SetFn, get: GetFn) {
   if (!supabase) {
     set({ error: 'Supabase가 설정되지 않았어요.' })
     return
@@ -81,6 +84,7 @@ async function performJoin(nickname: string, set: SetFn, get: GetFn) {
     occupantId: row.occupant_id,
     nickname: row.occupant_nickname,
     status: 'idle',
+    gender: 'boy',
     online: false,
   }))
   const mySeatIndex = seats.find((s) => s.occupantId === userId)?.seatIndex ?? null
@@ -122,29 +126,30 @@ async function performJoin(nickname: string, set: SetFn, get: GetFn) {
 
   presenceReady = false
   lastKnownNickname = nickname
+  lastKnownGender = gender
   presenceChannel = supabase.channel(`room-presence-${DEFAULT_ROOM_ID}`, {
     config: { presence: { key: userId } },
   })
 
   presenceChannel
     .on('presence', { event: 'sync' }, () => {
-      const state = presenceChannel!.presenceState<{ status: AvatarStatus; nickname: string }>()
+      const state = presenceChannel!.presenceState<{ status: CharacterState; nickname: string; gender?: Gender }>()
       set({
         seats: get().seats.map((s) => {
           if (!s.occupantId) return { ...s, online: false }
           const presences = state[s.occupantId]
           if (!presences || presences.length === 0) return { ...s, online: false }
-          return { ...s, online: true, status: presences[0].status }
+          return { ...s, online: true, status: presences[0].status, gender: presences[0].gender ?? 'boy' }
         }),
       })
     })
     .subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         presenceReady = true
-        // Use whatever status/nickname is currently known rather than a
-        // hardcoded default — updateMyStatus() may have already been
-        // called (and dropped) before the channel finished connecting.
-        await presenceChannel!.track({ status: lastKnownStatus, nickname: lastKnownNickname })
+        // Use whatever status/nickname/gender is currently known rather
+        // than a hardcoded default — updateMyStatus() may have already
+        // been called (and dropped) before the channel finished connecting.
+        await presenceChannel!.track({ status: lastKnownStatus, nickname: lastKnownNickname, gender: lastKnownGender })
       }
     })
 }
@@ -155,12 +160,12 @@ export const useRoomStore = create<RoomState>()((set, get) => ({
   loading: false,
   error: null,
 
-  join: (nickname) => {
+  join: (nickname, gender) => {
     // Guard against duplicate concurrent joins (e.g. React StrictMode's
     // double-invoked effects) so we never try to re-subscribe an
     // already-subscribed channel.
     if (joinPromise) return joinPromise
-    joinPromise = performJoin(nickname, set, get)
+    joinPromise = performJoin(nickname, gender, set, get)
     return joinPromise
   },
 
@@ -169,7 +174,7 @@ export const useRoomStore = create<RoomState>()((set, get) => ({
     joinPromise = null
   },
 
-  claimSeat: async (seatIndex, nickname) => {
+  claimSeat: async (seatIndex, nickname, gender) => {
     if (!supabase) return false
     const userId = useAuthStore.getState().userId
     if (!userId) return false
@@ -186,8 +191,9 @@ export const useRoomStore = create<RoomState>()((set, get) => ({
 
     set({ mySeatIndex: seatIndex })
     lastKnownNickname = nickname
+    lastKnownGender = gender
     if (presenceChannel && presenceReady) {
-      await presenceChannel.track({ status: lastKnownStatus, nickname })
+      await presenceChannel.track({ status: lastKnownStatus, nickname, gender })
     }
     return true
   },
@@ -208,11 +214,12 @@ export const useRoomStore = create<RoomState>()((set, get) => ({
     set({ mySeatIndex: null })
   },
 
-  updateMyStatus: (status, nickname) => {
+  updateMyStatus: (status, nickname, gender) => {
     lastKnownStatus = status
     lastKnownNickname = nickname
+    lastKnownGender = gender
     if (presenceChannel && presenceReady) {
-      presenceChannel.track({ status, nickname })
+      presenceChannel.track({ status, nickname, gender })
     }
   },
 }))

@@ -1,4 +1,4 @@
-import { DotAvatar } from '../avatar/DotAvatar'
+import { CharacterView } from '../../character/components/CharacterView'
 import { useAuthStore } from '../../store/authStore'
 import { useRoomStore } from '../../store/roomStore'
 import { useProfileStore } from '../../store/profileStore'
@@ -9,6 +9,7 @@ export function SeatRoom() {
   const authError = useAuthStore((s) => s.errorMessage)
 
   const nickname = useProfileStore((s) => s.nickname)
+  const gender = useProfileStore((s) => s.gender)
 
   const seats = useRoomStore((s) => s.seats)
   const mySeatIndex = useRoomStore((s) => s.mySeatIndex)
@@ -54,7 +55,12 @@ export function SeatRoom() {
             >
               {seat.occupantId ? (
                 <>
-                  <DotAvatar status={seat.online ? seat.status : 'idle'} pixelSize={8} />
+                  <CharacterView
+                    state={seat.online ? seat.status : 'idle'}
+                    gender={seat.gender}
+                    size={54}
+                    animated={seat.seatIndex === mySeatIndex}
+                  />
                   <span className="font-cute text-[10px] text-ink truncate max-w-full">
                     {seat.nickname ?? '익명'}
                   </span>
@@ -72,7 +78,7 @@ export function SeatRoom() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => claimSeat(seat.seatIndex, nickname)}
+                  onClick={() => claimSeat(seat.seatIndex, nickname, gender)}
                   disabled={mySeatIndex != null}
                   className="w-full h-full min-h-[64px] flex flex-col items-center justify-center gap-1 text-ink-soft disabled:opacity-40"
                 >

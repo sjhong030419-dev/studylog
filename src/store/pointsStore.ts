@@ -2,6 +2,12 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { PointTransaction } from '../types'
 import { todayKey } from '../utils/time'
+import {
+  computeBalance,
+  computeStudyXpTotal,
+  computeStudyXpTotalBeforeLastSession,
+  computeTodayEarnedFromStudy,
+} from './pointsMath'
 
 export const POINTS_PER_10_MIN = 1
 export const DAILY_STUDY_POINT_CAP = 60
@@ -28,6 +34,17 @@ interface PointsState {
   school: string | null
 
   balance: () => number
+  /** Study XP — lifetime points earned specifically from study sessions
+   * (`earn_study` transactions only). This is the sole source for character
+   * level/room growth: it excludes ad bonuses, streak bonuses, and any
+   * other non-study reward, and it never decreases when points are spent.
+   * (docs/StudyLog_Character_System_Fix_PRD_v1.0.md §8) */
+  studyXpTotal: () => number
+  /** Study XP total as of just before the most recently earned study
+   * session — used to show "level before -> after" on the result/capture
+   * card (PRD §14). Never a fabricated value: it's the same transaction
+   * log minus the latest `earn_study` entry. */
+  studyXpTotalBeforeLastSession: () => number
   todayEarnedFromStudy: () => number
   earnFromStudySession: (durationSec: number) => void
   earn: (amount: number, reason: string) => void
@@ -44,19 +61,13 @@ export const usePointsStore = create<PointsState>()(
       milestonesAwarded: [],
       school: null,
 
-      balance: () => {
-        return get().transactions.reduce(
-          (sum, t) => sum + (t.type === 'spend' ? -t.amount : t.amount),
-          0,
-        )
-      },
+      balance: () => computeBalance(get().transactions),
 
-      todayEarnedFromStudy: () => {
-        const key = todayKey()
-        return get()
-          .transactions.filter((t) => t.dateKey === key && t.type === 'earn_study')
-          .reduce((sum, t) => sum + t.amount, 0)
-      },
+      studyXpTotal: () => computeStudyXpTotal(get().transactions),
+
+      studyXpTotalBeforeLastSession: () => computeStudyXpTotalBeforeLastSession(get().transactions),
+
+      todayEarnedFromStudy: () => computeTodayEarnedFromStudy(get().transactions, todayKey()),
 
       earnFromStudySession: (durationSec) => {
         const key = todayKey()

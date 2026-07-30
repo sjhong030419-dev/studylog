@@ -1,11 +1,18 @@
 import { useMemo, useState } from 'react'
-import { DotAvatar } from '../avatar/DotAvatar'
+import { CharacterView } from '../../character/components/CharacterView'
+import { useMyAvatarAppearance } from '../../hooks/useMyAvatarAppearance'
 import { useTimerStore } from '../../store/timerStore'
 import { usePointsStore } from '../../store/pointsStore'
 import { useProfileStore } from '../../store/profileStore'
-import { useShopStore } from '../../store/shopStore'
 import { formatDuration } from '../../utils/time'
+import { readableInkColor } from '../../utils/contrastColor'
 import type { StudySession } from '../../types'
+import type { Gender } from '../../character/types'
+
+const BASE_PRESENTATIONS: { value: Gender; label: string }[] = [
+  { value: 'boy', label: '남학생 스타일' },
+  { value: 'girl', label: '여학생 스타일' },
+]
 
 interface MyPageProps {
   onOpenSettings: () => void
@@ -33,20 +40,15 @@ export function MyPage({ onOpenSettings }: MyPageProps) {
 
   const nickname = useProfileStore((s) => s.nickname)
   const setNickname = useProfileStore((s) => s.setNickname)
-
-  const shopItems = useShopStore((s) => s.items)
-  const equipped = useShopStore((s) => s.equipped)
+  const gender = useProfileStore((s) => s.gender)
+  const setGender = useProfileStore((s) => s.setGender)
+  const appearance = useMyAvatarAppearance()
 
   const [editing, setEditing] = useState(false)
   const [nicknameInput, setNicknameInput] = useState(nickname)
   const [schoolInput, setSchoolInput] = useState(school ?? '')
   const [selectedDay, setSelectedDay] = useState<DayLog | null>(null)
   const [confirmAction, setConfirmAction] = useState<'logout' | 'delete' | null>(null)
-
-  const equippedOutfit = shopItems.find((i) => i.id === equipped.outfit)
-  const equippedHair = shopItems.find((i) => i.id === equipped.hair)
-  const equippedAccessory = shopItems.find((i) => i.id === equipped.accessory)
-  const equippedBackground = shopItems.find((i) => i.id === equipped.background)
 
   const totalStudySec = sessions.reduce((sum, s) => sum + s.durationSec, 0)
 
@@ -82,17 +84,23 @@ export function MyPage({ onOpenSettings }: MyPageProps) {
     <div className="min-h-screen flex flex-col items-center gap-6 px-4 py-10">
       <h1 className="font-cute text-3xl text-ink">마이페이지 👤</h1>
 
-      <div className="bg-white/70 backdrop-blur rounded-3xl shadow-lg px-8 py-6 flex flex-col items-center gap-2 w-full max-w-sm">
-        <DotAvatar
-          status="resting"
-          pixelSize={16}
-          outfitColor={equippedOutfit?.colorHex}
-          hairEmoji={equippedHair?.emoji}
-          accessoryEmoji={equippedAccessory?.emoji}
-          backgroundColor={equippedBackground?.colorHex}
-        />
-        <span className="font-cute text-ink text-lg mt-1">{nickname}</span>
-        <span className="text-ink-soft text-sm">{school ? `🏫 ${school}` : '소속 학교 미등록'}</span>
+      <div
+        className="backdrop-blur rounded-3xl shadow-lg px-8 py-6 flex flex-col items-center gap-2 w-full max-w-sm"
+        style={{ backgroundColor: appearance.backgroundColor ?? 'rgba(255,255,255,0.7)' }}
+      >
+        <CharacterView state="happy" gender={gender} appearance={appearance} size={120} />
+        <span
+          className="font-cute text-lg mt-1"
+          style={{ color: readableInkColor(appearance.backgroundColor, 'var(--color-ink)') }}
+        >
+          {nickname}
+        </span>
+        <span
+          className="text-sm"
+          style={{ color: readableInkColor(appearance.backgroundColor, 'var(--color-ink-soft)') }}
+        >
+          {school ? `🏫 ${school}` : '소속 학교 미등록'}
+        </span>
 
         {!editing ? (
           <button
@@ -138,6 +146,34 @@ export function MyPage({ onOpenSettings }: MyPageProps) {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="w-full max-w-sm bg-white/70 rounded-2xl shadow-sm px-5 py-4 flex flex-col items-center gap-3">
+        <span className="font-cute text-ink-soft text-sm self-start">캐릭터 타입</span>
+        <p className="text-ink-soft text-[10px] self-start -mt-1">
+          헤어·의상·액세서리는 캐릭터 타입과 상관없이 자유롭게 착용할 수 있어요.
+        </p>
+        <div className="w-full flex gap-2" role="group" aria-label="캐릭터 타입 선택">
+          {BASE_PRESENTATIONS.map((preset) => {
+            const selected = gender === preset.value
+            return (
+              <button
+                key={preset.value}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => setGender(preset.value)}
+                className={`flex-1 font-cute text-sm px-3 py-2.5 rounded-xl border-2 flex items-center justify-center gap-1.5 ${
+                  selected ? 'border-ink bg-pastel-yellow text-ink' : 'border-ink/15 bg-white text-ink-soft'
+                }`}
+              >
+                {selected && (
+                  <span aria-hidden="true">✓</span>
+                )}
+                {preset.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <div className="w-full max-w-sm grid grid-cols-3 gap-2">

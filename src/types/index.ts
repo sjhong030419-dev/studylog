@@ -1,5 +1,3 @@
-export type AvatarStatus = 'studying' | 'idle' | 'resting' | 'away'
-
 export interface Subject {
   id: string
   name: string
