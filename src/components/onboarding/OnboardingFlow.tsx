@@ -4,6 +4,7 @@ import { useProfileStore } from '../../store/profileStore'
 import { useTimerStore } from '../../store/timerStore'
 import { usePlannerStore } from '../../store/plannerStore'
 import { todayKey } from '../../utils/time'
+import { parseGoalMinutes } from '../../utils/goalMinutes'
 import type { Gender } from '../../character/types'
 
 type Step = 'welcome' | 'character' | 'nickname' | 'subject' | 'goal'
@@ -24,6 +25,7 @@ export function OnboardingFlow() {
   const [localGender, setLocalGender] = useState<Gender>('boy')
   const [localNickname, setLocalNickname] = useState('')
   const [goalMinutes, setGoalMinutes] = useState('')
+  const [goalError, setGoalError] = useState<string | null>(null)
 
   const setGender = useProfileStore((s) => s.setGender)
   const setNickname = useProfileStore((s) => s.setNickname)
@@ -43,11 +45,16 @@ export function OnboardingFlow() {
   }
 
   function finish() {
+    const goalResult = parseGoalMinutes(goalMinutes)
+    if (!goalResult.valid) {
+      setGoalError(goalResult.error)
+      return
+    }
+
     setGender(localGender)
     if (localNickname.trim()) setNickname(localNickname)
-    const minutes = Number(goalMinutes)
-    if (minutes > 0) {
-      addTask(todayKey(), selectedSubjectId, '오늘의 목표', 'time', minutes)
+    if (goalResult.minutes !== null) {
+      addTask(todayKey(), selectedSubjectId, '오늘의 목표', 'time', goalResult.minutes)
     }
     completeOnboarding()
   }
@@ -190,12 +197,21 @@ export function OnboardingFlow() {
               min={1}
               max={600}
               value={goalMinutes}
-              onChange={(e) => setGoalMinutes(e.target.value)}
+              onChange={(e) => {
+                setGoalMinutes(e.target.value)
+                setGoalError(null)
+              }}
               placeholder="30"
+              aria-invalid={goalError !== null}
               className="w-24 font-cute text-lg px-4 py-3 rounded-full bg-white border border-ink/20 text-ink text-center"
             />
             <span className="font-cute text-ink-soft">분</span>
           </div>
+          {goalError && (
+            <p role="alert" className="font-cute text-xs text-red-500 text-center">
+              {goalError}
+            </p>
+          )}
           <button
             type="button"
             onClick={finish}

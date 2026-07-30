@@ -3,9 +3,11 @@ import { persist } from 'zustand/middleware'
 import type { PointTransaction } from '../types'
 import { todayKey } from '../utils/time'
 import {
+  computeAwardableStudyXp,
   computeBalance,
+  computeStreakUpdate,
+  computeStudyXpBeforeTodaysLastSession,
   computeStudyXpTotal,
-  computeStudyXpTotalBeforeLastSession,
   computeTodayEarnedFromStudy,
 } from './pointsMath'
 
@@ -40,11 +42,11 @@ interface PointsState {
    * other non-study reward, and it never decreases when points are spent.
    * (docs/StudyLog_Character_System_Fix_PRD_v1.0.md §8) */
   studyXpTotal: () => number
-  /** Study XP total as of just before the most recently earned study
-   * session — used to show "level before -> after" on the result/capture
-   * card (PRD §14). Never a fabricated value: it's the same transaction
-   * log minus the latest `earn_study` entry. */
-  studyXpTotalBeforeLastSession: () => number
+  /** Study XP total as of just before TODAY's most recently earned study
+   * session — undefined if no Study XP was earned today. Used to show
+   * "level before -> after" on the result/capture card (PRD §14), scoped
+   * to today so a past day's level change is never shown on today's card. */
+  studyXpTotalBeforeTodaysLastSession: () => number | undefined
   todayEarnedFromStudy: () => number
   earnFromStudySession: (durationSec: number) => void
   earn: (amount: number, reason: string) => void
@@ -65,16 +67,15 @@ export const usePointsStore = create<PointsState>()(
 
       studyXpTotal: () => computeStudyXpTotal(get().transactions),
 
-      studyXpTotalBeforeLastSession: () => computeStudyXpTotalBeforeLastSession(get().transactions),
+      studyXpTotalBeforeTodaysLastSession: () => computeStudyXpBeforeTodaysLastSession(get().transactions, todayKey()),
 
       todayEarnedFromStudy: () => computeTodayEarnedFromStudy(get().transactions, todayKey()),
 
       earnFromStudySession: (durationSec) => {
         const key = todayKey()
         const state = get()
-        const raw = Math.floor(durationSec / 600) * POINTS_PER_10_MIN
         const alreadyToday = state.todayEarnedFromStudy()
-        const awardable = Math.max(0, Math.min(raw, DAILY_STUDY_POINT_CAP - alreadyToday))
+        const awardable = computeAwardableStudyXp(durationSec, alreadyToday, DAILY_STUDY_POINT_CAP, POINTS_PER_10_MIN)
 
         const newTransactions: PointTransaction[] = [...state.transactions]
 
@@ -89,27 +90,32 @@ export const usePointsStore = create<PointsState>()(
           })
         }
 
-        let { streakCount, lastStudyDate, milestonesAwarded } = state
+        // Attendance/streak only counts a day when this session actually
+        // earned real Study XP — a sub-10-minute session, or a session
+        // after the daily cap is already spent, must never start or bump
+        // the streak (docs/StudyLog_XP_Level_Reward_Rules.md §6).
+        const streakUpdate = computeStreakUpdate(
+          { streakCount: state.streakCount, lastStudyDate: state.lastStudyDate, milestonesAwarded: state.milestonesAwarded },
+          { awardable, todayDateKey: key, yesterdayDateKey: yesterdayKeyOf(key), milestones: STREAK_MILESTONES },
+        )
 
-        if (lastStudyDate !== key) {
-          streakCount = lastStudyDate === yesterdayKeyOf(key) ? streakCount + 1 : 1
-          lastStudyDate = key
-
-          const bonus = STREAK_MILESTONES[streakCount]
-          if (bonus && !milestonesAwarded.includes(streakCount)) {
-            newTransactions.push({
-              id: `pt-streak-${Date.now()}`,
-              type: 'earn_streak',
-              amount: bonus,
-              reason: `${streakCount}일 연속 출석 보너스`,
-              dateKey: key,
-              timestamp: Date.now(),
-            })
-            milestonesAwarded = [...milestonesAwarded, streakCount]
-          }
+        if (streakUpdate.milestoneBonus) {
+          newTransactions.push({
+            id: `pt-streak-${Date.now()}`,
+            type: 'earn_streak',
+            amount: streakUpdate.milestoneBonus.amount,
+            reason: `${streakUpdate.milestoneBonus.streakCount}일 연속 출석 보너스`,
+            dateKey: key,
+            timestamp: Date.now(),
+          })
         }
 
-        set({ transactions: newTransactions, streakCount, lastStudyDate, milestonesAwarded })
+        set({
+          transactions: newTransactions,
+          streakCount: streakUpdate.streakCount,
+          lastStudyDate: streakUpdate.lastStudyDate,
+          milestonesAwarded: streakUpdate.milestonesAwarded,
+        })
       },
 
       earn: (amount, reason) => {
