@@ -13,6 +13,7 @@ interface StudyTimeSummaryProps {
   onPause: () => void
   onResume: () => void
   onStop: () => void
+  disabledReason?: string
 }
 
 /**
@@ -30,6 +31,7 @@ export function StudyTimeSummary({
   onPause,
   onResume,
   onStop,
+  disabledReason,
 }: StudyTimeSummaryProps) {
   return (
     <div className="w-full bg-(--color-home-card) rounded-[22px] shadow-sm px-5 py-5 flex flex-col gap-4">
@@ -60,6 +62,7 @@ export function StudyTimeSummary({
         onPause={onPause}
         onResume={onResume}
         onStop={onStop}
+        disabledReason={disabledReason}
       />
     </div>
   )

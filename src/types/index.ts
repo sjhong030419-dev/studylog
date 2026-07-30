@@ -2,6 +2,12 @@ export interface Subject {
   id: string
   name: string
   color: string
+  /** Set when the subject is removed but has real study history attached —
+   * hidden from new-selection lists everywhere, but the record itself (and
+   * its name) is kept so past sessions/planner tasks/stats/result cards can
+   * still resolve a real name instead of a raw id. Subjects with zero
+   * history are hard-deleted instead (nothing to preserve). */
+  archivedAt?: number
 }
 
 export interface StudySession {

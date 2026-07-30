@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { useTimerStore } from './timerStore'
+import { canStartWithSubject } from './subjectMath'
 import { playChime } from '../utils/noiseSynth'
 import { todayKey } from '../utils/time'
 
@@ -48,6 +49,7 @@ export const usePomodoroStore = create<PomodoroState>()(
       completedRoundsToday: 0,
 
       start: (subjectId, focusMin, breakMin, rounds) => {
+        if (!canStartWithSubject(subjectId)) return
         ensureFreshDay(get, set)
         set({
           subjectId,
