@@ -1,16 +1,21 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTimerStore, todaySessions } from '../../store/timerStore'
 import { usePlannerStore, type PlannerTargetType } from '../../store/plannerStore'
+import { activeSubjectsOf } from '../../store/subjectMath'
+import { SubjectEmptyState } from '../subjects/SubjectEmptyState'
 import { dateKeyOffset, formatDuration, todayKey } from '../../utils/time'
 
 export function StudyPlanner() {
   const subjects = useTimerStore((s) => s.subjects)
+  const addSubject = useTimerStore((s) => s.addSubject)
   const sessions = useTimerStore((s) => s.sessions)
   const tasks = usePlannerStore((s) => s.tasks)
   const addTask = usePlannerStore((s) => s.addTask)
   const toggleComplete = usePlannerStore((s) => s.toggleComplete)
   const removeTask = usePlannerStore((s) => s.removeTask)
   const carryOverTask = usePlannerStore((s) => s.carryOverTask)
+
+  const activeSubjects = activeSubjectsOf(subjects)
 
   const today = todayKey()
   const yesterday = dateKeyOffset(today, -1)
@@ -21,7 +26,13 @@ export function StudyPlanner() {
   const todaySec = todaySessions(sessions)
 
   const [showAdd, setShowAdd] = useState(false)
-  const [subjectId, setSubjectId] = useState(subjects[0]?.id ?? '')
+  const [subjectId, setSubjectId] = useState(activeSubjects[0]?.id ?? '')
+
+  useEffect(() => {
+    if (activeSubjects.some((s) => s.id === subjectId)) return
+    setSubjectId(activeSubjects[0]?.id ?? '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSubjects])
   const [title, setTitle] = useState('')
   const [targetType, setTargetType] = useState<PlannerTargetType>('time')
   const [targetMinutes, setTargetMinutes] = useState(60)
@@ -33,6 +44,7 @@ export function StudyPlanner() {
   }
 
   function handleAdd() {
+    if (!subjectId) return
     addTask(today, subjectId, title, targetType, targetMinutes)
     setTitle('')
     setShowAdd(false)
@@ -66,10 +78,14 @@ export function StudyPlanner() {
         </button>
       </div>
 
-      {showAdd && (
+      {showAdd && activeSubjects.length === 0 && (
+        <SubjectEmptyState onAdd={addSubject} reason="할 일을 등록하려면 과목이 필요해요." />
+      )}
+
+      {showAdd && activeSubjects.length > 0 && (
         <div className="bg-white/80 rounded-2xl px-4 py-3 flex flex-col gap-2 shadow-sm">
           <div className="flex flex-wrap gap-1.5">
-            {subjects.map((s) => (
+            {activeSubjects.map((s) => (
               <button
                 key={s.id}
                 type="button"

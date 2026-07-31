@@ -3,6 +3,7 @@ import { useSettingsStore } from '../../store/settingsStore'
 
 interface SettingsPageProps {
   onBack: () => void
+  onOpenSubjects: () => void
 }
 
 function ToggleSwitch({ on, onClick }: { on: boolean; onClick: () => void }) {
@@ -40,7 +41,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   )
 }
 
-export function SettingsPage({ onBack }: SettingsPageProps) {
+export function SettingsPage({ onBack, onOpenSubjects }: SettingsPageProps) {
   const notifyStudyReminder = useSettingsStore((s) => s.notifyStudyReminder)
   const notifyStreakWarning = useSettingsStore((s) => s.notifyStreakWarning)
   const notifyRankChange = useSettingsStore((s) => s.notifyRankChange)
@@ -103,6 +104,12 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
             />
           </div>
         )}
+      </SectionCard>
+
+      <SectionCard title="과목 관리">
+        <button type="button" onClick={onOpenSubjects} className="font-cute text-sm text-ink text-left">
+          내 과목 추가·수정·삭제 →
+        </button>
       </SectionCard>
 
       <SectionCard title="계정 설정">

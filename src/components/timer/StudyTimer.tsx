@@ -9,11 +9,13 @@ import { CharacterRoomCard } from '../home/CharacterRoomCard'
 import { SubjectChips } from '../home/SubjectChips'
 import { StudyTimeSummary } from '../home/StudyTimeSummary'
 import { SubjectBreakdownCard } from '../home/SubjectBreakdownCard'
+import { SubjectEmptyState } from '../subjects/SubjectEmptyState'
 import { computeDailyGoal } from '../../utils/dailyGoal'
 import { deriveCharacterState } from '../../character/engine/characterStateMachine'
 import { deriveSpeechBubble } from '../../utils/speechBubble'
 import { deriveExpLevel } from '../../character/engine/expLevel'
 import { todayKey } from '../../utils/time'
+import { activeSubjectsOf } from '../../store/subjectMath'
 
 /** Continuous focus beyond this length shows the sleepy pose — a deterministic
  * read of real elapsed session time, not a fabricated or random cue. */
@@ -124,6 +126,8 @@ export function StudyTimer() {
     .filter((row) => row.sec > 0)
 
   const maxSec = Math.max(1, ...perSubject.map((r) => r.sec))
+  const activeSubjects = activeSubjectsOf(subjects)
+  const hasNoSubjects = activeSubjects.length === 0
 
   const goal = computeDailyGoal(plannerTasks, sessions, todayKey())
   const speech = awayMessage
@@ -156,13 +160,17 @@ export function StudyTimer() {
         </div>
       )}
 
-      <SubjectChips
-        subjects={subjects}
-        selectedSubjectId={selectedSubjectId}
-        disabled={isRunning}
-        onSelect={selectSubject}
-        onAdd={addSubject}
-      />
+      {hasNoSubjects ? (
+        <SubjectEmptyState onAdd={addSubject} />
+      ) : (
+        <SubjectChips
+          subjects={activeSubjects}
+          selectedSubjectId={selectedSubjectId}
+          disabled={isRunning}
+          onSelect={selectSubject}
+          onAdd={addSubject}
+        />
+      )}
 
       <StudyTimeSummary
         elapsedSec={elapsedSec}
@@ -174,6 +182,7 @@ export function StudyTimer() {
         onPause={pause}
         onResume={resume}
         onStop={handleStop}
+        disabledReason={hasNoSubjects ? '과목을 먼저 추가해주세요.' : undefined}
       />
 
       <SubjectBreakdownCard perSubject={perSubject} maxSec={maxSec} />

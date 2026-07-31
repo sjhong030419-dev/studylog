@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTimerStore } from '../../store/timerStore'
 import { usePointsStore } from '../../store/pointsStore'
+import { activeSubjectsOf } from '../../store/subjectMath'
+import { SubjectEmptyState } from '../subjects/SubjectEmptyState'
 import { EXTRA_BUNDLE_COST, EXTRA_BUNDLE_SIZE, useTutorStore } from '../../store/tutorStore'
 
 export function AiTutorChat() {
   const subjects = useTimerStore((s) => s.subjects)
+  const addSubject = useTimerStore((s) => s.addSubject)
+  const activeSubjects = activeSubjectsOf(subjects)
   const balance = usePointsStore((s) => s.balance())
 
   const messages = useTutorStore((s) => s.messages)
@@ -14,15 +18,30 @@ export function AiTutorChat() {
   const buyExtraQuestions = useTutorStore((s) => s.buyExtraQuestions)
   const remaining = useTutorStore((s) => s.remainingToday())
 
-  const [subjectId, setSubjectId] = useState(subjects[0]?.id ?? '')
+  const [subjectId, setSubjectId] = useState(activeSubjects[0]?.id ?? '')
   const [input, setInput] = useState('')
+
+  useEffect(() => {
+    if (activeSubjects.some((s) => s.id === subjectId)) return
+    setSubjectId(activeSubjects[0]?.id ?? '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSubjects])
 
   const subjectMessages = messages.filter((m) => m.subjectId === subjectId)
 
   function handleSend() {
-    if (!input.trim() || remaining <= 0) return
+    if (!input.trim() || remaining <= 0 || !subjectId) return
     sendMessage(subjectId, input)
     setInput('')
+  }
+
+  if (activeSubjects.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center gap-4 px-4 py-10">
+        <h1 className="font-cute text-3xl text-ink">AI 튜터 🤖</h1>
+        <SubjectEmptyState onAdd={addSubject} reason="튜터에게 질문하려면 과목이 필요해요." />
+      </div>
+    )
   }
 
   return (
@@ -30,7 +49,7 @@ export function AiTutorChat() {
       <h1 className="font-cute text-3xl text-ink">AI 튜터 🤖</h1>
 
       <div className="flex flex-wrap justify-center gap-2">
-        {subjects.map((s) => (
+        {activeSubjects.map((s) => (
           <button
             key={s.id}
             type="button"

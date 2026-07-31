@@ -4,6 +4,8 @@ import { useMyAvatarAppearance } from '../../hooks/useMyAvatarAppearance'
 import { useProfileStore } from '../../store/profileStore'
 import { useTimerStore } from '../../store/timerStore'
 import { usePomodoroStore } from '../../store/pomodoroStore'
+import { activeSubjectsOf } from '../../store/subjectMath'
+import { SubjectEmptyState } from '../subjects/SubjectEmptyState'
 import type { CharacterState } from '../../character/types'
 
 const PRESETS = [
@@ -19,6 +21,8 @@ function formatCountdown(sec: number): string {
 
 export function PomodoroTimer() {
   const subjects = useTimerStore((s) => s.subjects)
+  const addSubject = useTimerStore((s) => s.addSubject)
+  const activeSubjects = activeSubjectsOf(subjects)
 
   const phase = usePomodoroStore((s) => s.phase)
   const remainingSec = usePomodoroStore((s) => s.remainingSec)
@@ -34,7 +38,7 @@ export function PomodoroTimer() {
   const reset = usePomodoroStore((s) => s.reset)
   const tick = usePomodoroStore((s) => s.tick)
 
-  const [subjectId, setSubjectId] = useState(subjects[0]?.id ?? '')
+  const [subjectId, setSubjectId] = useState(activeSubjects[0]?.id ?? '')
   const [customFocus, setCustomFocus] = useState(25)
   const [customBreak, setCustomBreak] = useState(5)
   const [customRounds, setCustomRounds] = useState(4)
@@ -47,13 +51,30 @@ export function PomodoroTimer() {
     return () => clearInterval(id)
   }, [phase, tick])
 
+  // Keep the local selection valid as subjects are added/removed elsewhere
+  // (e.g. right after creating the first subject from the empty state) —
+  // never leaves a stale/empty id selected once real subjects exist.
+  useEffect(() => {
+    if (activeSubjects.some((s) => s.id === subjectId)) return
+    setSubjectId(activeSubjects[0]?.id ?? '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSubjects])
+
   const state: CharacterState = isPaused ? 'break' : phase === 'focus' ? 'study' : 'idle'
+
+  if (phase === 'idle' && activeSubjects.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-5 w-full">
+        <SubjectEmptyState onAdd={addSubject} reason="뽀모도로를 시작하려면 과목이 필요해요." />
+      </div>
+    )
+  }
 
   if (phase === 'idle') {
     return (
       <div className="flex flex-col items-center gap-5 w-full">
         <div className="flex flex-wrap justify-center gap-2 max-w-sm">
-          {subjects.map((subject) => (
+          {activeSubjects.map((subject) => (
             <button
               key={subject.id}
               type="button"

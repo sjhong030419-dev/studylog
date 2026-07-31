@@ -9,6 +9,7 @@ import { AiTutorChat } from './components/tutor/AiTutorChat'
 import { AvatarShop } from './components/shop/AvatarShop'
 import { MyPage } from './components/profile/MyPage'
 import { SettingsPage } from './components/settings/SettingsPage'
+import { SubjectManagerPage } from './components/subjects/SubjectManagerPage'
 import { NotificationBell } from './components/notifications/NotificationBell'
 import { NotificationsPage } from './components/notifications/NotificationsPage'
 import { BgmPlayer } from './components/audio/BgmPlayer'
@@ -18,7 +19,7 @@ import { useSettingsStore } from './store/settingsStore'
 import { useProfileStore } from './store/profileStore'
 import type { NavTarget } from './types'
 
-type Overlay = 'profile' | 'settings' | 'notifications' | null
+type Overlay = 'profile' | 'settings' | 'notifications' | 'subjects' | null
 
 function App() {
   const [tab, setTab] = useState<Tab>('timer')
@@ -60,7 +61,10 @@ function App() {
       {overlay && (
         <div className="fixed inset-0 z-30 overflow-y-auto bg-gradient-to-b from-[#fdf6ff] to-[#eef4ff] dark:from-[#1c1830] dark:to-[#14121f]">
           {overlay === 'profile' && <MyPage onOpenSettings={() => setOverlay('settings')} />}
-          {overlay === 'settings' && <SettingsPage onBack={() => setOverlay('profile')} />}
+          {overlay === 'settings' && (
+            <SettingsPage onBack={() => setOverlay('profile')} onOpenSubjects={() => setOverlay('subjects')} />
+          )}
+          {overlay === 'subjects' && <SubjectManagerPage onBack={() => setOverlay('settings')} />}
           {overlay === 'notifications' && (
             <NotificationsPage onBack={() => setOverlay(null)} onNavigate={handleNavigate} />
           )}

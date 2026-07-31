@@ -4,32 +4,34 @@ import type { StudySession, Subject } from '../types'
 import { todayKey } from '../utils/time'
 import { usePointsStore } from './pointsStore'
 import { useAudioStore } from './audioStore'
-
-const SUBJECT_COLORS = [
-  '#ffb3c6',
-  '#a8d8ff',
-  '#c9f5e0',
-  '#ffe29a',
-  '#d3c2ff',
-  '#ffcba4',
-]
-
-const DEFAULT_SUBJECTS: Subject[] = [
-  { id: 'kor', name: '국어', color: SUBJECT_COLORS[0] },
-  { id: 'math', name: '수학', color: SUBJECT_COLORS[1] },
-  { id: 'eng', name: '영어', color: SUBJECT_COLORS[2] },
-]
+import {
+  activeSubjectsOf,
+  canStartWithSubject,
+  computeAddSubject,
+  computeRemoveSubject,
+  computeUpdateSubjectColor,
+  computeUpdateSubjectName,
+} from './subjectMath'
 
 interface TimerState {
   subjects: Subject[]
-  selectedSubjectId: string
+  /** null = no subject selected yet — the only valid state for a brand-new
+   * user with zero subjects (no auto-created defaults). */
+  selectedSubjectId: string | null
   isRunning: boolean
   isPaused: boolean
   elapsedSec: number
   sessions: StudySession[]
 
   selectSubject: (id: string) => void
-  addSubject: (name: string) => void
+  addSubject: (name: string) => { ok: true } | { ok: false; error: string }
+  updateSubjectName: (id: string, name: string) => { ok: true } | { ok: false; error: string }
+  updateSubjectColor: (id: string, color: string) => { ok: true } | { ok: false; error: string }
+  /** Always archives — never removes the subject from `subjects` — so any
+   * data referencing it by id (sessions, planner tasks, tutor messages,
+   * stats) can keep resolving a real name/color. Refuses while the timer
+   * is actively running on that subject. */
+  removeSubject: (id: string) => { ok: true } | { ok: false; error: string }
   start: () => void
   pause: () => void
   resume: () => void
@@ -41,8 +43,8 @@ interface TimerState {
 export const useTimerStore = create<TimerState>()(
   persist(
     (set, get) => ({
-      subjects: DEFAULT_SUBJECTS,
-      selectedSubjectId: DEFAULT_SUBJECTS[0].id,
+      subjects: [],
+      selectedSubjectId: null,
       isRunning: false,
       isPaused: false,
       elapsedSec: 0,
@@ -54,20 +56,37 @@ export const useTimerStore = create<TimerState>()(
       },
 
       addSubject: (name) => {
-        const trimmed = name.trim()
-        if (!trimmed) return
-        const { subjects } = get()
-        const color = SUBJECT_COLORS[subjects.length % SUBJECT_COLORS.length]
-        const newSubject: Subject = {
-          id: `custom-${Date.now()}`,
-          name: trimmed,
-          color,
-        }
-        set({ subjects: [...subjects, newSubject], selectedSubjectId: newSubject.id })
+        const result = computeAddSubject(get().subjects, name)
+        if (!result.ok) return { ok: false, error: result.error }
+        set({ subjects: result.subjects, selectedSubjectId: result.newSubject.id })
+        return { ok: true }
+      },
+
+      updateSubjectName: (id, name) => {
+        const result = computeUpdateSubjectName(get().subjects, id, name)
+        if (!result.ok) return result
+        set({ subjects: result.subjects })
+        return { ok: true }
+      },
+
+      updateSubjectColor: (id, color) => {
+        const result = computeUpdateSubjectColor(get().subjects, id, color)
+        if (!result.ok) return result
+        set({ subjects: result.subjects })
+        return { ok: true }
+      },
+
+      removeSubject: (id) => {
+        const { subjects, selectedSubjectId, isRunning } = get()
+        const result = computeRemoveSubject(subjects, id, selectedSubjectId, isRunning)
+        if (!result.ok) return result
+        set({ subjects: result.subjects, selectedSubjectId: result.selectedSubjectId })
+        return { ok: true }
       },
 
       start: () => {
         if (get().isRunning) return
+        if (!canStartWithSubject(get().selectedSubjectId)) return
         set({ isRunning: true, isPaused: false, elapsedSec: 0 })
       },
 
@@ -84,7 +103,10 @@ export const useTimerStore = create<TimerState>()(
       stop: () => {
         const { isRunning, elapsedSec, selectedSubjectId } = get()
         if (!isRunning) return
-        if (elapsedSec > 0) {
+        // `start()` already refuses to run without a selected subject, so
+        // this is only a defensive guard — never silently log a session
+        // against no subject.
+        if (elapsedSec > 0 && selectedSubjectId) {
           get().logSession(selectedSubjectId, elapsedSec)
         }
         set({ isRunning: false, isPaused: false, elapsedSec: 0 })
@@ -115,7 +137,30 @@ export const useTimerStore = create<TimerState>()(
       partialize: (state) => ({
         subjects: state.subjects,
         sessions: state.sessions,
+        selectedSubjectId: state.selectedSubjectId,
       }),
+      // Deliberately NOT using zustand's `migrate`/`version` here: it only
+      // fires when the persisted JSON has a numeric `version` field
+      // (zustand/esm/middleware.mjs checks
+      // `typeof deserializedStorageValue.version === "number"` before ever
+      // calling `migrate`). Every real existing user's `studylog-timer`
+      // blob predates this field entirely, so `migrate` would silently
+      // never run for them — confirmed by reproducing it live: with
+      // `version` absent, the store hydrated with `selectedSubjectId`
+      // still `null`/`undefined`, and clicking "시작" silently did nothing
+      // (`canStartWithSubject` correctly refused it). `onRehydrateStorage`
+      // runs unconditionally after every hydration regardless of a
+      // `version` field, so it's used instead to backfill/repair
+      // `selectedSubjectId` from the user's own real `subjects` — never
+      // touches `subjects`/`sessions` themselves, so existing study
+      // history is untouched.
+      onRehydrateStorage: () => (state) => {
+        if (!state) return
+        const active = activeSubjectsOf(state.subjects)
+        if (!state.selectedSubjectId || !active.some((s) => s.id === state.selectedSubjectId)) {
+          state.selectedSubjectId = active[0]?.id ?? null
+        }
+      },
     },
   ),
 )

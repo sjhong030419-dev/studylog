@@ -2,6 +2,7 @@ import { CharacterView } from '../../character/components/CharacterView'
 import { useAuthStore } from '../../store/authStore'
 import { useRoomStore } from '../../store/roomStore'
 import { useProfileStore } from '../../store/profileStore'
+import { useMyAvatarAppearance } from '../../hooks/useMyAvatarAppearance'
 import { isSupabaseConfigured } from '../../lib/supabaseClient'
 
 export function SeatRoom() {
@@ -10,6 +11,7 @@ export function SeatRoom() {
 
   const nickname = useProfileStore((s) => s.nickname)
   const gender = useProfileStore((s) => s.gender)
+  const myAppearance = useMyAvatarAppearance()
 
   const seats = useRoomStore((s) => s.seats)
   const mySeatIndex = useRoomStore((s) => s.mySeatIndex)
@@ -58,6 +60,12 @@ export function SeatRoom() {
                   <CharacterView
                     state={seat.online ? seat.status : 'idle'}
                     gender={seat.gender}
+                    // Only my own equipped cosmetics are known locally —
+                    // other occupants' presence payload doesn't carry
+                    // equippedAssetIds (docs/character-system.md §10 known
+                    // gap), so they render with the default preset colors
+                    // rather than silently showing my own outfit on them.
+                    appearance={isMine ? myAppearance : undefined}
                     size={54}
                     animated={seat.seatIndex === mySeatIndex}
                   />

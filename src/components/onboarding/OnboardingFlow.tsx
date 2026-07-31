@@ -3,6 +3,7 @@ import { CharacterView } from '../../character/components/CharacterView'
 import { useProfileStore } from '../../store/profileStore'
 import { useTimerStore } from '../../store/timerStore'
 import { usePlannerStore } from '../../store/plannerStore'
+import { activeSubjectsOf } from '../../store/subjectMath'
 import { todayKey } from '../../utils/time'
 import { parseGoalMinutes } from '../../utils/goalMinutes'
 import type { Gender } from '../../character/types'
@@ -26,6 +27,7 @@ export function OnboardingFlow() {
   const [localNickname, setLocalNickname] = useState('')
   const [goalMinutes, setGoalMinutes] = useState('')
   const [goalError, setGoalError] = useState<string | null>(null)
+  const [subjectStepError, setSubjectStepError] = useState<string | null>(null)
 
   const setGender = useProfileStore((s) => s.setGender)
   const setNickname = useProfileStore((s) => s.setNickname)
@@ -36,10 +38,15 @@ export function OnboardingFlow() {
   const selectSubject = useTimerStore((s) => s.selectSubject)
   const addSubject = useTimerStore((s) => s.addSubject)
   const addTask = usePlannerStore((s) => s.addTask)
+  const activeSubjects = activeSubjectsOf(subjects)
 
   const stepIndex = STEP_ORDER.indexOf(step)
 
   function goNext() {
+    if (step === 'subject' && activeSubjects.length === 0) {
+      setSubjectStepError('최소 하나의 과목을 만들어야 다음으로 진행할 수 있어요.')
+      return
+    }
     const next = STEP_ORDER[stepIndex + 1]
     if (next) setStep(next)
   }
@@ -53,7 +60,7 @@ export function OnboardingFlow() {
 
     setGender(localGender)
     if (localNickname.trim()) setNickname(localNickname)
-    if (goalResult.minutes !== null) {
+    if (goalResult.minutes !== null && selectedSubjectId) {
       addTask(todayKey(), selectedSubjectId, '오늘의 목표', 'time', goalResult.minutes)
     }
     completeOnboarding()
@@ -160,22 +167,38 @@ export function OnboardingFlow() {
 
       {step === 'subject' && (
         <div className="w-full max-w-sm flex flex-col items-center gap-6">
-          <h2 className="font-cute text-xl text-ink text-center">오늘은 어떤 과목을 공부할까요?</h2>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {subjects.map((subject) => (
-              <button
-                key={subject.id}
-                type="button"
-                onClick={() => selectSubject(subject.id)}
-                className={`font-cute px-4 py-2 rounded-full border text-sm min-h-[40px] ${
-                  selectedSubjectId === subject.id ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
-                }`}
-              >
-                {subject.name}
-              </button>
-            ))}
-          </div>
-          <AddSubjectField onAdd={addSubject} />
+          <h2 className="font-cute text-xl text-ink text-center">어떤 과목을 공부할까요?</h2>
+          <p className="font-cute text-xs text-ink-soft text-center">
+            나만의 과목을 직접 만들어보세요. 나중에 얼마든지 추가·삭제할 수 있어요.
+          </p>
+          {activeSubjects.length > 0 && (
+            <div className="flex flex-wrap gap-2 justify-center">
+              {activeSubjects.map((subject) => (
+                <button
+                  key={subject.id}
+                  type="button"
+                  onClick={() => selectSubject(subject.id)}
+                  className={`font-cute px-4 py-2 rounded-full border text-sm min-h-[40px] ${
+                    selectedSubjectId === subject.id ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
+                  }`}
+                >
+                  {subject.name}
+                </button>
+              ))}
+            </div>
+          )}
+          <AddSubjectField
+            onAdd={(name) => {
+              const result = addSubject(name)
+              if (result.ok) setSubjectStepError(null)
+              return result
+            }}
+          />
+          {subjectStepError && (
+            <p role="alert" className="font-cute text-xs text-red-500 text-center">
+              {subjectStepError}
+            </p>
+          )}
           <button
             type="button"
             onClick={goNext}
@@ -230,26 +253,56 @@ export function OnboardingFlow() {
   )
 }
 
-function AddSubjectField({ onAdd }: { onAdd: (name: string) => void }) {
+function AddSubjectField({
+  onAdd,
+}: {
+  onAdd: (name: string) => { ok: true } | { ok: false; error: string }
+}) {
   const [value, setValue] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  function handleSubmit() {
+    const result = onAdd(value)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setValue('')
+    setError(null)
+  }
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault()
-        if (!value.trim()) return
-        onAdd(value)
-        setValue('')
+        handleSubmit()
       }}
-      className="flex items-center gap-2"
+      className="flex flex-col items-center gap-1.5"
     >
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => setValue(e.target.value.slice(0, 10))}
-        placeholder="+ 과목 추가"
-        maxLength={10}
-        className="font-cute text-sm px-4 py-2 rounded-full bg-white border border-ink/20 text-ink"
-      />
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value.slice(0, 20))
+            setError(null)
+          }}
+          placeholder="예: 토익, 코딩, 자격증"
+          maxLength={20}
+          className="font-cute text-sm px-4 py-2 rounded-full bg-white border border-ink/20 text-ink"
+        />
+        <button
+          type="submit"
+          className="font-cute text-sm px-4 py-2 rounded-full bg-ink text-white min-h-[40px]"
+        >
+          + 추가
+        </button>
+      </div>
+      {error && (
+        <p role="alert" className="font-cute text-xs text-red-500">
+          {error}
+        </p>
+      )}
     </form>
   )
 }
