@@ -151,29 +151,31 @@ Happy · Excited · Celebrate · Level Up · Focused
 - **프레임 속도:** 상태별로 다르며, 실제 구현값(`src/character/types.ts` `STATE_FPS`)은 4~12 FPS 범위다 — 이전 버전의 "12~24 FPS" 표기는 실제 구현과 달라 정정한다. 상태별 값은 §5 프레임 표와 함께 관리된다.
 - **파일명 규칙:** 레이어별로 다르며 전부 `src/character/engine/spriteManifest.ts`가 중앙에서 관리한다 — §12 참고. 몸/얼굴은 `(gender)_(action)_(frame).png`(예: `boy_study_01.png`), 코스튬(헤어/의상/액세서리)은 `(assetKey)_(frame).png`(예: `ribbon_01.png`), 상태 이펙트는 `(action)_(frame).png`(예: `sleep_01.png`).
 - **앵커 위치(배치 기준점):** 캐릭터는 씬 컨테이너 기준 `top: 3%`, 가로 중앙 정렬(`left: 50%`, `translateX(-50%)`), 너비는 컨테이너의 58% (`RoomScene.tsx` 기준). 실제 스프라이트로 교체해도 이 배치 규칙은 유지되어야 하며, 캔버스 내에서 캐릭터가 프레임 중앙 하단에 정렬되어 있어야 이 배치값이 그대로 맞는다.
-- **폴백(fallback) 동작:** ① 상태별 아트가 없으면 `idle`로 대체 렌더링한다(`STATE_HAS_ART`, 현재는 12개 상태 전부 `true`). ② 알 수 없거나 아직 카탈로그에 없는 코스튬 아이템 ID는 조용히 무시하고 렌더링을 깨뜨리지 않는다(`resolveCatalogEntries`). 실제 아트로 전환한 뒤에도 이 두 폴백 규칙은 그대로 유지해야 한다.
+- **폴백(fallback) 동작:** ① 상태별 아트가 없으면 `idle`로 대체 렌더링한다(`STATE_HAS_ART`, 현재는 13개 상태 전부 `true`). ② 알 수 없거나 아직 카탈로그에 없는 코스튬 아이템 ID는 조용히 무시하고 렌더링을 깨뜨리지 않는다(`resolveCatalogEntries`). 실제 아트로 전환한 뒤에도 이 두 폴백 규칙은 그대로 유지해야 한다.
 
-> 이 스펙은 실제 픽셀 일러스트 PNG 스프라이트 자산의 존재를 전제로 한다. 현재 프로젝트에는 이런 이미지 에셋이 없고 전부 코드(SVG/CSS)로 그려져 있었다 — 엔진/구현 설계 시 이 점을 반드시 반영해야 한다 (아래 "설계 제안"의 공개 이슈 참고).
+> 이 스펙이 작성될 당시엔 실제 픽셀 일러스트 PNG 스프라이트 자산이 프로젝트에 없었다. 이후 base/ 폴더에 승인된 실제 PNG가 커밋되었다(§14) — 아래 "설계 제안"과 §14는 그 이후 기준으로 갱신되어 있다.
 
-## 10. 설계 제안 — 실제 아트 자산 교체 경계 (구현 완료, 실제 이미지는 여전히 없음)
+## 10. 설계 제안 — 실제 아트 자산 교체 경계 (base 이미지 승인·적용 완료, 나머지 레이어는 여전히 없음)
 
-**현재 상태 (다시 한번 명확히):** 지금 화면에 보이는 캐릭터는 전부 `src/character/fallback/ChibiFallbackArt.tsx`의 SVG 코드로 그려진 placeholder다. 이 문서의 §9/§12 파일 스펙을 만족하는 실제 PNG/스프라이트 에셋은 **여전히 하나도 존재하지 않는다** (`public/sprites/avatar/` 각 폴더는 `.gitkeep`만 있는 빈 폴더). 이번 단계에서 만든 건 "실제 이미지가 들어오면 즉시 작동하는 렌더링 구조"이지, 실제 이미지 자체가 아니다. 어떤 보고서에서도 이 SVG를 "최종 프로덕션 아트"로 표현해서는 안 된다.
+**현재 상태 (다시 한번 명확히, §14로 갱신됨):** `public/sprites/avatar/base/`에 승인된 남성형·여성형 도트 캐릭터 PNG 208장이 실제로 존재하고(커밋 `714aff6`), `SPRITE_ASSETS_AVAILABLE = true`로 전환되어 **커스터마이징이 없는 기본 캐릭터는 이제 이 실제 PNG로 렌더링된다.** 반면 `hair/`, `outfit/`, `accessory/`, `face/`, `effects/` 5개 폴더는 여전히 `.gitkeep`만 있는 빈 폴더다 — 사용자가 헤어/의상/액세서리를 장착하면 여전히 `ChibiFallbackArt.tsx`의 SVG로 렌더링된다(§14). 어떤 보고서에서도 "모든 커스터마이징이 새 PNG로 나온다"고 표현해서는 안 된다.
 
-**실제 아트 자산을 넣을 때 건드릴 곳은 정확히 한 곳이다 — 이제 실제로 구현되어 작동한다.**
+**실제 아트 자산을 넣을 때 건드릴 곳은 정확히 한 곳이며, 이제 실제로 검증됐다.**
 
 - 앱 전체에서 캐릭터를 그리는 진입점은 `src/character/components/CharacterView.tsx` 하나뿐이다. 타이머, 스터디룸, 마이페이지, 상점, 캡처 카드, 온보딩, 뽀모도로 전부 이 컴포넌트를 `state`/`gender`/`appearance`/`size` props로만 호출하며, 내부 렌더링 방식(SVG인지 PNG 스프라이트인지)을 전혀 알지 못한다.
-- `src/character/engine/spriteAssetMap.ts`의 `SPRITE_ASSETS_AVAILABLE` 플래그가 유일한 스위치다. `CharacterView.tsx`는 이미 이 플래그로 분기하도록 구현되어 있다 — `false`(현재)면 `ChibiFallbackArt`, `true`면 `src/character/engine/PixelSpriteRenderer.tsx`를 렌더링한다. 실제 배포 시 필요한 작업은 §13의 파일 목록을 `public/sprites/avatar/`에 채운 뒤 이 플래그 한 줄만 `true`로 바꾸는 것뿐이다.
-- `PixelSpriteRenderer`는 각 레이어를 개별 `<img onError>`로 그려서, 만약 파일이 실제로 없거나 깨져 있어도 브라우저 기본 "깨진 이미지" 아이콘이 노출되지 않는다 — 코스튬/이펙트 레이어가 실패하면 그 레이어만 조용히 빠지고, 필수인 `base` 레이어가 실패하면 그 즉시 `CharacterView`가 `ChibiFallbackArt`로 자동 전환한다(`onBaseLayerError` 콜백). 이 폴백은 실제 이미지가 부분적으로만 준비된 과도기에도 캐릭터가 절대 깨져 보이지 않도록 하기 위함이다.
-- 이 교체 작업은 `Timer`, `characterStateMachine`, `profileStore`, `AvatarShop`, `RoomScene`, `LogCaptureCard`, `OnboardingFlow` 어느 파일도 수정할 필요가 없다 — 전부 `CharacterView`/`RoomScene`을 통해서만 캐릭터를 소비하기 때문이다. 실제로 이번 단계에서 이 파일들 중 어느 것도 캐릭터 렌더링 방식 때문에 변경되지 않았다.
+- `src/character/engine/spriteAssetMap.ts`의 `SPRITE_ASSETS_AVAILABLE` 플래그와 `src/character/engine/spriteSupport.ts`의 지원 레지스트리가 함께 렌더링 경로를 결정한다. `CharacterView`는 `shouldUseSprites()`(순수 함수, `spriteSupport.ts`) 하나로 판단한다 — base 이미지의 성별/상태 지원 여부와, **장착된 코스튬 전부가 지원되는지**를 함께 확인한다. 장착된 아이템 중 단 하나라도 PNG 레이어가 없으면 캐릭터 전체가 `ChibiFallbackArt`로 전환된다 — 새 PNG 위에 아이템만 빠진 모습으로 그려지는 일은 없다.
+- `PixelSpriteRenderer`는 각 레이어를 개별 `<img onError>`로 그리되, `spriteSupport.ts`의 레지스트리에 없는 코스튬/이펙트/얼굴 레이어는 애초에 요청조차 하지 않는다(존재하지 않는 파일에 대해 불필요한 404 네트워크 요청을 만들지 않음). `base` 레이어가 실패하면 그 즉시 `CharacterView`가 `ChibiFallbackArt`로 자동 전환한다(`onBaseLayerError` 콜백) — 실제 이미지가 부분적으로만 준비된 과도기에도 캐릭터가 절대 깨져 보이지 않도록 하기 위함이다.
+- 원래 10-레이어 설계의 `face/`(눈·입·표정) 레이어는 이번에 승인된 실제 base PNG에 이미 표정·헤어·의상이 한 장의 완결된 그림으로 포함되어 있어(§14) **더 이상 별도 합성 레이어로 그리지 않는다** — `PixelSpriteRenderer`가 `face/` 경로를 요청하지 않도록 코드를 정리했다. `resolveFaceFramePath()` 함수 자체와 그 테스트는 향후 정말 분리된 얼굴 레이어가 필요해질 경우를 대비해 `spriteManifest.ts`에 남겨뒀지만 현재는 어디서도 호출되지 않는다.
+- 이 교체 작업은 `Timer`, `characterStateMachine`, `profileStore`, `AvatarShop`, `RoomScene`, `LogCaptureCard`, `OnboardingFlow`, `StudyPlanner` 어느 파일도 수정하지 않았다 — 전부 `CharacterView`/`RoomScene`을 통해서만 캐릭터를 소비하기 때문이다.
 
 **코스튬 슬롯도 같은 이유로 확장 가능하다 (변경 없음).**
 
 - `src/character/catalog/types.ts`의 `CharacterSlot`은 19개 고정 슬롯(예: `top`, `onePiece`, `hairFront`, `headAccessory` 등)을 정의하고, 각 상점 아이템은 `character/catalog/items.ts`에서 이 슬롯 중 하나에 데이터로 매핑된다. 렌더러(`ChibiFallbackArt`도, 새 `PixelSpriteRenderer`도)는 아이템 ID를 직접 분기하지 않고 슬롯이 매핑된 레이어의 `zIndex`/렌더 순서로만 그린다.
 - `top`(상의)과 `onePiece`(원피스)는 서로 다른 슬롯이라 동시 장착 시 상호 배제(`incompatibleItemIds`)로 처리되며, 새 의상 카테고리가 추가되어도 `CharacterSlot`에 슬롯 하나를 추가하고 `SLOT_TO_LAYER`(§12)에 매핑 한 줄을 추가하는 것으로 끝난다 — 렌더러에 새 `if` 분기가 필요 없다.
+- 실제 코스튬 PNG가 준비되면 `spriteSupport.ts`의 `SUPPORTED_COSMETIC_ASSET_KEYS`에 해당 `assetKey`를 추가하기만 하면 된다 — 그 즉시 `allCosmeticsSupported()`가 해당 아이템을 지원 목록에 포함시키고, 그 아이템만 장착한 사용자는 자동으로 새 PNG 합성 렌더링으로 전환된다. 다른 코드는 손댈 필요 없다.
 
-**알려진 갭 (이번 단계에서 의도적으로 손대지 않음):** `src/components/room/SeatRoom.tsx`의 스터디룸 좌석은 실시간 Supabase presence로 다른 사용자의 성별/상태만 받고, 장착한 코스튬(`equippedAssetIds`)은 받지 않는다 — 내 좌석은 이번에 로컬 `useMyAvatarAppearance()`를 연결해 고쳤지만, 다른 사용자의 좌석은 presence payload 구조 자체를 확장해야 해서 "Supabase/저장 데이터 구조를 불필요하게 바꾸지 않는다"는 이번 작업의 제약과 충돌한다. 다른 사용자는 여전히 기본 프리셋 색상으로만 보인다.
+**알려진 갭 (이번 단계에서 의도적으로 손대지 않음):** `src/components/room/SeatRoom.tsx`의 스터디룸 좌석은 실시간 Supabase presence로 다른 사용자의 성별/상태만 받고, 장착한 코스튬(`equippedAssetIds`)은 받지 않는다 — 내 좌석은 로컬 `useMyAvatarAppearance()`를 연결해 고쳤지만(이전 단계), 다른 사용자의 좌석은 presence payload 구조 자체를 확장해야 해서 "Supabase/저장 데이터 구조를 불필요하게 바꾸지 않는다"는 제약과 충돌한다. 다른 사용자는 여전히 기본 프리셋 색상으로만 보인다.
 
-**결론:** 실제 캐릭터 아트가 준비되면 `spriteAssetMap.ts`의 플래그 전환 하나만으로 교체가 끝난다 — 이 경계는 실제로 검증되었다(§14 검증 결과 참고).
+**결론:** 나머지 레이어(hair/outfit/accessory/face/effects)의 실제 PNG가 준비되면 `spriteSupport.ts`의 지원 레지스트리에 항목을 추가하는 것만으로 교체가 끝난다 — 이 경계는 실제로 검증되었다(§14 검증 결과 참고).
 
 ## 11. MVP 최소 캐릭터 에셋 세트 (현재 구현 기준 확인)
 
@@ -225,16 +227,18 @@ Happy · Excited · Celebrate · Level Up · Focused
 | handheld | handheld |
 | stateEffect | stateEffect |
 
-**실제 파일이 놓이는 6개 폴더** (`public/sprites/avatar/`, 이번 단계에서 실제로 생성함 — 전부 빈 폴더, `.gitkeep`만 있음):
+**실제 파일이 놓이는 6개 폴더** (`public/sprites/avatar/`, §14 기준 현재 상태):
 
 ```
 public/sprites/avatar/
-  base/       -- 몸/피부 (base, skin 레이어)
-  face/       -- 눈/입/표정 (eyes, mouth 레이어)
-  hair/       -- 뒷머리 + 앞머리 (hairBack, hairFront 레이어 — 파일명으로 구분)
-  outfit/     -- 의상 (outfit 레이어)
-  accessory/  -- 액세서리 + 손에 든 아이템 (accessory, handheld 레이어)
-  effects/    -- 상태 이펙트 (stateEffect 레이어)
+  base/       -- 몸/피부 (base, skin 레이어) — 실제 PNG 208장 존재 (커밋 714aff6, 승인 완료)
+  face/       -- 눈/입/표정 (eyes, mouth 레이어) — 빈 폴더, .gitkeep만 있음.
+               -- 승인된 base PNG가 표정을 이미 포함하고 있어 더 이상 별도 레이어로
+               -- 합성하지 않는다(§10) — 채울 계획이 없는 한 비워둬도 된다.
+  hair/       -- 뒷머리 + 앞머리 (hairBack, hairFront 레이어) — 빈 폴더, .gitkeep만 있음
+  outfit/     -- 의상 (outfit 레이어) — 빈 폴더, .gitkeep만 있음
+  accessory/  -- 액세서리 + 손에 든 아이템 (accessory, handheld 레이어) — 빈 폴더, .gitkeep만 있음
+  effects/    -- 상태 이펙트 (stateEffect 레이어) — 빈 폴더, .gitkeep만 있음
 ```
 
 **파일명 규칙 (레이어별, `spriteManifest.ts`의 `resolve*Path` 함수가 실제로 구현):**
@@ -243,21 +247,44 @@ public/sprites/avatar/
 - `hair|outfit|accessory/(assetKey)_(frame).png` — 코스튬 1종당 파일 1장(기본), `assetKey`는 `character/catalog/items.ts`의 기존 값 그대로 재사용 (예: `ribbon_01.png`)
 - `effects/(state)_(frame).png` — 성별 무관, 상태 이펙트 공용
 
-## 13. 지금 당장 필요한 이미지 목록 (§11 최소 세트 기준, 실제 코드의 프레임 수 그대로 계산)
+## 13. 남은 이미지 제작 작업 (§14 기준 갱신 — base/는 완료, 나머지는 아직 미착수)
 
-§11의 실제로 트리거되는 7개 상태(idle/study/break/sleep/away/happy/levelUp)만 채우면 기존 기능이 전부 정상 동작한다. 프레임 수는 `src/character/types.ts`의 `STATE_FRAME_COUNT`를 그대로 사용:
+**완료된 부분 (더 이상 필요 없음):** base/ 폴더에 13개 상태 × 성별 2 × 각 상태의 프레임 수만큼 208장이 이미 존재하고 승인됐다(§14). 다만 그중 실제로 서로 다른 그림은 성별당 4장(idle/study/sleep/happy)뿐이고, 나머지 9개 상태는 그중 하나를 그대로 재사용한 파일이며, 각 상태 내 프레임끼리도 전부 같은 그림이다(§14 — 실제 애니메이션 아님). face/ 레이어는 base PNG에 이미 포함되어 있어(§10) 별도로 제작할 계획이 없는 한 이 목록에서 제외한다.
 
-| 상태 | 프레임 수 | base(성별×2) | face(성별×2) | effects(성별 무관) |
-|---|---:|---:|---:|---:|
-| idle | 8 | 16 | 16 | 8 |
-| study | 10 | 20 | 20 | 10 |
-| break | 4 | 8 | 8 | 4 |
-| sleep | 8 | 16 | 16 | 8 |
-| away | 4 | 8 | 8 | 4 |
-| happy | 10 | 20 | 20 | 10 |
-| levelUp | 12 | 24 | 24 | 12 |
-| **합계** | **56** | **112장** | **112장** | **56장** |
+**아직 필요한 것 (전부 빈 폴더, §12):**
 
-**+ 코스튬 9장** (현재 상점 아이템과 1:1, 각 1프레임): `ribbon`, `strawHat`, `cap`(hair/) · `hoodie`, `dress`(outfit/ — `hoodie`는 outfit-blue/outfit-gold가 공유) · `glasses`, `headphones`, `necklace`(accessory/)
+| 폴더 | 필요한 이유 | 현재 수량 |
+|---|---|---:|
+| hair/ | 헤어/머리 액세서리 3종(ribbon, strawHat, cap) 장착 시 새 PNG로 표시하려면 필요 | 0장 |
+| outfit/ | 의상 3종(outfit-blue, outfit-pink, outfit-gold) 장착 시 필요 | 0장 |
+| accessory/ | 안경·헤드폰·목걸이 3종 장착 시 필요 | 0장 |
+| effects/ | 상태 이펙트(레벨업 반짝임 등) 오버레이 | 0장 |
 
-**MVP 최소 합계: 112 + 112 + 56 + 9 = 289장.** 나머지 6개 상태(thinking/reading/typing/excited/celebrate/focused)는 §11 기준 아직 실제 트리거가 없어(또는 `STATE_HAS_ART`가 이미 안전한 SVG 폴백을 제공하고 있어) 이번 최소 세트에는 포함하지 않았다 — 전부 채우면 §5 프레임 표 기준 상태 13개 × 성별 2 × (base+face) + 이펙트가 더 필요하다.
+**+ 코스튬 최소 9장** (현재 상점 아이템과 1:1, 각 1프레임이면 충분): `ribbon`, `strawHat`, `cap`(hair/) · `hoodie`, `dress`(outfit/ — `hoodie`는 outfit-blue/outfit-gold가 공유) · `glasses`, `headphones`, `necklace`(accessory/). 이 9장만 채워도 상점의 모든 기본 코스튬 조합이 새 PNG로 렌더링된다 — `spriteSupport.ts`의 `SUPPORTED_COSMETIC_ASSET_KEYS`에 추가하는 것만으로 즉시 활성화된다(§10).
+
+**진짜 애니메이션이 필요하다면 추가로:** 현재 base/의 각 상태 프레임은 전부 동일 이미지 반복이다(`HAS_REAL_PER_FRAME_ANIMATION = false`, §14). 4개 고유 포즈(idle 8프레임/study 10프레임/sleep 8프레임/happy 10프레임 = 성별당 36프레임, 성별 2 = 72장)를 실제로 다른 그림으로 다시 그려야 진짜 애니메이션이 된다. 이는 이번 승인 범위 밖이며 별도 작업으로 남겨둔다.
+
+## 14. 승인된 base PNG 적용 결과 (커밋 714aff6 이후, 이번 안전성 작업 기준)
+
+**딜리버리 확인 (포렌식 검증, 208개 파일 전수 확인):**
+
+- `public/sprites/avatar/base/`에 성별 2 × 상태 13개 × 상태별 프레임 수만큼 정확히 208개 PNG가 존재하며, 전부 160×160 RGBA(투명 배경, PNG color type 6)다. 파일명 규칙(`(gender)_(state)_(frame).png`)과 프레임 수는 `STATE_FRAME_COUNT`와 정확히 일치한다.
+- 모든 208개 파일의 MD5 해시를 비교한 결과, 성별당 실제로 서로 다른 그림은 **4장뿐**이다 — `idle`, `study`, `sleep`, `happy` (`UNIQUE_POSE_STATES`, `src/character/engine/spriteSupport.ts`). 나머지 9개 상태(`away`, `break`, `thinking`, `typing`, `reading`, `focused`, `excited`, `celebrate`, `levelUp`)는 이 4장 중 하나와 바이트 단위로 완전히 동일한 파일이다 — 매핑은 `REUSED_POSE_SOURCE`에 정확히 기록되어 있다.
+- 각 상태 내 프레임끼리도 서로 바이트 단위로 동일하다 — 즉 프레임 수는 맞지만 실제 프레임 간 그림 차이(진짜 애니메이션)는 현재 전혀 없다(`HAS_REAL_PER_FRAME_ANIMATION = false`). 이 사실을 "애니메이션 구현 완료"로 표현해서는 안 된다.
+- `hair/`, `outfit/`, `accessory/`, `face/`, `effects/` 5개 폴더는 여전히 `.gitkeep`만 있는 빈 폴더다.
+
+**적용된 안전장치 (`spriteSupport.ts` + `CharacterView.tsx` + `PixelSpriteRenderer.tsx`):**
+
+- `CharacterView`가 새 PNG를 쓸지 결정하는 유일한 기준은 `shouldUseSprites()`다 — base 이미지의 성별/상태 지원 여부와 **장착된 코스튬 전원의 지원 여부**를 함께 검사한다. 장착된 헤어/의상/액세서리 중 단 하나라도 PNG 레이어가 없으면(현재는 전부 없음) 캐릭터 전체가 기존 `ChibiFallbackArt` SVG 렌더러로 전환된다 — 아이템만 빠진 반쪽짜리 캐릭터가 그려지는 일은 없다.
+- 커스터마이징이 전혀 없는 기본 남성/여성 캐릭터만 새 PNG로 보이고, 상점 아이템을 하나라도 장착한 사용자는 여전히 기존 SVG 렌더러로 보인다 — 두 렌더러 모두 `equippedAssetIds`는 그대로 유지하므로(§2 데이터 모델 변경 없음) 렌더 경로가 바뀌어도 구매/장착 데이터는 손실되지 않는다.
+- `PixelSpriteRenderer`는 `base` 레이어가 실제로 로드 실패하면(`onError`) 그 즉시 `CharacterView`에 알려 SVG로 전환시킨다 — 네트워크 문제 등으로 이미지가 깨졌을 때도 깨진 이미지 아이콘 대신 항상 안전한 폴백이 나온다.
+
+**Playwright 실브라우저 검증 (로컬 dev 서버, 임시 설치 후 정리 완료):**
+
+- 기본 남성/여성 캐릭터가 새 PNG로 렌더링됨을 스크린샷과 DOM(`<img src="/sprites/avatar/base/...">`)으로 확인.
+- study/sleep/happy 상태 전환 시에도 새 PNG가 유지되고 깨진 이미지가 없음을 확인.
+- 리본(헤어 액세서리)을 구매·장착하면 캐릭터 전체가 즉시 `ChibiFallbackArt` SVG로 전환되고, 리본이 실제로 시각적으로 표시됨을 확인 — 장착 데이터(`equippedAssetIds`)는 스토어에 그대로 유지됨을 별도로 확인.
+- 콘솔 에러 0건, 실패한 스프라이트 네트워크 요청 0건, 320px 폭에서 가로 스크롤 없음.
+- 온보딩/홈/타이머/뽀모도로/마이페이지/상점 미리보기/결과 공유 카드/스터디룸 좌석 전 화면이 여전히 `CharacterView` 단일 진입점만 사용함을 코드로 확인(§10).
+
+**검증 방법:** `npm install --no-save playwright`로 임시 설치해 헤드리스 Chromium으로 확인한 뒤, 스크립트와 패키지를 전부 제거하고 `package.json`/`package-lock.json`은 변경하지 않았다.

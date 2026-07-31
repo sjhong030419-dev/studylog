@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SpriteAnimator } from '../engine/SpriteAnimator'
 import { ChibiFallbackArt } from '../fallback/ChibiFallbackArt'
 import { PixelSpriteRenderer } from '../engine/PixelSpriteRenderer'
 import { SPRITE_ASSETS_AVAILABLE } from '../engine/spriteAssetMap'
+import { shouldUseSprites } from '../engine/spriteSupport'
+import { resolveCatalogEntries } from '../catalog/items'
 import { resolveAppearance } from '../presets/defaultPresets'
 import { STATE_FRAME_COUNT, STATE_FPS, STATE_HAS_ART } from '../types'
 import type { CharacterAppearance, CharacterState, Gender } from '../types'
@@ -46,7 +48,26 @@ export function CharacterView({
   // they're available, fall back to the SVG renderer rather than ever
   // showing a broken-image icon (docs/character-system.md §10).
   const [spriteLoadFailed, setSpriteLoadFailed] = useState(false)
-  const useSprites = SPRITE_ASSETS_AVAILABLE && !spriteLoadFailed
+
+  const cosmeticEntries = useMemo(
+    () => resolveCatalogEntries(resolvedAppearance.equippedAssetIds),
+    [resolvedAppearance.equippedAssetIds],
+  )
+
+  // Use the real PNG sprite only when the WHOLE look can be represented:
+  // the base image, the requested gender, the requested state, and every
+  // equipped cosmetic item all need real support. If any equipped
+  // hair/outfit/accessory has no PNG layer yet, fall back to the SVG
+  // renderer entirely — it already draws every cosmetic correctly — rather
+  // than rendering the new base without that item and making it silently
+  // disappear (docs/character-system.md §14).
+  const useSprites = shouldUseSprites({
+    spriteAssetsAvailable: SPRITE_ASSETS_AVAILABLE,
+    spriteLoadFailed,
+    gender,
+    state: effectiveState,
+    cosmeticEntries,
+  })
 
   return (
     <SpriteAnimator

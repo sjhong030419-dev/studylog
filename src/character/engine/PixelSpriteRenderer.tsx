@@ -5,12 +5,12 @@ import {
   resolveBaseFramePath,
   resolveCosmeticFramePath,
   resolveEffectFramePath,
-  resolveFaceFramePath,
   SLOT_TO_LAYER,
   SPRITE_CANVAS_SIZE,
   SPRITE_LAYER_ORDER,
   type SpriteLayer,
 } from './spriteManifest'
+import { SUPPORTED_COSMETIC_ASSET_KEYS, SUPPORTED_EFFECT_STATES } from './spriteSupport'
 import type { CharacterAppearance, CharacterState, Gender } from '../types'
 
 interface PixelSpriteRendererProps {
@@ -33,11 +33,13 @@ interface LayerImage {
 }
 
 /**
- * Renders the real transparent-PNG sprite stack once production art exists
- * (`SPRITE_ASSETS_AVAILABLE` in `spriteAssetMap.ts`). Not used today — with
- * no image files under `public/sprites/avatar/` yet, `CharacterView` never
- * mounts this component. It exists now so the swap is a one-line flag flip
- * later, not a rewrite (docs/character-system.md §10).
+ * Renders the real transparent-PNG sprite stack. `CharacterView` only
+ * mounts this when the current look is fully representable — real base art
+ * for this gender/state, and every equipped cosmetic has a supported PNG
+ * layer (`spriteSupport.ts`). Approved base portraits already include
+ * default hair/outfit baked in (docs/character-system.md §14), so the
+ * `face/` layer from the original 10-layer design isn't drawn here — it
+ * was never delivered as a separate asset and would always 404.
  */
 export function PixelSpriteRenderer({
   gender,
@@ -60,9 +62,13 @@ export function PixelSpriteRenderer({
     }
 
     push({ key: 'base', layer: 'base', src: resolveBaseFramePath(gender, state, frame) })
-    push({ key: 'face', layer: 'eyes', src: resolveFaceFramePath(gender, state, frame) })
 
+    // CharacterView already refuses to reach this component unless every
+    // equipped item is supported, but this loop stays support-gated too —
+    // defense in depth, and it means this component never issues a
+    // network request for a file it already knows doesn't exist.
     for (const entry of cosmeticEntries) {
+      if (!SUPPORTED_COSMETIC_ASSET_KEYS.has(entry.assetKey)) continue
       const layer = SLOT_TO_LAYER[entry.slot]
       const folder = LAYER_TO_FOLDER[layer]
       if (folder === 'hair' || folder === 'outfit' || folder === 'accessory') {
@@ -70,7 +76,9 @@ export function PixelSpriteRenderer({
       }
     }
 
-    push({ key: 'effect', layer: 'stateEffect', src: resolveEffectFramePath(state, frame) })
+    if (SUPPORTED_EFFECT_STATES.has(state)) {
+      push({ key: 'effect', layer: 'stateEffect', src: resolveEffectFramePath(state, frame) })
+    }
 
     return SPRITE_LAYER_ORDER.flatMap((layer) => byLayer.get(layer) ?? [])
   }, [gender, state, frame, cosmeticEntries])
