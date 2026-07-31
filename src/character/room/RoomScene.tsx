@@ -10,6 +10,12 @@ interface RoomSceneProps {
   /** Passed straight through to the character — see CharacterView's
    * multi-seat animation-throttling contract. */
   animated?: boolean
+  /** Multiplies the character's default 58%-of-container width. Defaults to
+   * 1 (unchanged) for every existing caller (LogCaptureCard's share card,
+   * etc.) — only the Home screen's main character card opts into a larger
+   * value (CharacterRoomCard) so the confirmed-design PNG reads clearly as
+   * the screen's focal point without resizing the character anywhere else. */
+  characterScale?: number
 }
 
 const DIM_STATES: CharacterState[] = ['away']
@@ -28,16 +34,22 @@ const DEFAULT_WALL_COLOR = 'var(--color-home-soft-yellow)'
  * the pet/plant layer so it can cover the character's legs without ever
  * clipping the cat or floor plant, which now render after it.
  */
-export function RoomScene({ state, gender = 'boy', appearance, level, animated }: RoomSceneProps) {
+export function RoomScene({ state, gender = 'boy', appearance, level, animated, characterScale = 1 }: RoomSceneProps) {
   const unlocked = unlockedAdditions(level)
   const wallColor = appearance?.backgroundColor ?? DEFAULT_WALL_COLOR
+  const widthPercent = 58 * characterScale
+  // Grows downward from the same top anchor as the character scales up, so
+  // the head keeps clear of the card's top edge (and the speech bubble
+  // above it) while the desk (drawn after, DeskLayer) still covers the
+  // lower body exactly as it does at the default scale.
+  const topPercent = 3
 
   return (
     <div className="relative w-full h-full overflow-hidden">
       <RoomBackLayer wallColor={wallColor} unlocked={unlocked} />
       <RoomBehindDeskLayer unlocked={unlocked} />
 
-      <div className="absolute" style={{ top: '3%', left: '50%', width: '58%', transform: 'translateX(-50%)' }}>
+      <div className="absolute" style={{ top: `${topPercent}%`, left: '50%', width: `${widthPercent}%`, transform: 'translateX(-50%)' }}>
         <CharacterView state={state} gender={gender} appearance={appearance} size={200} className="w-full h-auto" animated={animated} />
       </div>
 
