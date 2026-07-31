@@ -14,6 +14,19 @@ interface CharacterViewProps {
   gender?: Gender
   appearance?: Partial<CharacterAppearance>
   size?: number
+  /** How the renderer's root box is sized (character/room/PixelRoomRenderer.tsx):
+   * 'width' (default) — the literal `size`px drives the box, height follows
+   * via each renderer's own aspect ratio. Used by every existing caller
+   * (MyPage, AvatarShop, PomodoroTimer, OnboardingFlow, SeatRoom, the
+   * legacy SVG room).
+   * 'height' — a definite ancestor height drives the box instead (`height:
+   * 100%`), width follows via aspect ratio and is capped at 100% of the
+   * ancestor's width. Used only by PixelRoomRenderer, which needs the
+   * character's rendered HEIGHT to be an exact percentage of room height
+   * regardless of which renderer (1:1 PNG or 5:6 SVG) is actually active —
+   * CharacterView and its two renderers apply this uniformly, so the room
+   * never has to guess or duplicate per-renderer sizing logic. */
+  fit?: 'width' | 'height'
   className?: string
   /** Set false to render a static (non-animating) frame — no interval timer
    * is created at all. Use this for avatars that aren't the primary focus
@@ -34,6 +47,7 @@ export function CharacterView({
   gender = 'boy',
   appearance,
   size = 160,
+  fit = 'width',
   className,
   animated = true,
 }: CharacterViewProps) {
@@ -84,6 +98,7 @@ export function CharacterView({
             frame={frame}
             appearance={resolvedAppearance}
             size={size}
+            fit={fit}
             onBaseLayerError={() => setSpriteLoadFailed(true)}
           />
         ) : (
@@ -94,6 +109,7 @@ export function CharacterView({
             frameCount={frameCount}
             appearance={resolvedAppearance}
             size={size}
+            fit={fit}
           />
         )
       }

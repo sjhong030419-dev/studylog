@@ -79,6 +79,36 @@ export const CHARACTER_WIDTH_RATIO = CHARACTER_HEIGHT_RATIO * (ROOM_CANVAS_HEIGH
 export const CHARACTER_TOP_RATIO = 0.16
 
 /**
+ * Hard upper bound on the character's height ratio, independent of any
+ * caller-supplied `characterScale`. `CharacterRoomCard` (the Home screen)
+ * passes `characterScale={1.3}` to `RoomScene` so the *legacy SVG* room's
+ * unrelated `58% × scale` width formula reads as the screen's focal point —
+ * but naively applying that same 1.3× to `CHARACTER_WIDTH_RATIO` here would
+ * push the pixel room's character to 0.42 × 1.3 = 54.6% of room height,
+ * blowing past the 38-45% PRD range this whole placement contract exists to
+ * guarantee. `resolveCharacterHeightRatio`/`resolveCharacterWidthRatio`
+ * clamp to this ceiling so any scale ≥ ~1.07 stops growing the character
+ * further — LegacySvgRoomRenderer's own scale formula is untouched by this
+ * (it doesn't import these ratios at all).
+ */
+export const MAX_CHARACTER_HEIGHT_RATIO = 0.45
+
+/** `characterScale`-aware, clamped height ratio — the single place both
+ * `PixelRoomRenderer` and `computeCharacterBoxPx` derive the character's
+ * actual on-screen height fraction from, so the two can never disagree. */
+export function resolveCharacterHeightRatio(characterScale = 1): number {
+  return Math.min(CHARACTER_HEIGHT_RATIO * characterScale, MAX_CHARACTER_HEIGHT_RATIO)
+}
+
+/** Same clamp, expressed as the width fraction PixelRoomRenderer's CSS
+ * actually sets (the square 1:1 sprite canvas means width ratio and height
+ * ratio convert via the room's own 4:5 aspect ratio — see
+ * CHARACTER_WIDTH_RATIO's derivation above). */
+export function resolveCharacterWidthRatio(characterScale = 1): number {
+  return resolveCharacterHeightRatio(characterScale) * (ROOM_CANVAS_HEIGHT / ROOM_CANVAS_WIDTH)
+}
+
+/**
  * `CharacterView`'s `size` prop is a max-width ceiling on a CSS-responsive
  * box (`width: 100%; max-width: size`), not a fixed pixel size — see
  * PixelSpriteRenderer.tsx / ChibiFallbackArt.tsx. PixelRoomRenderer passes
@@ -90,22 +120,39 @@ export const CHARACTER_TOP_RATIO = 0.16
  */
 export const ROOM_CHARACTER_SIZE_CAP = ROOM_CANVAS_WIDTH
 
+/** PixelSpriteRenderer's canvas is square (public/sprites/avatar/base/ PNGs
+ * are 160×160) — width:height. */
+export const PNG_RENDERER_ASPECT_RATIO = 1
+/** ChibiFallbackArt's `viewBox="0 0 200 240"` — width:height, a real 5:6
+ * ratio, notably NOT square. This is exactly why PixelRoomRenderer can't
+ * derive the character's box from a single "square canvas" width-ratio
+ * formula (the bug fixed here) — it must size from HEIGHT, independent of
+ * which renderer's aspect ratio ends up applying. */
+export const SVG_RENDERER_ASPECT_RATIO = 200 / 240
+
 /**
  * Pure math for the character's rendered box given a room container's
  * actual pixel width — used to verify the 38-45% height-ratio requirement
  * at real device widths (320/390/430) in tests, since this project has no
  * component-rendering test harness to measure real CSS layout. Mirrors
- * exactly what the CSS in PixelRoomRenderer computes: width = room width ×
- * CHARACTER_WIDTH_RATIO × scale; height = width (square 1:1 canvas).
+ * exactly what CharacterView's `fit="height"` mode does in real CSS
+ * (PixelSpriteRenderer.tsx / ChibiFallbackArt.tsx, both driven from
+ * PixelRoomRenderer's height-based wrapper): height is derived purely from
+ * `resolveCharacterHeightRatio` (clamped, aspect-ratio-independent); width
+ * is then derived FROM that height via whichever renderer's own aspect
+ * ratio is passed in — defaults to the PNG renderer's 1:1 for backward
+ * compatibility with existing callers of this function.
  */
 export function computeCharacterBoxPx(
   roomWidthPx: number,
   characterScale = 1,
+  aspectRatio: number = PNG_RENDERER_ASPECT_RATIO,
 ): { widthPx: number; heightPx: number; heightRatio: number } {
-  const widthPx = roomWidthPx * CHARACTER_WIDTH_RATIO * characterScale
-  const heightPx = widthPx
   const roomHeightPx = roomWidthPx * (ROOM_CANVAS_HEIGHT / ROOM_CANVAS_WIDTH)
-  return { widthPx, heightPx, heightRatio: heightPx / roomHeightPx }
+  const heightRatio = resolveCharacterHeightRatio(characterScale)
+  const heightPx = roomHeightPx * heightRatio
+  const widthPx = heightPx * aspectRatio
+  return { widthPx, heightPx, heightRatio }
 }
 
 function assetPath(theme: RoomThemeId, file: string): string {

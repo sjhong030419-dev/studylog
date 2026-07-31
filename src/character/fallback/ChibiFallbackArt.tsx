@@ -9,6 +9,11 @@ interface ChibiFallbackArtProps {
   frameCount: number
   appearance: CharacterAppearance
   size: number
+  /** See CharacterView's `fit` prop doc — 'width' (default) sizes this
+   * svg from `size`px; 'height' fills a definite ancestor height instead
+   * (PixelRoomRenderer), preserving this component's own 200:240 (5:6)
+   * aspect ratio rather than the 1:1 PixelSpriteRenderer uses. */
+  fit?: 'width' | 'height'
 }
 
 /**
@@ -23,7 +28,7 @@ interface ChibiFallbackArtProps {
  * (character/catalog/) rather than rendered as emoji text — see
  * docs/StudyLog_Character_System_Fix_PRD_v1.0.md §9.
  */
-export function ChibiFallbackArt({ gender, state, frame, frameCount, appearance, size }: ChibiFallbackArtProps) {
+export function ChibiFallbackArt({ gender, state, frame, frameCount, appearance, size, fit = 'width' }: ChibiFallbackArtProps) {
   const t = frameCount > 1 ? frame / frameCount : 0
   const wave = Math.sin(t * Math.PI * 2)
   const bounce = Math.abs(wave)
@@ -36,18 +41,23 @@ export function ChibiFallbackArt({ gender, state, frame, frameCount, appearance,
   const isOnePiece = outfitEntry?.slot === 'onePiece'
   const overlayParts = equippedParts.filter((p) => p.slot !== 'top' && p.slot !== 'onePiece')
 
+  // fit='width' (default): width is the literal `size`px (always definite)
+  // with max-width:100% as a safe responsive clamp — a bare width:100%
+  // would collapse to 0 whenever this renders inside an indefinite
+  // (shrink-to-fit) ancestor, which is every existing non-room screen.
+  //
+  // fit='height' (PixelRoomRenderer only): height:100% fills a definite
+  // ancestor height, width follows via this SVG's own 200:240 aspect ratio
+  // and is capped at 100% of the ancestor's width — the exact same
+  // contract PixelSpriteRenderer applies for its 1:1 ratio, so the room
+  // never needs to know or guess which of the two is actually rendering.
+  const svgStyle =
+    fit === 'height'
+      ? { height: '100%', width: 'auto', maxWidth: '100%', aspectRatio: '200 / 240' }
+      : { width: size, maxWidth: '100%', height: 'auto', aspectRatio: '200 / 240' }
+
   return (
-    // width is the literal `size`px (always definite) with max-width:100%
-    // as a safe responsive clamp — same reasoning as PixelSpriteRenderer's
-    // root div. A bare width:100% here would collapse to 0 whenever this
-    // renders inside an indefinite (shrink-to-fit) ancestor, which is every
-    // existing non-room screen (MyPage, AvatarShop, PomodoroTimer, ...).
-    <svg
-      viewBox="0 0 200 240"
-      style={{ width: size, maxWidth: '100%', height: 'auto', aspectRatio: '200 / 240' }}
-      role="img"
-      aria-label={STATE_LABEL[state]}
-    >
+    <svg viewBox="0 0 200 240" style={svgStyle} role="img" aria-label={STATE_LABEL[state]}>
       {/* CSS transition eases between discrete frame poses — a temporary
           smoothing layer for the placeholder art. Real sprite frames won't
           use this (SPRITE_ASSETS_AVAILABLE branch bypasses this component

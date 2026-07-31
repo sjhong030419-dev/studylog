@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { CharacterView } from '../components/CharacterView'
 import {
   CHARACTER_TOP_RATIO,
-  CHARACTER_WIDTH_RATIO,
+  resolveCharacterHeightRatio,
   ROOM_CANVAS_HEIGHT,
   ROOM_CANVAS_WIDTH,
   ROOM_CHARACTER_SIZE_CAP,
@@ -122,20 +122,31 @@ export function PixelRoomRenderer({
         <div key={g}>{renderGroup(g)}</div>
       ))}
 
+      {/* A height-based common container, not a width-based one: this box
+          sets ONLY `height` (a clamped percentage of room height) and
+          `width:100%` as a horizontal bound, then centers its child via
+          flex. It never assumes or checks which renderer CharacterView
+          mounts (PixelSpriteRenderer's 1:1 canvas vs ChibiFallbackArt's 5:6
+          SVG) — CharacterView's `fit="height"` pushes that responsibility
+          down to whichever renderer is actually active, so this component
+          can't duplicate/guess renderer-specific sizing logic (both
+          renderers apply the exact same object-fit:contain-style contract:
+          height:100%, width:auto capped at 100%, own aspect ratio). This is
+          what actually keeps the *rendered height* — not just the box's
+          width — within MAX_CHARACTER_HEIGHT_RATIO regardless of which
+          renderer is active. */}
       <div
-        className="absolute"
+        className="absolute flex justify-center"
         style={{
           top: `${CHARACTER_TOP_RATIO * 100}%`,
-          left: '50%',
-          // Only width is set (not height) — CharacterView's own `h-auto`
-          // preserves whatever aspect ratio its active renderer actually
-          // has (PixelSpriteRenderer's square 1:1 canvas resolves to
-          // exactly CHARACTER_HEIGHT_RATIO of room height by construction —
-          // see the ratio derivation on CHARACTER_WIDTH_RATIO above; a
-          // ChibiFallbackArt SVG fallback would keep its own taller ratio
-          // instead, same approximation the legacy room already accepts).
-          width: `${CHARACTER_WIDTH_RATIO * characterScale * 100}%`,
-          transform: 'translateX(-50%)',
+          left: 0,
+          width: '100%',
+          // resolveCharacterHeightRatio clamps at MAX_CHARACTER_HEIGHT_RATIO
+          // (45%) regardless of `characterScale` — CharacterRoomCard's
+          // characterScale=1.3 is tuned for the unrelated legacy SVG room's
+          // own 58%×scale formula and must not push the pixel room's
+          // character past the 38-45% PRD range.
+          height: `${resolveCharacterHeightRatio(characterScale) * 100}%`,
           zIndex: ROOM_CHARACTER_Z_INDEX,
         }}
       >
@@ -143,12 +154,11 @@ export function PixelRoomRenderer({
           state={state}
           gender={gender}
           appearance={appearance}
-          // ROOM_CHARACTER_SIZE_CAP (not CharacterView's small 160px
-          // default) so the width:100% box above is never artificially
-          // capped below what the room's own percentage width intends —
-          // see ROOM_CHARACTER_SIZE_CAP's doc comment.
+          // Unused in fit="height" mode (height drives sizing instead) —
+          // kept for prop-shape consistency, same cap as before.
           size={ROOM_CHARACTER_SIZE_CAP}
-          className="w-full h-auto"
+          fit="height"
+          className="h-full w-auto"
           animated={animated}
         />
       </div>

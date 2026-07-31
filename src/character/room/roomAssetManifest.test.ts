@@ -3,11 +3,16 @@ import {
   CHARACTER_HEIGHT_RATIO,
   CHARACTER_WIDTH_RATIO,
   computeCharacterBoxPx,
+  MAX_CHARACTER_HEIGHT_RATIO,
+  PNG_RENDERER_ASPECT_RATIO,
+  resolveCharacterHeightRatio,
+  resolveCharacterWidthRatio,
   ROOM_ASSET_MANIFEST,
   ROOM_CANVAS_HEIGHT,
   ROOM_CANVAS_WIDTH,
   ROOM_CHARACTER_SIZE_CAP,
   ROOM_CHARACTER_Z_INDEX,
+  SVG_RENDERER_ASPECT_RATIO,
 } from './roomAssetManifest'
 
 describe('ROOM_ASSET_MANIFEST (public/sprites/room/ file naming contract)', () => {
@@ -123,6 +128,117 @@ describe('computeCharacterBoxPx (responsive sizing regression guard — 320/390/
     for (const width of SUPPORTED_WIDTHS) {
       const { widthPx } = computeCharacterBoxPx(width, 1.3)
       expect(widthPx).toBeLessThan(ROOM_CHARACTER_SIZE_CAP)
+    }
+  })
+
+  describe('CharacterRoomCard\'s characterScale=1.3 must not blow past the 38-45% PRD range', () => {
+    // Home passes characterScale=1.3 to RoomScene — that value is tuned for
+    // LegacySvgRoomRenderer's own unrelated `58% × scale` width formula.
+    // Naively applying the same 1.3× to the pixel room's ratio would give
+    // 0.42 × 1.3 = 54.6%, well outside 38-45% — this is exactly the bug
+    // being fixed here.
+    it.each(SUPPORTED_WIDTHS)('stays within 38-45%% height ratio at %ipx even with characterScale=1.3', (width) => {
+      const { heightRatio } = computeCharacterBoxPx(width, 1.3)
+      expect(heightRatio).toBeGreaterThanOrEqual(0.38)
+      expect(heightRatio).toBeLessThanOrEqual(0.45)
+    })
+
+    it.each(SUPPORTED_WIDTHS)('the height ratio at %ipx is independent of room width (pure percentage, not px-dependent)', (width) => {
+      const { heightRatio } = computeCharacterBoxPx(width, 1.3)
+      expect(heightRatio).toBeCloseTo(MAX_CHARACTER_HEIGHT_RATIO, 5)
+    })
+
+    it('unclamped 1.3× would have exceeded 45% (proves the clamp is actually doing something, not a no-op)', () => {
+      const naiveUnclamped = CHARACTER_HEIGHT_RATIO * 1.3
+      expect(naiveUnclamped).toBeGreaterThan(MAX_CHARACTER_HEIGHT_RATIO)
+    })
+  })
+})
+
+describe('computeCharacterBoxPx aspect-ratio parameter — PNG 1:1 vs SVG 5:6 (fixes: PixelRoomRenderer no longer assumes a square canvas)', () => {
+  // ChibiFallbackArt's viewBox="0 0 200 240" is 5:6 (taller than it is
+  // wide) — the exact case that broke the previous width-first formula:
+  // clamping the WIDTH to 45%-equivalent still let the SVG's derived
+  // height run to 45% × 1.2 ≈ 54%. computeCharacterBoxPx now derives
+  // height FIRST (aspect-ratio independent) and width second, mirroring
+  // what CharacterView's fit="height" mode actually does in CSS.
+  const SUPPORTED_WIDTHS = [320, 390, 430]
+
+  it.each(SUPPORTED_WIDTHS)(
+    'PNG (1:1) and SVG (5:6) hit the IDENTICAL height ratio at %ipx, even with characterScale=1.3',
+    (width) => {
+      const png = computeCharacterBoxPx(width, 1.3, PNG_RENDERER_ASPECT_RATIO)
+      const svg = computeCharacterBoxPx(width, 1.3, SVG_RENDERER_ASPECT_RATIO)
+      expect(png.heightRatio).toBeCloseTo(svg.heightRatio, 10)
+    },
+  )
+
+  it.each(SUPPORTED_WIDTHS)('both PNG and SVG stay within 38-45%% at %ipx with characterScale=1.3 (the exact bug report)', (width) => {
+    for (const aspectRatio of [PNG_RENDERER_ASPECT_RATIO, SVG_RENDERER_ASPECT_RATIO]) {
+      const { heightRatio } = computeCharacterBoxPx(width, 1.3, aspectRatio)
+      expect(heightRatio).toBeGreaterThanOrEqual(0.38)
+      expect(heightRatio).toBeLessThanOrEqual(0.45)
+    }
+  })
+
+  it.each(SUPPORTED_WIDTHS)('both PNG and SVG also stay within 38-45%% at %ipx at the default scale (1)', (width) => {
+    for (const aspectRatio of [PNG_RENDERER_ASPECT_RATIO, SVG_RENDERER_ASPECT_RATIO]) {
+      const { heightRatio } = computeCharacterBoxPx(width, 1, aspectRatio)
+      expect(heightRatio).toBeGreaterThanOrEqual(0.38)
+      expect(heightRatio).toBeLessThanOrEqual(0.45)
+    }
+  })
+
+  it.each(SUPPORTED_WIDTHS)('PNG never distorts — width always equals height at %ipx', (width) => {
+    const { widthPx, heightPx } = computeCharacterBoxPx(width, 1.3, PNG_RENDERER_ASPECT_RATIO)
+    expect(widthPx).toBeCloseTo(heightPx, 10)
+  })
+
+  it.each(SUPPORTED_WIDTHS)('SVG never distorts — width:height always equals exactly 200:240 at %ipx', (width) => {
+    const { widthPx, heightPx } = computeCharacterBoxPx(width, 1.3, SVG_RENDERER_ASPECT_RATIO)
+    expect(widthPx / heightPx).toBeCloseTo(200 / 240, 10)
+  })
+
+  it.each(SUPPORTED_WIDTHS)('SVG is narrower than PNG at the same height (5:6 vs 1:1) — so it never overflows where PNG wouldn\'t, at %ipx', (width) => {
+    const png = computeCharacterBoxPx(width, 1.3, PNG_RENDERER_ASPECT_RATIO)
+    const svg = computeCharacterBoxPx(width, 1.3, SVG_RENDERER_ASPECT_RATIO)
+    expect(svg.widthPx).toBeLessThan(png.widthPx)
+    expect(svg.heightPx).toBeCloseTo(png.heightPx, 10) // same height — only width differs by aspect ratio
+  })
+
+  it('an unclamped SVG at 1.3x would have exceeded 45% by even more than PNG did (the exact regression this turn fixes)', () => {
+    // Reproduces the reported math: naive width-first clamp gave PNG
+    // 45% but let SVG's *derived* height run to ~54% (45% × 1.2).
+    const naiveSvgHeightRatio = MAX_CHARACTER_HEIGHT_RATIO * (240 / 200)
+    expect(naiveSvgHeightRatio).toBeGreaterThan(MAX_CHARACTER_HEIGHT_RATIO)
+    expect(naiveSvgHeightRatio).toBeCloseTo(0.54, 2)
+    // ...but the actual (fixed) computeCharacterBoxPx never produces this:
+    const actualSvg = computeCharacterBoxPx(390, 1.3, SVG_RENDERER_ASPECT_RATIO)
+    expect(actualSvg.heightRatio).toBeLessThanOrEqual(MAX_CHARACTER_HEIGHT_RATIO)
+  })
+})
+
+describe('resolveCharacterHeightRatio / resolveCharacterWidthRatio (the clamp mechanism itself)', () => {
+  it('does not clamp at the default scale (1) — matches the unclamped constants exactly', () => {
+    expect(resolveCharacterHeightRatio(1)).toBe(CHARACTER_HEIGHT_RATIO)
+    expect(resolveCharacterWidthRatio(1)).toBe(CHARACTER_WIDTH_RATIO)
+  })
+
+  it('does not clamp a scale small enough to stay under the ceiling', () => {
+    // 0.42 × 0.5 = 0.21, nowhere near 0.45 — the clamp must not affect this.
+    expect(resolveCharacterHeightRatio(0.5)).toBeCloseTo(CHARACTER_HEIGHT_RATIO * 0.5, 10)
+  })
+
+  it('clamps at exactly MAX_CHARACTER_HEIGHT_RATIO once scale pushes past it', () => {
+    expect(resolveCharacterHeightRatio(1.3)).toBe(MAX_CHARACTER_HEIGHT_RATIO)
+    expect(resolveCharacterHeightRatio(5)).toBe(MAX_CHARACTER_HEIGHT_RATIO) // never exceeds it, however large the scale
+  })
+
+  it('resolveCharacterWidthRatio always converts the (already-clamped) height ratio via the room aspect ratio', () => {
+    for (const scale of [0.5, 1, 1.3, 5]) {
+      const height = resolveCharacterHeightRatio(scale)
+      const width = resolveCharacterWidthRatio(scale)
+      expect(width).toBeCloseTo(height * (ROOM_CANVAS_HEIGHT / ROOM_CANVAS_WIDTH), 10)
     }
   })
 })

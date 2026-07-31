@@ -19,6 +19,10 @@ interface PixelSpriteRendererProps {
   frame: number
   appearance: CharacterAppearance
   size: number
+  /** See CharacterView's `fit` prop doc — 'width' (default) sizes this
+   * root div from `size`px; 'height' fills a definite ancestor height
+   * instead (PixelRoomRenderer). */
+  fit?: 'width' | 'height'
   /** Called once if the required `base` body layer fails to load — the
    * caller (CharacterView) is expected to fall back to ChibiFallbackArt for
    * this render. A missing cosmetic/effect layer never triggers this; it
@@ -47,6 +51,7 @@ export function PixelSpriteRenderer({
   frame,
   appearance,
   size,
+  fit = 'width',
   onBaseLayerError,
 }: PixelSpriteRendererProps) {
   const [failedLayerKeys, setFailedLayerKeys] = useState<Set<string>>(new Set())
@@ -90,17 +95,25 @@ export function PixelSpriteRenderer({
     setFailedLayerKeys((prev) => new Set(prev).add(img.key))
   }
 
+  // fit='width' (default, every existing caller): width is the literal
+  // `size`px (always definite — never a bare percentage), with
+  // max-width:100% as a *safe* responsive clamp — when the ancestor's
+  // width is indefinite (the shrink-to-fit flex layout every non-room
+  // screen uses), max-width:100% safely resolves to "no constraint"
+  // instead of collapsing the box (a bare `width:100%` there collapses to
+  // 0 — a real regression this replaced).
+  //
+  // fit='height' (PixelRoomRenderer only): height:100% fills whatever
+  // definite height its ancestor gives it, width is derived from that via
+  // aspect-ratio and capped at 100% of the ancestor's width so a narrow
+  // room can never force distortion or horizontal overflow.
+  const boxStyle =
+    fit === 'height'
+      ? { position: 'relative' as const, height: '100%', width: 'auto', maxWidth: '100%', aspectRatio: '1 / 1' }
+      : { position: 'relative' as const, width: size, maxWidth: '100%', aspectRatio: '1 / 1' }
+
   return (
-    // width is the literal `size`px (always definite — never a bare
-    // percentage), with max-width:100% as a *safe* responsive clamp: when
-    // an ancestor gives this box a real (smaller) definite width — e.g.
-    // PixelRoomRenderer's percentage-width wrapper — max-width correctly
-    // shrinks it to fit; when the ancestor's width is indefinite (the
-    // shrink-to-fit flex layout every existing non-room screen uses),
-    // max-width:100% safely resolves to "no constraint" instead of
-    // collapsing the box (a bare `width:100%` there collapses to 0 — a real
-    // regression this replaced). aspectRatio keeps it square either way.
-    <div style={{ position: 'relative', width: size, maxWidth: '100%', aspectRatio: '1 / 1' }}>
+    <div style={boxStyle}>
       {images
         .filter((img) => !failedLayerKeys.has(img.key))
         .map((img) => (
