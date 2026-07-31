@@ -9,7 +9,6 @@ interface SubjectManagerPageProps {
 
 export function SubjectManagerPage({ onBack }: SubjectManagerPageProps) {
   const subjects = useTimerStore((s) => s.subjects)
-  const sessions = useTimerStore((s) => s.sessions)
   const selectedSubjectId = useTimerStore((s) => s.selectedSubjectId)
   const isRunning = useTimerStore((s) => s.isRunning)
   const addSubject = useTimerStore((s) => s.addSubject)
@@ -33,10 +32,6 @@ export function SubjectManagerPage({ onBack }: SubjectManagerPageProps) {
     const id = window.setTimeout(() => setToast(null), 2600)
     return () => window.clearTimeout(id)
   }, [toast])
-
-  function hasHistory(id: string): boolean {
-    return sessions.some((s) => s.subjectId === id)
-  }
 
   function handleAdd() {
     const result = addSubject(newName)
@@ -72,7 +67,7 @@ export function SubjectManagerPage({ onBack }: SubjectManagerPageProps) {
       setConfirmDeleteId(null)
       return
     }
-    setToast(result.archived ? '과목을 보관했어요. 지난 기록은 계속 보여요.' : '과목을 삭제했어요.')
+    setToast('과목을 보관했어요. 지난 기록은 계속 보여요.')
     setConfirmDeleteId(null)
   }
 
@@ -211,7 +206,7 @@ export function SubjectManagerPage({ onBack }: SubjectManagerPageProps) {
               </p>
             )}
             {isRunning && selectedSubjectId === subject.id && (
-              <p className="font-cute text-[11px] text-ink-soft">타이머 작동 중에는 삭제할 수 없어요.</p>
+              <p className="font-cute text-[11px] text-ink-soft">타이머 작동 중에는 보관할 수 없어요.</p>
             )}
           </div>
         ))}
@@ -248,9 +243,7 @@ export function SubjectManagerPage({ onBack }: SubjectManagerPageProps) {
           >
             <span className="font-cute text-ink text-lg">과목을 삭제할까요?</span>
             <p className="text-ink-soft text-sm font-cute">
-              {hasHistory(confirmDeleteId)
-                ? '이 과목에는 공부 기록이 있어요. 기록은 그대로 보존되고, 과목만 선택 목록에서 보이지 않게 보관돼요.'
-                : '이 과목에는 아직 기록이 없어요. 완전히 삭제돼요.'}
+              기록은 그대로 보존되고, 과목만 선택 목록에서 보이지 않게 보관돼요.
             </p>
             <div className="flex gap-2 w-full">
               <button

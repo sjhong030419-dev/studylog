@@ -27,10 +27,11 @@ interface TimerState {
   addSubject: (name: string) => { ok: true } | { ok: false; error: string }
   updateSubjectName: (id: string, name: string) => { ok: true } | { ok: false; error: string }
   updateSubjectColor: (id: string, color: string) => { ok: true } | { ok: false; error: string }
-  /** Archives the subject if it has real study history (keeps the record so
-   * past sessions can still resolve a name), otherwise removes it outright.
-   * Refuses while the timer is actively running on that subject. */
-  removeSubject: (id: string) => { ok: true; archived: boolean } | { ok: false; error: string }
+  /** Always archives — never removes the subject from `subjects` — so any
+   * data referencing it by id (sessions, planner tasks, tutor messages,
+   * stats) can keep resolving a real name/color. Refuses while the timer
+   * is actively running on that subject. */
+  removeSubject: (id: string) => { ok: true } | { ok: false; error: string }
   start: () => void
   pause: () => void
   resume: () => void
@@ -76,11 +77,11 @@ export const useTimerStore = create<TimerState>()(
       },
 
       removeSubject: (id) => {
-        const { subjects, sessions, selectedSubjectId, isRunning } = get()
-        const result = computeRemoveSubject(subjects, sessions, id, selectedSubjectId, isRunning)
+        const { subjects, selectedSubjectId, isRunning } = get()
+        const result = computeRemoveSubject(subjects, id, selectedSubjectId, isRunning)
         if (!result.ok) return result
         set({ subjects: result.subjects, selectedSubjectId: result.selectedSubjectId })
-        return { ok: true, archived: result.archived }
+        return { ok: true }
       },
 
       start: () => {

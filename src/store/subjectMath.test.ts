@@ -7,14 +7,10 @@ import {
   computeUpdateSubjectColor,
   computeUpdateSubjectName,
 } from './subjectMath'
-import type { StudySession, Subject } from '../types'
+import type { Subject } from '../types'
 
 function subject(partial: Partial<Subject> & Pick<Subject, 'id' | 'name'>): Subject {
   return { color: '#ffb3c6', ...partial }
-}
-
-function session(partial: Partial<StudySession> & Pick<StudySession, 'subjectId'>): StudySession {
-  return { id: `s-${Math.random()}`, startedAt: 0, durationSec: 600, dateKey: '2026-01-01', ...partial }
 }
 
 describe('new users start with no default subjects (docs: no auto-created 국어/수학/영어)', () => {
@@ -88,66 +84,87 @@ describe('computeUpdateSubjectColor', () => {
   })
 })
 
-describe('computeRemoveSubject (archive-if-has-history, hard-delete-if-empty)', () => {
-  it('hard-deletes a subject with no study history', () => {
+describe('computeRemoveSubject (always archives — never hard-deletes)', () => {
+  it('never removes a subject from the array, even one with zero study history', () => {
+    // Regression: this used to hard-delete a history-less subject, which
+    // silently lost its name/color for any planner task, AI tutor message,
+    // or other data that referenced it by id without ever having a study
+    // session. Archiving unconditionally means those references can always
+    // resolve a real name (docs: data-preservation review finding).
     const subjects = [subject({ id: '1', name: '코딩' })]
-    const result = computeRemoveSubject(subjects, [], '1', '1', false)
-    expect(result.ok).toBe(true)
-    if (result.ok) {
-      expect(result.subjects).toHaveLength(0)
-      expect(result.archived).toBe(false)
-    }
-  })
-
-  it('archives (not deletes) a subject that has real study history', () => {
-    const subjects = [subject({ id: '1', name: '코딩' })]
-    const sessions = [session({ subjectId: '1' })]
-    const result = computeRemoveSubject(subjects, sessions, '1', '1', false)
+    const result = computeRemoveSubject(subjects, '1', '1', false)
     expect(result.ok).toBe(true)
     if (result.ok) {
       expect(result.subjects).toHaveLength(1)
-      expect(result.subjects[0].archivedAt).toBeTypeOf('number')
-      expect(result.subjects[0].name).toBe('코딩') // name preserved for past records
-      expect(result.archived).toBe(true)
+      expect(result.subjects.some((s) => s.id === '1')).toBe(true)
     }
   })
 
-  it('reassigns selection to the first remaining active subject when the selected one is removed', () => {
+  it('always sets archivedAt', () => {
+    const subjects = [subject({ id: '1', name: '코딩' })]
+    const result = computeRemoveSubject(subjects, '1', '1', false)
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(result.subjects[0].archivedAt).toBeTypeOf('number')
+  })
+
+  it('preserves the name and color of an archived subject', () => {
+    const subjects = [subject({ id: '1', name: '코딩', color: '#a8d8ff' })]
+    const result = computeRemoveSubject(subjects, '1', '1', false)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.subjects[0].name).toBe('코딩')
+      expect(result.subjects[0].color).toBe('#a8d8ff')
+    }
+  })
+
+  it('hides the archived subject from activeSubjectsOf (selection lists)', () => {
+    const subjects = [subject({ id: '1', name: '코딩' })]
+    const result = computeRemoveSubject(subjects, '1', '1', false)
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(activeSubjectsOf(result.subjects)).toHaveLength(0)
+  })
+
+  it('reassigns selection to the first remaining active subject when the selected one is archived', () => {
     const subjects = [subject({ id: '1', name: '코딩' }), subject({ id: '2', name: '독서' })]
-    const result = computeRemoveSubject(subjects, [], '1', '1', false)
+    const result = computeRemoveSubject(subjects, '1', '1', false)
     expect(result.ok).toBe(true)
     if (result.ok) expect(result.selectedSubjectId).toBe('2')
   })
 
-  it('sets selection to null when removing the last remaining subject', () => {
+  it('sets selection to null when archiving the last remaining active subject', () => {
     const subjects = [subject({ id: '1', name: '코딩' })]
-    const result = computeRemoveSubject(subjects, [], '1', '1', false)
+    const result = computeRemoveSubject(subjects, '1', '1', false)
     expect(result.ok).toBe(true)
     if (result.ok) expect(result.selectedSubjectId).toBeNull()
   })
 
-  it('refuses to remove the subject the timer is actively running on', () => {
+  it('refuses to archive the subject the timer is actively running on', () => {
     const subjects = [subject({ id: '1', name: '코딩' })]
-    const result = computeRemoveSubject(subjects, [], '1', '1', true)
+    const result = computeRemoveSubject(subjects, '1', '1', true)
     expect(result.ok).toBe(false)
   })
 
-  it('allows removing a different subject while the timer runs on another one', () => {
+  it('allows archiving a different subject while the timer runs on another one', () => {
     const subjects = [subject({ id: '1', name: '코딩' }), subject({ id: '2', name: '독서' })]
-    const result = computeRemoveSubject(subjects, [], '2', '1', true)
+    const result = computeRemoveSubject(subjects, '2', '1', true)
     expect(result.ok).toBe(true)
   })
 
-  it('does not touch other subjects or unrelated sessions', () => {
+  it('does not touch other subjects or the current selection when they are unrelated', () => {
     const subjects = [subject({ id: '1', name: '코딩' }), subject({ id: '2', name: '독서' })]
-    const sessions = [session({ subjectId: '1' })]
-    const result = computeRemoveSubject(subjects, sessions, '1', '2', false)
+    const result = computeRemoveSubject(subjects, '1', '2', false)
     expect(result.ok).toBe(true)
     if (result.ok) {
       const kept = result.subjects.find((s) => s.id === '2')
       expect(kept?.archivedAt).toBeUndefined()
       expect(result.selectedSubjectId).toBe('2') // untouched, wasn't the removed one
     }
+  })
+
+  it('rejects removing an id that does not exist', () => {
+    const subjects = [subject({ id: '1', name: '코딩' })]
+    const result = computeRemoveSubject(subjects, 'missing', null, false)
+    expect(result.ok).toBe(false)
   })
 })
 

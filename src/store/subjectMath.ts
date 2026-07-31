@@ -1,4 +1,4 @@
-import type { StudySession, Subject } from '../types'
+import type { Subject } from '../types'
 import { generateId } from '../utils/id'
 
 /** Kept generous — real subject names ("정보처리기사 실기 준비") can run
@@ -71,15 +71,20 @@ export interface RemoveSubjectResult {
   ok: true
   subjects: Subject[]
   selectedSubjectId: string | null
-  /** true = kept as a hidden record because it has real study history
-   * (docs: archive, not hard-delete). false = fully removed (no history to
-   * preserve). */
-  archived: boolean
 }
 
+/**
+ * Removing a subject always archives it — it is never dropped from the
+ * `subjects` array and `archivedAt` is always set. A study-session check
+ * used to decide between archive and hard-delete, but that missed any
+ * subject with planner tasks, AI tutor messages, or other data referencing
+ * it by id but with zero sessions: hard-deleting those silently lost the
+ * subject's name/color for every one of those other records. Archiving
+ * unconditionally means every reference (sessions, planner, tutor
+ * messages, stats, past result cards) can always resolve a real name.
+ */
 export function computeRemoveSubject(
   subjects: Subject[],
-  sessions: StudySession[],
   id: string,
   selectedSubjectId: string | null,
   isTimerRunning: boolean,
@@ -87,13 +92,10 @@ export function computeRemoveSubject(
   const target = subjects.find((s) => s.id === id)
   if (!target) return { ok: false, error: '존재하지 않는 과목이에요.' }
   if (isTimerRunning && selectedSubjectId === id) {
-    return { ok: false, error: '타이머가 실행 중인 과목은 삭제할 수 없어요. 먼저 타이머를 종료해주세요.' }
+    return { ok: false, error: '타이머가 실행 중인 과목은 보관할 수 없어요. 먼저 타이머를 종료해주세요.' }
   }
 
-  const hasHistory = sessions.some((s) => s.subjectId === id)
-  const nextSubjects = hasHistory
-    ? subjects.map((s) => (s.id === id ? { ...s, archivedAt: Date.now() } : s))
-    : subjects.filter((s) => s.id !== id)
+  const nextSubjects = subjects.map((s) => (s.id === id ? { ...s, archivedAt: Date.now() } : s))
 
   let nextSelectedSubjectId = selectedSubjectId
   if (selectedSubjectId === id) {
@@ -101,5 +103,5 @@ export function computeRemoveSubject(
     nextSelectedSubjectId = remaining[0]?.id ?? null
   }
 
-  return { ok: true, subjects: nextSubjects, selectedSubjectId: nextSelectedSubjectId, archived: hasHistory }
+  return { ok: true, subjects: nextSubjects, selectedSubjectId: nextSelectedSubjectId }
 }
