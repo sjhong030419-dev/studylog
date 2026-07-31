@@ -5,6 +5,7 @@ import {
   CHARACTER_WIDTH_RATIO,
   ROOM_CANVAS_HEIGHT,
   ROOM_CANVAS_WIDTH,
+  ROOM_CHARACTER_SIZE_CAP,
   ROOM_CHARACTER_Z_INDEX,
   type RoomLayerAsset,
   type RoomLayerGroup,
@@ -138,7 +139,18 @@ export function PixelRoomRenderer({
           zIndex: ROOM_CHARACTER_Z_INDEX,
         }}
       >
-        <CharacterView state={state} gender={gender} appearance={appearance} className="w-full h-auto" animated={animated} />
+        <CharacterView
+          state={state}
+          gender={gender}
+          appearance={appearance}
+          // ROOM_CHARACTER_SIZE_CAP (not CharacterView's small 160px
+          // default) so the width:100% box above is never artificially
+          // capped below what the room's own percentage width intends —
+          // see ROOM_CHARACTER_SIZE_CAP's doc comment.
+          size={ROOM_CHARACTER_SIZE_CAP}
+          className="w-full h-auto"
+          animated={animated}
+        />
       </div>
 
       {renderGroup('deskFront')}

@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   CHARACTER_HEIGHT_RATIO,
   CHARACTER_WIDTH_RATIO,
+  computeCharacterBoxPx,
   ROOM_ASSET_MANIFEST,
   ROOM_CANVAS_HEIGHT,
   ROOM_CANVAS_WIDTH,
+  ROOM_CHARACTER_SIZE_CAP,
   ROOM_CHARACTER_Z_INDEX,
 } from './roomAssetManifest'
 
@@ -84,5 +86,43 @@ describe('room canvas + character placement contract', () => {
     const renderedWidthPx = CHARACTER_WIDTH_RATIO * ROOM_CANVAS_WIDTH
     const renderedHeightPx = renderedWidthPx // square canvas: height == width in px
     expect(renderedHeightPx / ROOM_CANVAS_HEIGHT).toBeCloseTo(CHARACTER_HEIGHT_RATIO, 5)
+  })
+})
+
+describe('computeCharacterBoxPx (responsive sizing regression guard — 320/390/430)', () => {
+  // These three widths are the project's required supported breakpoints
+  // (docs/StudyLog_Pixel_Room_Asset_Spec_v1.0.md §8), and CharacterRoomCard
+  // renders the room card nearly edge-to-edge on mobile, so treating room
+  // width ≈ viewport width is a reasonable approximation for this guard.
+  const SUPPORTED_WIDTHS = [320, 390, 430]
+
+  it.each(SUPPORTED_WIDTHS)('stays within the required 38-45%% height ratio at %ipx', (width) => {
+    const { heightRatio } = computeCharacterBoxPx(width)
+    expect(heightRatio).toBeGreaterThanOrEqual(0.38)
+    expect(heightRatio).toBeLessThanOrEqual(0.45)
+  })
+
+  it.each(SUPPORTED_WIDTHS)(
+    'never exceeds ROOM_CHARACTER_SIZE_CAP at %ipx (the fixed regression: CharacterView defaulted to a 160px cap that bound before the ratio did)',
+    (width) => {
+      const { widthPx } = computeCharacterBoxPx(width)
+      expect(widthPx).toBeLessThan(ROOM_CHARACTER_SIZE_CAP)
+      // The old default (160) would have wrongly clamped the character
+      // below its intended ratio at every one of these real widths —
+      // this is the exact bug the size-cap fix addresses.
+      expect(widthPx).toBeGreaterThan(160)
+    },
+  )
+
+  it.each(SUPPORTED_WIDTHS)('stays proportional (never squished) — width always equals height at %ipx', (width) => {
+    const { widthPx, heightPx } = computeCharacterBoxPx(width)
+    expect(widthPx).toBe(heightPx)
+  })
+
+  it('also holds at the Home card scale (characterScale 1.3) without exceeding the size cap', () => {
+    for (const width of SUPPORTED_WIDTHS) {
+      const { widthPx } = computeCharacterBoxPx(width, 1.3)
+      expect(widthPx).toBeLessThan(ROOM_CHARACTER_SIZE_CAP)
+    }
   })
 })

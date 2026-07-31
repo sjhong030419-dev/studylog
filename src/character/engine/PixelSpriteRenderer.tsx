@@ -91,7 +91,16 @@ export function PixelSpriteRenderer({
   }
 
   return (
-    <div style={{ position: 'relative', width: size, height: size }}>
+    // width is the literal `size`px (always definite — never a bare
+    // percentage), with max-width:100% as a *safe* responsive clamp: when
+    // an ancestor gives this box a real (smaller) definite width — e.g.
+    // PixelRoomRenderer's percentage-width wrapper — max-width correctly
+    // shrinks it to fit; when the ancestor's width is indefinite (the
+    // shrink-to-fit flex layout every existing non-room screen uses),
+    // max-width:100% safely resolves to "no constraint" instead of
+    // collapsing the box (a bare `width:100%` there collapses to 0 — a real
+    // regression this replaced). aspectRatio keeps it square either way.
+    <div style={{ position: 'relative', width: size, maxWidth: '100%', aspectRatio: '1 / 1' }}>
       {images
         .filter((img) => !failedLayerKeys.has(img.key))
         .map((img) => (

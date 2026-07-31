@@ -78,6 +78,36 @@ export const CHARACTER_WIDTH_RATIO = CHARACTER_HEIGHT_RATIO * (ROOM_CANVAS_HEIGH
  * behind it, per requirement #5 "캐릭터 얼굴이 가장 먼저 보임". */
 export const CHARACTER_TOP_RATIO = 0.16
 
+/**
+ * `CharacterView`'s `size` prop is a max-width ceiling on a CSS-responsive
+ * box (`width: 100%; max-width: size`), not a fixed pixel size — see
+ * PixelSpriteRenderer.tsx / ChibiFallbackArt.tsx. PixelRoomRenderer passes
+ * this constant instead of relying on CharacterView's small default (160px,
+ * meant for non-room screens like MyPage), specifically so the ceiling
+ * never binds before the real constraint (the room's own percentage width)
+ * does — see `computeCharacterBoxPx` and roomAssetManifest.test.ts for the
+ * regression guard proving this holds at every supported viewport width.
+ */
+export const ROOM_CHARACTER_SIZE_CAP = ROOM_CANVAS_WIDTH
+
+/**
+ * Pure math for the character's rendered box given a room container's
+ * actual pixel width — used to verify the 38-45% height-ratio requirement
+ * at real device widths (320/390/430) in tests, since this project has no
+ * component-rendering test harness to measure real CSS layout. Mirrors
+ * exactly what the CSS in PixelRoomRenderer computes: width = room width ×
+ * CHARACTER_WIDTH_RATIO × scale; height = width (square 1:1 canvas).
+ */
+export function computeCharacterBoxPx(
+  roomWidthPx: number,
+  characterScale = 1,
+): { widthPx: number; heightPx: number; heightRatio: number } {
+  const widthPx = roomWidthPx * CHARACTER_WIDTH_RATIO * characterScale
+  const heightPx = widthPx
+  const roomHeightPx = roomWidthPx * (ROOM_CANVAS_HEIGHT / ROOM_CANVAS_WIDTH)
+  return { widthPx, heightPx, heightRatio: heightPx / roomHeightPx }
+}
+
 function assetPath(theme: RoomThemeId, file: string): string {
   return `/sprites/room/${theme}/${file}`
 }

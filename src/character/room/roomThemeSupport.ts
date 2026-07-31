@@ -9,25 +9,59 @@ import { ROOM_ASSET_MANIFEST, type RoomLayerAsset, type RoomThemeId } from './ro
  * actually real, verified against what's committed. Empty today: no PNG
  * layer for any theme has been produced yet, so every theme is unready and
  * RoomScene keeps using the existing SVG room (docs/StudyLog_Pixel_Room_Asset_Spec_v1.0.md).
+ *
+ * Keyed per theme (not a single flat Set) so two themes can each declare a
+ * layer with the same id (e.g. both have a "background") without one
+ * theme's confirmed art making the other theme look ready too — confirming
+ * a layer for `default-night` must never affect any other theme's
+ * readiness.
  */
-export const CONFIRMED_ROOM_LAYER_IDS: ReadonlySet<string> = new Set([])
+export const CONFIRMED_ROOM_LAYER_IDS: Partial<Record<RoomThemeId, ReadonlySet<string>>> = {
+  'default-night': new Set([]),
+}
+
+function confirmedLayerIdsFor(
+  themeId: string,
+  confirmedLayerIds: Partial<Record<string, ReadonlySet<string>>>,
+): ReadonlySet<string> {
+  return confirmedLayerIds[themeId] ?? new Set()
+}
 
 /** A layer is "required" (must exist for its theme to be usable at all) if
  * it's part of the always-on baseline scene — i.e. not gated behind a level
  * or a shop item, both of which are allowed to be silently absent (same
  * rule as an unsupported cosmetic layer in the character system: optional
- * layers degrade gracefully, required ones don't). */
-export function getRequiredLayers(themeId: RoomThemeId): RoomLayerAsset[] {
-  return (ROOM_ASSET_MANIFEST[themeId] ?? []).filter((layer) => layer.minLevel === undefined && layer.shopItemId === undefined)
+ * layers degrade gracefully, required ones don't).
+ *
+ * `manifest` defaults to the real ROOM_ASSET_MANIFEST — the parameter only
+ * exists so tests can exercise theme-isolation with synthetic multi-theme
+ * fixtures without inventing a second real production theme (this app only
+ * has one approved reference concept today, docs/assets/study-room-approved-v1.png). */
+export function getRequiredLayers(
+  themeId: string,
+  manifest: Partial<Record<string, RoomLayerAsset[]>> = ROOM_ASSET_MANIFEST,
+): RoomLayerAsset[] {
+  return (manifest[themeId] ?? []).filter((layer) => layer.minLevel === undefined && layer.shopItemId === undefined)
 }
 
 /** True only if every required (non level/shop-gated) layer for this theme
- * has a real, confirmed file. A theme with zero declared layers is never
- * "ready" — there is nothing to render. */
-export function isRoomThemeReady(themeId: RoomThemeId): boolean {
-  const required = getRequiredLayers(themeId)
+ * has a real, confirmed file *for that same theme*. A theme with zero
+ * declared layers is never "ready" — there is nothing to render. An
+ * undeclared theme id always resolves to an empty confirmed set, so it's
+ * always unready too. */
+export function isRoomThemeReady(
+  themeId: RoomThemeId,
+  options?: {
+    manifest?: Partial<Record<string, RoomLayerAsset[]>>
+    confirmedLayerIds?: Partial<Record<string, ReadonlySet<string>>>
+  },
+): boolean {
+  const manifest = options?.manifest ?? ROOM_ASSET_MANIFEST
+  const confirmedLayerIds = options?.confirmedLayerIds ?? CONFIRMED_ROOM_LAYER_IDS
+  const required = getRequiredLayers(themeId, manifest)
   if (required.length === 0) return false
-  return required.every((layer) => CONFIRMED_ROOM_LAYER_IDS.has(layer.id))
+  const confirmed = confirmedLayerIdsFor(themeId, confirmedLayerIds)
+  return required.every((layer) => confirmed.has(layer.id))
 }
 
 export interface ResolveActiveLayersInput {

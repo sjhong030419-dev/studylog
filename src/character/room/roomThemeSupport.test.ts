@@ -9,8 +9,8 @@ import {
 import type { RoomLayerAsset, RoomThemeId } from './roomAssetManifest'
 
 describe('honest current gap (regression guard — should start failing loudly once real room art lands)', () => {
-  it('has no confirmed real room layer files yet', () => {
-    expect(CONFIRMED_ROOM_LAYER_IDS.size).toBe(0)
+  it('has no confirmed real room layer files yet for default-night', () => {
+    expect(CONFIRMED_ROOM_LAYER_IDS['default-night']?.size ?? 0).toBe(0)
   })
 })
 
@@ -98,5 +98,73 @@ describe('shouldUsePixelRoom', () => {
   it('is false when the theme is not ready, regardless of runtime failure state', () => {
     expect(shouldUsePixelRoom({ themeId: 'default-night', pixelRoomLoadFailed: false })).toBe(false)
     expect(shouldUsePixelRoom({ themeId: 'default-night', pixelRoomLoadFailed: true })).toBe(false)
+  })
+})
+
+describe('per-theme layer confirmation isolation (fixes: a flat id Set let two themes sharing a layer id contaminate each other)', () => {
+  // Two synthetic themes that both declare a layer with the SAME id
+  // ("background") — a real scenario once a second theme is approved,
+  // since every theme will very likely have its own background.png. These
+  // fixtures are test-only; no second real theme is added to
+  // roomAssetManifest.ts (this app has only one approved reference concept).
+  const background = (): RoomLayerAsset => ({
+    id: 'background',
+    group: 'background',
+    src: 'irrelevant.png',
+    zIndex: 0,
+  })
+  const twoThemeManifest: Partial<Record<string, RoomLayerAsset[]>> = {
+    'theme-a': [background()],
+    'theme-b': [background()],
+  }
+
+  it('confirming "background" for theme-a does not make theme-b ready too', () => {
+    const confirmedLayerIds: Partial<Record<string, ReadonlySet<string>>> = {
+      'theme-a': new Set(['background']),
+      // theme-b intentionally has no entry at all
+    }
+    expect(
+      isRoomThemeReady('theme-a' as RoomThemeId, { manifest: twoThemeManifest, confirmedLayerIds }),
+    ).toBe(true)
+    expect(
+      isRoomThemeReady('theme-b' as RoomThemeId, { manifest: twoThemeManifest, confirmedLayerIds }),
+    ).toBe(false)
+  })
+
+  it('a theme with only some of its required layers confirmed stays unready', () => {
+    const partialManifest: Partial<Record<string, RoomLayerAsset[]>> = {
+      'theme-c': [background(), { id: 'desk-front', group: 'deskFront', src: 'irrelevant.png', zIndex: 30 }],
+    }
+    const confirmedLayerIds: Partial<Record<string, ReadonlySet<string>>> = {
+      'theme-c': new Set(['background']), // desk-front missing
+    }
+    expect(
+      isRoomThemeReady('theme-c' as RoomThemeId, { manifest: partialManifest, confirmedLayerIds }),
+    ).toBe(false)
+  })
+
+  it('a theme becomes ready only once every required layer is confirmed', () => {
+    const manifest: Partial<Record<string, RoomLayerAsset[]>> = {
+      'theme-d': [background(), { id: 'desk-front', group: 'deskFront', src: 'irrelevant.png', zIndex: 30 }],
+    }
+    const confirmedLayerIds: Partial<Record<string, ReadonlySet<string>>> = {
+      'theme-d': new Set(['background', 'desk-front']),
+    }
+    expect(isRoomThemeReady('theme-d' as RoomThemeId, { manifest, confirmedLayerIds })).toBe(true)
+  })
+
+  it('an undeclared theme id is always unready, even if its name coincidentally appears in confirmedLayerIds', () => {
+    const confirmedLayerIds: Partial<Record<string, ReadonlySet<string>>> = {
+      'ghost-theme': new Set(['background']),
+    }
+    // "ghost-theme" has no manifest entry — getRequiredLayers returns [],
+    // so isRoomThemeReady must short-circuit to false regardless of what's
+    // sitting in confirmedLayerIds for that key.
+    expect(isRoomThemeReady('ghost-theme' as RoomThemeId, { confirmedLayerIds })).toBe(false)
+  })
+
+  it('real default-night still stays unready with the real manifest and real confirmed registry', () => {
+    // No overrides passed — exercises the actual production data end to end.
+    expect(isRoomThemeReady('default-night')).toBe(false)
   })
 })

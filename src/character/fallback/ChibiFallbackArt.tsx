@@ -37,7 +37,17 @@ export function ChibiFallbackArt({ gender, state, frame, frameCount, appearance,
   const overlayParts = equippedParts.filter((p) => p.slot !== 'top' && p.slot !== 'onePiece')
 
   return (
-    <svg viewBox="0 0 200 240" width={size} height={size * 1.2} role="img" aria-label={STATE_LABEL[state]}>
+    // width is the literal `size`px (always definite) with max-width:100%
+    // as a safe responsive clamp — same reasoning as PixelSpriteRenderer's
+    // root div. A bare width:100% here would collapse to 0 whenever this
+    // renders inside an indefinite (shrink-to-fit) ancestor, which is every
+    // existing non-room screen (MyPage, AvatarShop, PomodoroTimer, ...).
+    <svg
+      viewBox="0 0 200 240"
+      style={{ width: size, maxWidth: '100%', height: 'auto', aspectRatio: '200 / 240' }}
+      role="img"
+      aria-label={STATE_LABEL[state]}
+    >
       {/* CSS transition eases between discrete frame poses — a temporary
           smoothing layer for the placeholder art. Real sprite frames won't
           use this (SPRITE_ASSETS_AVAILABLE branch bypasses this component
