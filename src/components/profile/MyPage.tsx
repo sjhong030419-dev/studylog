@@ -4,6 +4,8 @@ import { useMyAvatarAppearance } from '../../hooks/useMyAvatarAppearance'
 import { useTimerStore } from '../../store/timerStore'
 import { usePointsStore } from '../../store/pointsStore'
 import { useProfileStore } from '../../store/profileStore'
+import { useAuthStore } from '../../store/authStore'
+import { isSupabaseConfigured } from '../../lib/supabaseClient'
 import { formatDuration } from '../../utils/time'
 import { readableInkColor } from '../../utils/contrastColor'
 import type { StudySession } from '../../types'
@@ -44,6 +46,12 @@ export function MyPage({ onOpenSettings }: MyPageProps) {
   const setGender = useProfileStore((s) => s.setGender)
   const appearance = useMyAvatarAppearance()
 
+  const linkedEmail = useAuthStore((s) => s.email)
+  const linkEmailStatus = useAuthStore((s) => s.linkEmailStatus)
+  const linkEmailError = useAuthStore((s) => s.linkEmailError)
+  const linkEmail = useAuthStore((s) => s.linkEmail)
+  const [emailInput, setEmailInput] = useState('')
+
   const [editing, setEditing] = useState(false)
   const [nicknameInput, setNicknameInput] = useState(nickname)
   const [schoolInput, setSchoolInput] = useState(school ?? '')
@@ -78,6 +86,11 @@ export function MyPage({ onOpenSettings }: MyPageProps) {
     setNickname(nicknameInput)
     setSchool(schoolInput)
     setEditing(false)
+  }
+
+  async function handleLinkEmail() {
+    const result = await linkEmail(emailInput)
+    if (result.ok) setEmailInput('')
   }
 
   return (
@@ -175,6 +188,44 @@ export function MyPage({ onOpenSettings }: MyPageProps) {
           })}
         </div>
       </div>
+
+      {isSupabaseConfigured && (
+        <div className="w-full max-w-sm bg-white/70 rounded-2xl shadow-sm px-5 py-4 flex flex-col items-start gap-2">
+          <span className="font-cute text-ink-soft text-sm">계정 연결</span>
+          {linkedEmail ? (
+            <p className="text-ink text-sm font-cute">✅ {linkedEmail}로 연결됨 — 다른 기기에서도 같은 이메일로 로그인하면 데이터가 동기화돼요.</p>
+          ) : (
+            <>
+              <p className="text-ink-soft text-[10px] -mt-1">
+                이메일을 연결하면 다른 기기에서도 같은 데이터를 볼 수 있어요. 비밀번호 없이 메일로 온 링크만 누르면 돼요.
+              </p>
+              <div className="w-full flex gap-2">
+                <input
+                  type="email"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  placeholder="you@example.com"
+                  className="flex-1 font-cute text-sm px-3 py-2 rounded-xl border border-ink/15 outline-none bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={handleLinkEmail}
+                  disabled={linkEmailStatus === 'sending' || !emailInput.trim()}
+                  className="font-cute text-xs px-4 py-2 rounded-full bg-pastel-mint text-ink shadow disabled:opacity-50 whitespace-nowrap"
+                >
+                  {linkEmailStatus === 'sending' ? '전송 중...' : '링크 보내기'}
+                </button>
+              </div>
+              {linkEmailStatus === 'sent' && (
+                <p className="text-pastel-mint text-xs font-cute">📩 메일함에서 링크를 확인해주세요!</p>
+              )}
+              {linkEmailStatus === 'error' && linkEmailError && (
+                <p className="text-red-400 text-xs font-cute">{linkEmailError}</p>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       <div className="w-full max-w-sm grid grid-cols-3 gap-2">
         <div className="bg-white/70 rounded-2xl shadow-sm px-2 py-3 flex flex-col items-center gap-1">
