@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { LegacySvgRoomRenderer } from './LegacySvgRoomRenderer'
 import { PixelRoomRenderer } from './PixelRoomRenderer'
+import { FullSceneRoomRenderer } from './FullSceneRoomRenderer'
 import { shouldUsePixelRoom } from './roomThemeSupport'
 import type { RoomThemeId } from './roomAssetManifest'
 import type { CharacterAppearance, CharacterState, Gender } from '../types'
@@ -31,19 +32,37 @@ const ACTIVE_THEME_ID: RoomThemeId = 'default-night'
  * Public entry point for the study room scene — every screen that shows the
  * room (Home's CharacterRoomCard, the result share card via LogCaptureCard)
  * keeps calling this exact component with this exact prop shape. Internally
- * it now dispatches between two renderers:
+ * it now dispatches between three renderers, in this priority order:
  *
  *   RoomScene
- *    ├─ PixelRoomRenderer     (docs/StudyLog_Pixel_Room_Asset_Spec_v1.0.md — real PNG layers)
- *    └─ LegacySvgRoomRenderer (docs/character-system.md §6 — the existing procedural SVG room)
+ *    ├─ FullSceneRoomRenderer (public/sprites/room/default-night/scenes/ — current visual MVP)
+ *    ├─ PixelRoomRenderer     (docs/StudyLog_Pixel_Room_Asset_Spec_v1.0.md — layered PNGs, future customization path)
+ *    └─ LegacySvgRoomRenderer (docs/character-system.md §6 — the existing procedural SVG room, final safety net)
  *
+ * `FullSceneRoomRenderer` is one baked illustration per gender × state
+ * (idle/study/sleep/happy) — it does not read `appearance`/`level`, so
+ * equipped cosmetics, background shop items, and level-unlocked furniture
+ * (plant/cat) are not visually reflected while it's active. That data is
+ * still stored and applied everywhere else in the app; only this renderer's
+ * *display* doesn't show it yet. If its image 404s, `onError` permanently
+ * falls back to the layered/legacy pair below for this mounted instance —
  * `shouldUsePixelRoom` is false for every theme today (no real layer PNGs
  * exist yet — roomThemeSupport.ts CONFIRMED_ROOM_LAYER_IDS is empty), so
- * this always renders LegacySvgRoomRenderer right now: the pixel room only
- * activates once a theme's required layers are both declared AND real.
+ * that fallback lands on LegacySvgRoomRenderer in practice.
  */
 export function RoomScene(props: RoomSceneProps) {
   const [pixelRoomLoadFailed, setPixelRoomLoadFailed] = useState(false)
+  const [fullSceneLoadFailed, setFullSceneLoadFailed] = useState(false)
+
+  if (!fullSceneLoadFailed) {
+    return (
+      <FullSceneRoomRenderer
+        state={props.state}
+        gender={props.gender ?? 'boy'}
+        onError={() => setFullSceneLoadFailed(true)}
+      />
+    )
+  }
 
   const usePixelRoom = shouldUsePixelRoom({ themeId: ACTIVE_THEME_ID, pixelRoomLoadFailed })
 
