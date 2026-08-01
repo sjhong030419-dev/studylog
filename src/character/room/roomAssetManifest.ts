@@ -8,9 +8,11 @@
  * `/sprites/room/...` string.
  */
 
+import type { CharacterState } from '../types'
+
 /** The confirmed reference concept (docs/assets/study-room-approved-v1.png,
  * commit 06adca8) is a single flat illustration, not a layered export. Until
- * that art is actually decomposed into these 14 real transparent PNGs, this
+ * that art is actually decomposed into these 15 real transparent PNGs, this
  * is the only theme id declared — adding a second theme means adding a new
  * key here once its own reference concept is approved, never inventing one. */
 export type RoomThemeId = 'default-night'
@@ -37,6 +39,19 @@ export interface RoomLayerAsset {
    * hair/outfit/accessory/background). The field exists so the mechanism is
    * ready and tested (roomThemeSupport.test.ts) before it's needed for real. */
   shopItemId?: string
+  /** Skip this layer while the character is in one of these states. Exists
+   * solely for `desk-front` vs `desk-front-study` (docs/StudyLog_Pixel_Room_Asset_Spec_v1.0.md
+   * §4): the `study` base sprite already has a desk/book/pencil baked into
+   * its own art, so the room's normal desk-front panel would double it up —
+   * `desk-front` opts out of `study` here, and `desk-front-study` (via
+   * `onlyStates` below) covers that state instead. Both variants still count
+   * as "required" in getRequiredLayers — state-gating is not the same kind
+   * of optional as minLevel/shopItemId, since every state needs *some*
+   * desk-front layer active. */
+  excludeStates?: CharacterState[]
+  /** Render this layer only while the character is in one of these states —
+   * the inverse of `excludeStates`, used by `desk-front-study`. */
+  onlyStates?: CharacterState[]
   /** Position for a standalone prop file that isn't a full 640x800 canvas
    * layer, in canvas pixels from the top-left. Omitted for full-canvas
    * layers (they cover the whole frame via inset:0). */
@@ -160,7 +175,7 @@ function assetPath(theme: RoomThemeId, file: string): string {
 }
 
 /**
- * The 14-file `default-night` layer set (requirement #2), grouped and
+ * The 15-file `default-night` layer set (requirement #2), grouped and
  * z-ordered per the 6-stage pipeline. `minLevel` on plant/cat mirrors the
  * exact thresholds already used by the SVG room's GROWTH_STAGES (level 10 /
  * 20) so switching renderers never changes when furniture unlocks. None of
@@ -177,7 +192,13 @@ export const ROOM_ASSET_MANIFEST: Record<RoomThemeId, RoomLayerAsset[]> = {
     { id: 'shelf', group: 'behindCharacter', src: assetPath('default-night', 'shelf.png'), zIndex: 11 },
     { id: 'desk-back', group: 'behindCharacter', src: assetPath('default-night', 'desk-back.png'), zIndex: 12 },
 
-    { id: 'desk-front', group: 'deskFront', src: assetPath('default-night', 'desk-front.png'), zIndex: 30 },
+    // desk-front / desk-front-study are mutually exclusive by character
+    // state (see the `excludeStates`/`onlyStates` doc comment in
+    // roomAssetManifest.ts's RoomLayerAsset) — study's own base sprite
+    // already draws a desk/book/pencil, so it gets its own desk-front
+    // variant instead of double-stacking with the shared one.
+    { id: 'desk-front', group: 'deskFront', src: assetPath('default-night', 'desk-front.png'), zIndex: 30, excludeStates: ['study'] },
+    { id: 'desk-front-study', group: 'deskFront', src: assetPath('default-night', 'desk-front-study.png'), zIndex: 29, onlyStates: ['study'] },
     { id: 'lamp', group: 'deskFront', src: assetPath('default-night', 'lamp.png'), zIndex: 31 },
     { id: 'books', group: 'deskFront', src: assetPath('default-night', 'books.png'), zIndex: 32 },
     { id: 'mug', group: 'deskFront', src: assetPath('default-night', 'mug.png'), zIndex: 33 },

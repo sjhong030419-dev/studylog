@@ -18,12 +18,12 @@ import {
 describe('ROOM_ASSET_MANIFEST (public/sprites/room/ file naming contract)', () => {
   const layers = ROOM_ASSET_MANIFEST['default-night']
 
-  it('declares exactly the 14 layer files specified for default-night', () => {
-    expect(layers).toHaveLength(14)
+  it('declares exactly the 15 layer files specified for default-night (14 base + desk-front-study)', () => {
+    expect(layers).toHaveLength(15)
     const ids = layers.map((l) => l.id).sort()
     expect(ids).toEqual(
       [
-        'background', 'window-night', 'shelf', 'desk-back', 'desk-front',
+        'background', 'window-night', 'shelf', 'desk-back', 'desk-front', 'desk-front-study',
         'lamp', 'books', 'mug', 'stationery', 'plant', 'cat', 'rug',
         'foreground', 'lamp-glow',
       ].sort(),
