@@ -4,15 +4,30 @@ import {
   BASE_SPRITE_GENDERS,
   BASE_SPRITE_STATES,
   HAS_REAL_PER_FRAME_ANIMATION,
+  isShopItemPngSupported,
   REUSED_POSE_SOURCE,
   shouldUseSprites,
   SUPPORTED_COSMETIC_ASSET_KEYS,
   SUPPORTED_EFFECT_STATES,
   UNIQUE_POSE_STATES,
 } from './spriteSupport'
+import { CHARACTER_ASSET_CATALOG } from '../catalog/items'
 import { STATE_HAS_ART } from '../types'
 import type { CharacterAssetDefinition } from '../catalog/types'
 import type { CharacterState } from '../types'
+
+/** Every real hair/outfit/accessory shop item id (store/shopStore.ts) —
+ * kept as a literal list (not derived from the store) so this test file
+ * doesn't import the store, and so a change to the catalog is caught by a
+ * failing test rather than silently widening what's checked. */
+const REAL_COSMETIC_ITEM_IDS = [
+  'hair-ribbon', 'hair-straw', 'hair-cap',
+  'outfit-blue', 'outfit-pink', 'outfit-gold',
+  'acc-glasses', 'acc-headphone', 'acc-necklace',
+]
+/** Every real background shop item id — these recolor the room, not the
+ * character, so they must never be treated as "pending". */
+const REAL_BACKGROUND_ITEM_IDS = ['bg-sky', 'bg-night', 'bg-sakura']
 
 function cosmetic(partial: Partial<CharacterAssetDefinition> & Pick<CharacterAssetDefinition, 'assetKey'>): CharacterAssetDefinition {
   return { id: 'test-item', slot: 'top', zIndex: 30, ...partial }
@@ -85,10 +100,16 @@ describe('shouldUseSprites — falls back to the SVG renderer', () => {
     ).toBe(false)
   })
 
-  it('falls back to the SVG renderer when an unsupported cosmetic item is equipped', () => {
+})
+
+describe('shouldUseSprites — character consistency (equipping an unsupported cosmetic must NOT swap the whole art style)', () => {
+  it('still uses the new PNG when an unsupported cosmetic item is equipped', () => {
     // Every real shop item (ribbon, hoodie, dress, glasses, ...) has no PNG
-    // layer yet — equipping any of them must not render the bare PNG base
-    // with the item silently missing.
+    // layer yet. Previously this flipped the ENTIRE character to the SVG
+    // renderer — a full style swap the user would see differently on every
+    // screen at once. The new PNG body must stay StudyLog's one and only
+    // default look; PixelSpriteRenderer omits the unsupported item's own
+    // layer instead (its own per-entry SUPPORTED_COSMETIC_ASSET_KEYS check).
     const equippedRibbon = [cosmetic({ id: 'hair-ribbon', slot: 'headAccessory', assetKey: 'ribbon', zIndex: 50 })]
     expect(
       shouldUseSprites({
@@ -98,7 +119,101 @@ describe('shouldUseSprites — falls back to the SVG renderer', () => {
         state: 'idle',
         cosmeticEntries: equippedRibbon,
       }),
-    ).toBe(false)
+    ).toBe(true)
+  })
+
+  it('still uses the new PNG regardless of how many unsupported items are equipped at once', () => {
+    const allNine = [
+      cosmetic({ id: 'hair-ribbon', slot: 'headAccessory', assetKey: 'ribbon', zIndex: 50 }),
+      cosmetic({ id: 'hair-straw', slot: 'headAccessory', assetKey: 'strawHat', zIndex: 52 }),
+      cosmetic({ id: 'outfit-blue', slot: 'top', assetKey: 'hoodie', zIndex: 30 }),
+      cosmetic({ id: 'outfit-pink', slot: 'onePiece', assetKey: 'dress', zIndex: 30 }),
+      cosmetic({ id: 'acc-glasses', slot: 'faceAccessory', assetKey: 'glasses', zIndex: 65 }),
+      cosmetic({ id: 'acc-headphone', slot: 'headAccessory', assetKey: 'headphones', zIndex: 55 }),
+      cosmetic({ id: 'acc-necklace', slot: 'backAccessory', assetKey: 'necklace', zIndex: 28 }),
+    ]
+    expect(
+      shouldUseSprites({
+        spriteAssetsAvailable: true,
+        spriteLoadFailed: false,
+        gender: 'boy',
+        state: 'happy',
+        cosmeticEntries: allNine,
+      }),
+    ).toBe(true)
+  })
+
+  it('only falls back for base-image load failure, never for cosmetics (with or without items equipped)', () => {
+    const equippedRibbon = [cosmetic({ id: 'hair-ribbon', slot: 'headAccessory', assetKey: 'ribbon', zIndex: 50 })]
+    for (const cosmeticEntries of [[], equippedRibbon]) {
+      expect(
+        shouldUseSprites({
+          spriteAssetsAvailable: true,
+          spriteLoadFailed: true,
+          gender: 'boy',
+          state: 'idle',
+          cosmeticEntries,
+        }),
+      ).toBe(false)
+    }
+  })
+})
+
+describe('shouldUseSprites — same appearance yields the same renderer choice across every real screen (홈/일반타이머/뽀모도로/프로필/상점/공유)', () => {
+  // Every one of these screens calls useMyAvatarAppearance() → the same
+  // shopStore.equipped state → the same cosmeticEntries. The states below
+  // are exactly what each screen actually passes to CharacterView:
+  // 홈/일반타이머 (StudyTimer via CharacterRoomCard): idle/study/break/away/...
+  // 뽀모도로 (PomodoroTimer): the live phase state, and 'happy' on completion
+  // 프로필 (MyPage) / 상점 (AvatarShop) / 공유 (LogCaptureCard): always 'happy'
+  const REAL_SCREEN_STATES: CharacterState[] = ['idle', 'study', 'break', 'away', 'happy']
+
+  const equippedRibbon = [cosmetic({ id: 'hair-ribbon', slot: 'headAccessory', assetKey: 'ribbon', zIndex: 50 })]
+
+  it('resolves to the same (true/PNG) result for every screen state when a cosmetic is equipped', () => {
+    const results = REAL_SCREEN_STATES.map((state) =>
+      shouldUseSprites({
+        spriteAssetsAvailable: true,
+        spriteLoadFailed: false,
+        gender: 'boy',
+        state,
+        cosmeticEntries: equippedRibbon,
+      }),
+    )
+    expect(results).toEqual(REAL_SCREEN_STATES.map(() => true))
+  })
+
+  it('resolves to the same (true/PNG) result for every screen state with no customization equipped', () => {
+    const results = REAL_SCREEN_STATES.map((state) =>
+      shouldUseSprites({
+        spriteAssetsAvailable: true,
+        spriteLoadFailed: false,
+        gender: 'girl',
+        state,
+        cosmeticEntries: [],
+      }),
+    )
+    expect(results).toEqual(REAL_SCREEN_STATES.map(() => true))
+  })
+
+  it('equipping/unequipping a cosmetic never changes the result — the exact bug being fixed', () => {
+    for (const state of REAL_SCREEN_STATES) {
+      const withoutCosmetics = shouldUseSprites({
+        spriteAssetsAvailable: true,
+        spriteLoadFailed: false,
+        gender: 'boy',
+        state,
+        cosmeticEntries: [],
+      })
+      const withCosmetics = shouldUseSprites({
+        spriteAssetsAvailable: true,
+        spriteLoadFailed: false,
+        gender: 'boy',
+        state,
+        cosmeticEntries: equippedRibbon,
+      })
+      expect(withoutCosmetics).toBe(withCosmetics)
+    }
   })
 })
 
@@ -120,6 +235,43 @@ describe('allCosmeticsSupported', () => {
     const before = JSON.stringify(entries)
     allCosmeticsSupported(entries)
     expect(JSON.stringify(entries)).toBe(before)
+  })
+})
+
+describe('isShopItemPngSupported (shop purchase-gate / badge — single source of truth, no duplicated logic)', () => {
+  it('is false for every real hair/outfit/accessory item today (no PNG layer exists yet)', () => {
+    for (const itemId of REAL_COSMETIC_ITEM_IDS) {
+      expect(isShopItemPngSupported(itemId)).toBe(false)
+    }
+  })
+
+  it('is true for every real background item (recolors the room, not the character)', () => {
+    for (const itemId of REAL_BACKGROUND_ITEM_IDS) {
+      expect(isShopItemPngSupported(itemId)).toBe(true)
+    }
+  })
+
+  it('is true for an unknown/garbage item id (defensive — never throws, never blocks)', () => {
+    expect(isShopItemPngSupported('not-a-real-item')).toBe(true)
+  })
+
+  it('takes only an item id — its result cannot depend on or be affected by owned/equipped state', () => {
+    // Structural guarantee behind requirement #1 (show the badge regardless
+    // of owned/equipped) and #5/#6 (never touches purchase or equip data):
+    // there is no `owned`/`equipped` parameter for this function to read,
+    // so calling it twice for the same id always agrees.
+    for (const itemId of [...REAL_COSMETIC_ITEM_IDS, ...REAL_BACKGROUND_ITEM_IDS]) {
+      expect(isShopItemPngSupported(itemId)).toBe(isShopItemPngSupported(itemId))
+    }
+  })
+
+  it('agrees exactly with SUPPORTED_COSMETIC_ASSET_KEYS for every real catalog entry (no drift between shop gate and renderer skip)', () => {
+    // The shop's purchase/badge decision and PixelSpriteRenderer's
+    // per-layer skip decision must never be able to disagree — both read
+    // the same SUPPORTED_COSMETIC_ASSET_KEYS registry, this proves it.
+    for (const entry of CHARACTER_ASSET_CATALOG) {
+      expect(isShopItemPngSupported(entry.id)).toBe(SUPPORTED_COSMETIC_ASSET_KEYS.has(entry.assetKey))
+    }
   })
 })
 

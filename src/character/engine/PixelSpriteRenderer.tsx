@@ -37,13 +37,17 @@ interface LayerImage {
 }
 
 /**
- * Renders the real transparent-PNG sprite stack. `CharacterView` only
- * mounts this when the current look is fully representable — real base art
- * for this gender/state, and every equipped cosmetic has a supported PNG
- * layer (`spriteSupport.ts`). Approved base portraits already include
- * default hair/outfit baked in (docs/character-system.md §14), so the
- * `face/` layer from the original 10-layer design isn't drawn here — it
- * was never delivered as a separate asset and would always 404.
+ * Renders the real transparent-PNG sprite stack. `CharacterView` mounts
+ * this for every gender/state it has real base art for, regardless of what
+ * cosmetics are equipped — the new PNG body is StudyLog's one and only
+ * default character style, never conditionally swapped for the SVG
+ * renderer just because an item lacks a PNG layer (`spriteSupport.ts`
+ * `shouldUseSprites`). Any equipped item without a supported PNG layer is
+ * simply omitted below, not rendered as a broken image and not a reason to
+ * fall back. Approved base portraits already include default hair/outfit
+ * baked in (docs/character-system.md §14), so the `face/` layer from the
+ * original 10-layer design isn't drawn here — it was never delivered as a
+ * separate asset and would always 404.
  */
 export function PixelSpriteRenderer({
   gender,
@@ -68,10 +72,12 @@ export function PixelSpriteRenderer({
 
     push({ key: 'base', layer: 'base', src: resolveBaseFramePath(gender, state, frame) })
 
-    // CharacterView already refuses to reach this component unless every
-    // equipped item is supported, but this loop stays support-gated too —
-    // defense in depth, and it means this component never issues a
-    // network request for a file it already knows doesn't exist.
+    // This is now the ONLY place an unsupported cosmetic gets handled —
+    // CharacterView mounts this renderer regardless of what's equipped (the
+    // new PNG body is the one and only default look), so an item with no
+    // real PNG layer is simply omitted here rather than causing the whole
+    // character to fall back to the SVG renderer. Also means this component
+    // never issues a network request for a file it already knows 404s.
     for (const entry of cosmeticEntries) {
       if (!SUPPORTED_COSMETIC_ASSET_KEYS.has(entry.assetKey)) continue
       const layer = SLOT_TO_LAYER[entry.slot]

@@ -1,3 +1,4 @@
+import { findCatalogEntry } from '../catalog/items'
 import type { CharacterAssetDefinition } from '../catalog/types'
 import type { CharacterState, Gender } from '../types'
 
@@ -81,23 +82,45 @@ export const SUPPORTED_EFFECT_STATES: ReadonlySet<CharacterState> = new Set([])
 
 /**
  * True only if every equipped cosmetic item has a real supported PNG
- * layer. An empty list is vacuously supported (no customization equipped,
- * nothing to lose) — this is what lets an un-customized boy/girl show the
- * new sprite while anyone with an unsupported hair/outfit/accessory
- * equipped safely falls back to the SVG renderer instead of that item
- * silently disappearing.
+ * layer. No longer used to decide the PNG-vs-SVG renderer (see
+ * `shouldUseSprites` below) — an unsupported item must never swap the
+ * user's whole character to a different art style (docs/character-system.md
+ * "캐릭터 일관성"). Still used for two things: (1) `PixelSpriteRenderer`'s
+ * own per-layer skip loop, which is what actually omits an unsupported
+ * item's PNG layer while everything else keeps rendering; (2) the shop UI's
+ * "새 캐릭터 대응 준비 중" badge, to tell the user why an item they own
+ * doesn't visually show up on the new sprite yet.
  */
 export function allCosmeticsSupported(entries: CharacterAssetDefinition[]): boolean {
   return entries.every((entry) => SUPPORTED_COSMETIC_ASSET_KEYS.has(entry.assetKey))
 }
 
+/**
+ * True if this shop item id would actually render on the new PNG character
+ * when equipped. Background items have no character-catalog entry at all
+ * (they recolor the room, not the character), so they're always considered
+ * supported — only hair/outfit/accessory can be "pending". This is the one
+ * shared place that answers "is this shop item PNG-ready" from a raw item
+ * id — the shop (badge + purchase gate) and any future consumer must call
+ * this instead of re-deriving the check, so the rule never drifts out of
+ * sync with `SUPPORTED_COSMETIC_ASSET_KEYS`.
+ */
+export function isShopItemPngSupported(itemId: string): boolean {
+  const entry = findCatalogEntry(itemId)
+  if (!entry) return true
+  return SUPPORTED_COSMETIC_ASSET_KEYS.has(entry.assetKey)
+}
+
 export interface SpriteUsabilityInput {
   spriteAssetsAvailable: boolean
   /** True once a real base image failed to load at runtime this session —
-   * a defense-in-depth signal on top of the static registries below. */
+   * the only thing (besides gender/state coverage) that's still allowed to
+   * fall back to the SVG renderer. */
   spriteLoadFailed: boolean
   gender: Gender
   state: CharacterState
+  /** Kept in the input shape for callers/future use, but no longer part of
+   * this decision — see the note below. */
   cosmeticEntries: CharacterAssetDefinition[]
 }
 
@@ -107,19 +130,22 @@ export interface SpriteUsabilityInput {
  * component logic) so every branch is independently testable — this
  * project has no component-rendering test harness, only pure-function
  * tests, so the decision itself has to be a pure function to be covered.
+ *
+ * Deliberately does NOT check `allCosmeticsSupported(cosmeticEntries)`
+ * anymore — an unsupported hair/outfit/accessory must never swap the
+ * user's entire character to a visually different art style (that was the
+ * exact bug: equipping any of the 9 real shop items flipped every screen
+ * from the new PNG dot character to the old SVG chibi at once). The new PNG
+ * body is StudyLog's one and only default look; an unsupported item is
+ * instead silently omitted by `PixelSpriteRenderer`'s own per-layer skip
+ * (character/engine/spriteSupport.ts's `allCosmeticsSupported` / `SUPPORTED_COSMETIC_ASSET_KEYS`
+ * still back that skip and the shop's "새 캐릭터 대응 준비 중" badge).
  */
 export function shouldUseSprites({
   spriteAssetsAvailable,
   spriteLoadFailed,
   gender,
   state,
-  cosmeticEntries,
 }: SpriteUsabilityInput): boolean {
-  return (
-    spriteAssetsAvailable &&
-    !spriteLoadFailed &&
-    BASE_SPRITE_GENDERS.has(gender) &&
-    BASE_SPRITE_STATES.has(state) &&
-    allCosmeticsSupported(cosmeticEntries)
-  )
+  return spriteAssetsAvailable && !spriteLoadFailed && BASE_SPRITE_GENDERS.has(gender) && BASE_SPRITE_STATES.has(state)
 }

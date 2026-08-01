@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CharacterView } from '../../character/components/CharacterView'
+import { isShopItemPngSupported } from '../../character/engine/spriteSupport'
 import { useMyAvatarAppearance } from '../../hooks/useMyAvatarAppearance'
 import { useProfileStore } from '../../store/profileStore'
 import { usePointsStore } from '../../store/pointsStore'
@@ -91,6 +92,10 @@ export function AvatarShop() {
         {categoryItems.map((item) => {
           const owned = ownedItemIds.includes(item.id)
           const isEquipped = equipped[item.category] === item.id
+          // Shown regardless of owned/equipped — cash items exist, so a
+          // buyer must see this BEFORE purchasing, not only after equipping
+          // (character/engine/spriteSupport.ts is the single source of truth).
+          const isPngSupported = isShopItemPngSupported(item.id)
           return (
             <div
               key={item.id}
@@ -103,8 +108,16 @@ export function AvatarShop() {
               <span className="font-pixel text-[10px] text-ink-soft">
                 {item.priceType === 'points' ? `${item.price}P` : `₩${item.price.toLocaleString()}`}
               </span>
+              {!isPngSupported && (
+                <span className="font-cute text-[9px] px-2 py-0.5 rounded-full bg-ink/10 text-ink-soft text-center">
+                  새 캐릭터 대응 준비 중
+                </span>
+              )}
 
               {owned ? (
+                // Already-owned items stay fully equippable/unequippable
+                // regardless of PNG support — nothing about owned purchase
+                // or equip data is ever blocked, only NEW purchases are.
                 <button
                   type="button"
                   onClick={() => (isEquipped ? unequipCategory(item.category) : equipItem(item.id))}
@@ -119,7 +132,7 @@ export function AvatarShop() {
                   type="button"
                   onClick={() => handleBuy(item.id, item.priceType)}
                   disabled={
-                    checkoutLoading || (item.priceType === 'points' && balance < item.price)
+                    checkoutLoading || !isPngSupported || (item.priceType === 'points' && balance < item.price)
                   }
                   className="font-cute text-[11px] px-3 py-1 rounded-full bg-pastel-lavender text-ink w-full disabled:opacity-50"
                 >
