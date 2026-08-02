@@ -29,7 +29,14 @@ export function CharacterRoomCard({ state, gender, appearance, level, speech }: 
         className="relative w-full rounded-[24px] shadow-lg overflow-hidden"
         style={{ height: 'clamp(300px, 46dvh, 460px)' }}
       >
-        <RoomScene state={state} gender={gender} appearance={appearance} level={level} characterScale={1.3} />
+        <RoomScene
+          state={state}
+          gender={gender}
+          appearance={appearance}
+          level={level}
+          characterScale={1.3}
+          preferFullScene
+        />
       </div>
     </div>
   )

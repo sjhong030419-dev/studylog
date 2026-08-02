@@ -3,6 +3,7 @@ import { LegacySvgRoomRenderer } from './LegacySvgRoomRenderer'
 import { PixelRoomRenderer } from './PixelRoomRenderer'
 import { FullSceneRoomRenderer } from './FullSceneRoomRenderer'
 import { shouldUsePixelRoom } from './roomThemeSupport'
+import { shouldUseFullScene } from './fullSceneState'
 import type { RoomThemeId } from './roomAssetManifest'
 import type { CharacterAppearance, CharacterState, Gender } from '../types'
 
@@ -20,6 +21,14 @@ interface RoomSceneProps {
    * (CharacterRoomCard) so the character reads clearly as the screen's
    * focal point without resizing the character anywhere else. */
   characterScale?: number
+  /** Opts into trying FullSceneRoomRenderer first (see the dispatch order
+   * below). Defaults to false. FullSceneRoomRenderer ignores
+   * `appearance`/`level`/`animated`, so only callers that don't need those
+   * respected should set this — today that's just CharacterRoomCard (Home's
+   * timer screen). LogCaptureCard's share card must keep showing equipped
+   * cosmetics and its animated=false still frame, so it deliberately never
+   * passes this prop. */
+  preferFullScene?: boolean
 }
 
 /** The only approved pixel room concept today (docs/assets/study-room-approved-v1.png,
@@ -32,10 +41,10 @@ const ACTIVE_THEME_ID: RoomThemeId = 'default-night'
  * Public entry point for the study room scene — every screen that shows the
  * room (Home's CharacterRoomCard, the result share card via LogCaptureCard)
  * keeps calling this exact component with this exact prop shape. Internally
- * it now dispatches between three renderers, in this priority order:
+ * it dispatches between three renderers:
  *
  *   RoomScene
- *    ├─ FullSceneRoomRenderer (public/sprites/room/default-night/scenes/ — current visual MVP)
+ *    ├─ FullSceneRoomRenderer (public/sprites/room/default-night/scenes/ — current visual MVP, opt-in only)
  *    ├─ PixelRoomRenderer     (docs/StudyLog_Pixel_Room_Asset_Spec_v1.0.md — layered PNGs, future customization path)
  *    └─ LegacySvgRoomRenderer (docs/character-system.md §6 — the existing procedural SVG room, final safety net)
  *
@@ -44,8 +53,13 @@ const ACTIVE_THEME_ID: RoomThemeId = 'default-night'
  * equipped cosmetics, background shop items, and level-unlocked furniture
  * (plant/cat) are not visually reflected while it's active. That data is
  * still stored and applied everywhere else in the app; only this renderer's
- * *display* doesn't show it yet. If its image 404s, `onError` permanently
- * falls back to the layered/legacy pair below for this mounted instance —
+ * *display* doesn't show it yet. Because of that gap, it's gated behind the
+ * `preferFullScene` prop (default false, see `shouldUseFullScene`) rather
+ * than always running — only CharacterRoomCard (Home's timer screen) opts
+ * in; LogCaptureCard's share card does not, so it keeps rendering through
+ * the layered/legacy pair below and still shows equipped cosmetics. If
+ * FullSceneRoomRenderer's image 404s, `onError` permanently falls back to
+ * that same layered/legacy pair for this mounted instance —
  * `shouldUsePixelRoom` is false for every theme today (no real layer PNGs
  * exist yet — roomThemeSupport.ts CONFIRMED_ROOM_LAYER_IDS is empty), so
  * that fallback lands on LegacySvgRoomRenderer in practice.
@@ -54,7 +68,12 @@ export function RoomScene(props: RoomSceneProps) {
   const [pixelRoomLoadFailed, setPixelRoomLoadFailed] = useState(false)
   const [fullSceneLoadFailed, setFullSceneLoadFailed] = useState(false)
 
-  if (!fullSceneLoadFailed) {
+  const usesFullScene = shouldUseFullScene({
+    preferFullScene: props.preferFullScene ?? false,
+    fullSceneLoadFailed,
+  })
+
+  if (usesFullScene) {
     return (
       <FullSceneRoomRenderer
         state={props.state}
