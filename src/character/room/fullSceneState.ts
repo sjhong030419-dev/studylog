@@ -43,3 +43,25 @@ export interface ShouldUseFullSceneInput {
 export function shouldUseFullScene({ preferFullScene, fullSceneLoadFailed }: ShouldUseFullSceneInput): boolean {
   return preferFullScene && !fullSceneLoadFailed
 }
+
+export type FullSceneSwapDecision =
+  | { kind: 'unchanged' }
+  | { kind: 'swap-immediately' }
+  | { kind: 'load-then-swap' }
+
+/**
+ * The decision FullSceneRoomRenderer's image-swap effect makes on every
+ * run — pulled out as a pure function so "an unrelated parent re-render
+ * must never restart an in-flight image load" (the exact bug this fixes:
+ * StudyTimer re-renders every second, and an unstable `onError` reference
+ * used to be a dependency of that effect) has a regression guard that
+ * doesn't require a DOM-rendering test harness. `currentTarget` and
+ * `nextTarget` come from `scenePath(gender, scene)` — when they're equal,
+ * the caller changed for a reason OTHER than gender/state (e.g. `onError`
+ * identity, or the effect's own prior `setDisplaySrc` call) and nothing
+ * should happen. */
+export function resolveFullSceneSwap(currentTarget: string, nextTarget: string, isPreloaded: boolean): FullSceneSwapDecision {
+  if (nextTarget === currentTarget) return { kind: 'unchanged' }
+  if (isPreloaded) return { kind: 'swap-immediately' }
+  return { kind: 'load-then-swap' }
+}

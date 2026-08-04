@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { LegacySvgRoomRenderer } from './LegacySvgRoomRenderer'
 import { PixelRoomRenderer } from './PixelRoomRenderer'
 import { FullSceneRoomRenderer } from './FullSceneRoomRenderer'
@@ -68,6 +68,22 @@ export function RoomScene(props: RoomSceneProps) {
   const [pixelRoomLoadFailed, setPixelRoomLoadFailed] = useState(false)
   const [fullSceneLoadFailed, setFullSceneLoadFailed] = useState(false)
 
+  // useCallback (not an inline arrow) so these stay referentially stable
+  // across renders — setState setters from useState are themselves stable,
+  // so an empty dependency array is correct and these never change identity
+  // for the component's lifetime. This matters because StudyTimer re-renders
+  // every second while the timer runs: an inline `() => setX(true)` handed
+  // to FullSceneRoomRenderer would get a fresh identity on every one of
+  // those ticks, and used to be a dependency of its image-swap effect,
+  // which could tear down and restart an in-flight image load before a
+  // slow fetch ever finished. FullSceneRoomRenderer no longer depends on
+  // this identity for that effect either (see its own comment), but keeping
+  // both callbacks stable here is the correct fix at the source, and it
+  // benefits PixelRoomRenderer's callback the same way even though nothing
+  // has reported a matching bug there yet.
+  const handleFullSceneError = useCallback(() => setFullSceneLoadFailed(true), [])
+  const handlePixelRoomError = useCallback(() => setPixelRoomLoadFailed(true), [])
+
   const usesFullScene = shouldUseFullScene({
     preferFullScene: props.preferFullScene ?? false,
     fullSceneLoadFailed,
@@ -78,7 +94,7 @@ export function RoomScene(props: RoomSceneProps) {
       <FullSceneRoomRenderer
         state={props.state}
         gender={props.gender ?? 'boy'}
-        onError={() => setFullSceneLoadFailed(true)}
+        onError={handleFullSceneError}
       />
     )
   }
@@ -95,7 +111,7 @@ export function RoomScene(props: RoomSceneProps) {
         level={props.level}
         animated={props.animated}
         characterScale={props.characterScale}
-        onCriticalLayerError={() => setPixelRoomLoadFailed(true)}
+        onCriticalLayerError={handlePixelRoomError}
       />
     )
   }

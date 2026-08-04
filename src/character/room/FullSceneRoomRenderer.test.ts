@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveFullSceneName, shouldUseFullScene } from './fullSceneState'
+import { resolveFullSceneName, resolveFullSceneSwap, shouldUseFullScene } from './fullSceneState'
 import type { CharacterState } from '../types'
 
 describe('resolveFullSceneName', () => {
@@ -38,5 +38,26 @@ describe('shouldUseFullScene (scoping — fixes: RoomScene used to always try Fu
 
   it('stays false for a non-opted-in caller regardless of load-failure state', () => {
     expect(shouldUseFullScene({ preferFullScene: false, fullSceneLoadFailed: true })).toBe(false)
+  })
+})
+
+describe('resolveFullSceneSwap (fixes: an ancestor re-render with no real gender/state change used to restart an in-flight image load)', () => {
+  const BOY_IDLE = '/sprites/room/default-night/scenes/boy/idle.webp'
+  const BOY_STUDY = '/sprites/room/default-night/scenes/boy/study.webp'
+
+  it('is a no-op when the target is already the current display target', () => {
+    // This is the exact case StudyTimer's once-a-second re-render used to
+    // break: gender/state haven't changed, so currentTarget === nextTarget,
+    // and nothing should restart — regardless of why the effect re-ran.
+    expect(resolveFullSceneSwap(BOY_IDLE, BOY_IDLE, false)).toEqual({ kind: 'unchanged' })
+    expect(resolveFullSceneSwap(BOY_IDLE, BOY_IDLE, true)).toEqual({ kind: 'unchanged' })
+  })
+
+  it('swaps immediately when the new target is already preloaded', () => {
+    expect(resolveFullSceneSwap(BOY_IDLE, BOY_STUDY, true)).toEqual({ kind: 'swap-immediately' })
+  })
+
+  it('requires a background load when the new target has not been preloaded yet', () => {
+    expect(resolveFullSceneSwap(BOY_IDLE, BOY_STUDY, false)).toEqual({ kind: 'load-then-swap' })
   })
 })
