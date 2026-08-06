@@ -59,8 +59,8 @@ export function PixelRoomRenderer({
   const [failedIds, setFailedIds] = useState<Set<string>>(new Set())
 
   const layers = useMemo(
-    () => resolveActiveLayers(themeId, { level, equippedShopItemIds }),
-    [themeId, level, equippedShopItemIds],
+    () => resolveActiveLayers(themeId, { level, equippedShopItemIds, state }),
+    [themeId, level, equippedShopItemIds, state],
   )
 
   const byGroup = useMemo(() => {

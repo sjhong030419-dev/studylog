@@ -44,26 +44,26 @@ describe('isRoomThemeReady (no real PNGs exist yet, so every theme must be unrea
 
 describe('resolveActiveLayers', () => {
   it('excludes plant/cat below their level thresholds', () => {
-    const layers = resolveActiveLayers('default-night', { level: 5, equippedShopItemIds: [] })
+    const layers = resolveActiveLayers('default-night', { level: 5, equippedShopItemIds: [], state: 'idle' })
     expect(layers.find((l) => l.id === 'plant')).toBeUndefined()
     expect(layers.find((l) => l.id === 'cat')).toBeUndefined()
     expect(layers.find((l) => l.id === 'background')).toBeDefined()
   })
 
   it('includes plant at Lv10 but not cat yet', () => {
-    const layers = resolveActiveLayers('default-night', { level: 10, equippedShopItemIds: [] })
+    const layers = resolveActiveLayers('default-night', { level: 10, equippedShopItemIds: [], state: 'idle' })
     expect(layers.find((l) => l.id === 'plant')).toBeDefined()
     expect(layers.find((l) => l.id === 'cat')).toBeUndefined()
   })
 
   it('includes both plant and cat at Lv20', () => {
-    const layers = resolveActiveLayers('default-night', { level: 20, equippedShopItemIds: [] })
+    const layers = resolveActiveLayers('default-night', { level: 20, equippedShopItemIds: [], state: 'idle' })
     expect(layers.find((l) => l.id === 'plant')).toBeDefined()
     expect(layers.find((l) => l.id === 'cat')).toBeDefined()
   })
 
   it('returns layers sorted ascending by zIndex', () => {
-    const layers = resolveActiveLayers('default-night', { level: 100, equippedShopItemIds: [] })
+    const layers = resolveActiveLayers('default-night', { level: 100, equippedShopItemIds: [], state: 'idle' })
     const zIndexes = layers.map((l) => l.zIndex)
     expect(zIndexes).toEqual([...zIndexes].sort((a, b) => a - b))
   })
@@ -80,7 +80,7 @@ describe('resolveActiveLayers', () => {
       shopItemId: 'room-prop-test',
     }
     const withGatedLayer: Record<RoomThemeId, RoomLayerAsset[]> = {
-      'default-night': [...resolveActiveLayers('default-night', { level: 1, equippedShopItemIds: [] }), syntheticLayer],
+      'default-night': [...resolveActiveLayers('default-night', { level: 1, equippedShopItemIds: [], state: 'idle' }), syntheticLayer],
     }
     const notEquipped = withGatedLayer['default-night'].filter(
       (l) => l.shopItemId === undefined || ['nothing-equipped'].includes(l.shopItemId),
@@ -91,6 +91,22 @@ describe('resolveActiveLayers', () => {
       (l) => l.shopItemId === undefined || ['room-prop-test'].includes(l.shopItemId),
     )
     expect(equipped.find((l) => l.id === 'test-only-prop')).toBeDefined()
+  })
+
+  describe('desk-front vs desk-front-study (fixes: study\'s baked-in desk art would double up with the room\'s own desk-front)', () => {
+    it('uses the shared desk-front for every non-study state', () => {
+      for (const state of ['idle', 'sleep', 'happy'] as const) {
+        const layers = resolveActiveLayers('default-night', { level: 1, equippedShopItemIds: [], state })
+        expect(layers.find((l) => l.id === 'desk-front')).toBeDefined()
+        expect(layers.find((l) => l.id === 'desk-front-study')).toBeUndefined()
+      }
+    })
+
+    it('swaps to desk-front-study, and only that, while studying', () => {
+      const layers = resolveActiveLayers('default-night', { level: 1, equippedShopItemIds: [], state: 'study' })
+      expect(layers.find((l) => l.id === 'desk-front-study')).toBeDefined()
+      expect(layers.find((l) => l.id === 'desk-front')).toBeUndefined()
+    })
   })
 })
 

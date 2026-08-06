@@ -1,4 +1,5 @@
 import { ROOM_ASSET_MANIFEST, type RoomLayerAsset, type RoomThemeId } from './roomAssetManifest'
+import type { CharacterState } from '../types'
 
 /**
  * Explicit capability registry for the real pixel room pipeline
@@ -70,20 +71,31 @@ export interface ResolveActiveLayersInput {
    * optional `shopItemId` gate. No real layer uses this field yet (see
    * roomAssetManifest.ts) — passing an empty array is correct today. */
   equippedShopItemIds: string[]
+  /** Current character state — checked against each layer's optional
+   * `excludeStates`/`onlyStates` gate (today only `desk-front` /
+   * `desk-front-study` use this, to avoid double-drawing a desk under the
+   * `study` sprite's own baked-in desk — see roomAssetManifest.ts). */
+  state: CharacterState
 }
 
 /** Every layer for `themeId` that should actually render right now — level
- * gate and shop-item gate both applied, sorted by zIndex ascending so a
- * naive DOM-order renderer would already stack correctly even without
- * relying on CSS z-index. Does NOT filter by CONFIRMED_ROOM_LAYER_IDS —
- * callers only reach this after `isRoomThemeReady` already gated the whole
- * theme, and PixelRoomRenderer still handles a per-layer runtime 404 via
- * onError, same as PixelSpriteRenderer does for cosmetics. */
-export function resolveActiveLayers(themeId: RoomThemeId, { level, equippedShopItemIds }: ResolveActiveLayersInput): RoomLayerAsset[] {
+ * gate, shop-item gate, and state gate all applied, sorted by zIndex
+ * ascending so a naive DOM-order renderer would already stack correctly
+ * even without relying on CSS z-index. Does NOT filter by
+ * CONFIRMED_ROOM_LAYER_IDS — callers only reach this after
+ * `isRoomThemeReady` already gated the whole theme, and PixelRoomRenderer
+ * still handles a per-layer runtime 404 via onError, same as
+ * PixelSpriteRenderer does for cosmetics. */
+export function resolveActiveLayers(
+  themeId: RoomThemeId,
+  { level, equippedShopItemIds, state }: ResolveActiveLayersInput,
+): RoomLayerAsset[] {
   const layers = ROOM_ASSET_MANIFEST[themeId] ?? []
   return layers
     .filter((layer) => layer.minLevel === undefined || level >= layer.minLevel)
     .filter((layer) => layer.shopItemId === undefined || equippedShopItemIds.includes(layer.shopItemId))
+    .filter((layer) => layer.excludeStates === undefined || !layer.excludeStates.includes(state))
+    .filter((layer) => layer.onlyStates === undefined || layer.onlyStates.includes(state))
     .slice()
     .sort((a, b) => a.zIndex - b.zIndex)
 }
