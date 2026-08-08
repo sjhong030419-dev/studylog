@@ -176,7 +176,7 @@ function assetPath(theme: RoomThemeId, file: string): string {
 
 /**
  * The 15 baseline `default-night` layers (requirement #2) plus 1 planned,
- * shop-gated desk-prop layer (16 total), grouped and z-ordered per the
+ * shop-gated desk prop and study-only tool/hand layers (18 total), grouped and z-ordered per the
  * 6-stage pipeline. `minLevel` on plant/cat mirrors the exact thresholds
  * already used by the SVG room's GROWTH_STAGES (level 10 / 20) so switching
  * renderers never changes when furniture unlocks. None of these files exist
@@ -205,6 +205,11 @@ export const ROOM_ASSET_MANIFEST: Record<RoomThemeId, RoomLayerAsset[]> = {
     { id: 'books', group: 'deskFront', src: assetPath('default-night', 'books.png'), zIndex: 32 },
     { id: 'mug', group: 'deskFront', src: assetPath('default-night', 'mug.png'), zIndex: 33 },
     { id: 'stationery', group: 'deskFront', src: assetPath('default-night', 'stationery.png'), zIndex: 34 },
+    // Study-only depth sandwich: character body/outfit (z20) -> notebook
+    // (z21) -> pencil + redrawn hands (z22) -> desk front (z29). This keeps
+    // the notebook visible without painting over the fingers.
+    { id: 'study-tools', group: 'deskFront', src: assetPath('default-night', 'study-tools.png'), zIndex: 21, onlyStates: ['study'] },
+    { id: 'study-hands', group: 'deskFront', src: assetPath('default-night', 'study-hands.png'), zIndex: 22, onlyStates: ['study'] },
 
     // First-vertical-slice desk prop (docs/First_Vertical_Slice_Asset_Request.md,
     // docs/StudyLog_Asset_Layer_Spec_v1.0.md §6 "room-items/desk-prop/").

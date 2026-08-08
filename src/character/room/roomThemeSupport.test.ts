@@ -11,7 +11,7 @@ import type { RoomLayerAsset, RoomThemeId } from './roomAssetManifest'
 
 describe('delivered default-night room art', () => {
   it('has all real room layer files confirmed while avatar composition stays gated', () => {
-    expect(CONFIRMED_ROOM_LAYER_IDS['default-night']?.size).toBe(16)
+    expect(CONFIRMED_ROOM_LAYER_IDS['default-night']?.size).toBe(18)
     expect(isRoomThemeReady('default-night')).toBe(true)
     expect(ROOM_AVATAR_COMPOSITION_READY).toBe(false)
   })

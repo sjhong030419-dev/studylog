@@ -30,6 +30,8 @@ export const CONFIRMED_ROOM_LAYER_IDS: Partial<Record<RoomThemeId, ReadonlySet<s
     'books',
     'mug',
     'stationery',
+    'study-tools',
+    'study-hands',
     'desk-prop-plant-pot',
     'plant',
     'cat',

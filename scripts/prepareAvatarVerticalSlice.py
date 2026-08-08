@@ -11,6 +11,8 @@ SOURCE_DIR = ROOT / "docs" / "assets" / "cosmetic-sources" / "v2"
 OUTPUT_ROOT = ROOT / "public" / "sprites" / "avatar-layers"
 PREVIEW_DIR = ROOT / "docs" / "assets" / "cosmetic-drafts" / "v2" / "girl" / "study"
 LEGACY_DRAFT_DIR = ROOT / "docs" / "assets" / "cosmetic-drafts" / "v1" / "girl" / "study"
+ROOM_SOURCE_V2 = ROOT / "docs" / "assets" / "room-layer-sources" / "v2"
+COSMETIC_SOURCE_V3 = ROOT / "docs" / "assets" / "cosmetic-sources" / "v3"
 CANVAS_SIZE = (160, 160)
 SOURCE_CROP = (127, 100, 1127, 1100)
 ROOM_ALIGNMENT_OFFSET_Y = 8
@@ -90,6 +92,49 @@ def align_existing_layer(
     return aligned
 
 
+def place_isolated_asset(source: Image.Image, box: tuple[int, int, int, int]) -> Image.Image:
+    alpha_box = source.getchannel("A").getbbox()
+    if alpha_box is None:
+        raise ValueError("Isolated avatar source has no visible pixels")
+    cropped = source.crop(alpha_box)
+    x0, y0, x1, y1 = box
+    scale = min((x1 - x0) / cropped.width, (y1 - y0) / cropped.height)
+    fitted = cropped.resize(
+        (max(1, round(cropped.width * scale)), max(1, round(cropped.height * scale))),
+        Image.Resampling.NEAREST,
+    )
+    layer = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
+    x = x0 + ((x1 - x0) - fitted.width) // 2
+    y = y1 - fitted.height
+    layer.alpha_composite(fitted, (x, y))
+    return layer
+
+
+def generated_study_hands_layer() -> Image.Image:
+    sheet = Image.open(COSMETIC_SOURCE_V3 / "study-hands-sheet-alpha.png").convert("RGBA")
+    half = sheet.width // 2
+    # Match the approved chibi proportions: the hands must read clearly at
+    # room scale without becoming larger than the character's cheeks.
+    left_hand = place_isolated_asset(sheet.crop((0, 0, half, sheet.height)), (39, 109, 70, 145))
+    right_hand = place_isolated_asset(sheet.crop((half, 0, sheet.width, sheet.height)), (96, 123, 118, 146))
+    return Image.alpha_composite(left_hand, right_hand)
+
+
+def soften_double_neckline(base: Image.Image) -> Image.Image:
+    """Remove the source master's second dark neck stripe.
+
+    Garment collars supply the visible lower neckline. Keeping the original
+    full-width body outline underneath made it read as a brown choker after
+    the avatar was enlarged inside the room.
+    """
+    result = base.copy()
+    pixels = result.load()
+    for y in range(97, 100):
+        for x in range(68, 89):
+            pixels[x, y] = pixels[x, 95]
+    return result
+
+
 def connected_components(mask: set[tuple[int, int]]) -> list[set[tuple[int, int]]]:
     remaining = set(mask)
     components: list[set[tuple[int, int]]] = []
@@ -142,7 +187,15 @@ def extract_hair_layer(target: Image.Image, bare: Image.Image) -> Image.Image:
                 is_skin = red > 175 and green > 125 and blue > 95
                 if not is_skin:
                     outline.add((nx, ny))
-    return render_masked(target, outline)
+    layer = render_masked(target, outline)
+    # A brown neckline from the composite source is connected to the hair at
+    # this resolution. It is not hair and otherwise becomes a visible choker
+    # when layered over the base body.
+    layer_pixels = layer.load()
+    for y in range(92, 104):
+        for x in range(66, 93):
+            layer_pixels[x, y] = (0, 0, 0, 0)
+    return layer
 
 
 def extract_outfit_layer(target: Image.Image, reference: Image.Image) -> Image.Image:
@@ -150,7 +203,7 @@ def extract_outfit_layer(target: Image.Image, reference: Image.Image) -> Image.I
     alpha = target.getchannel("A").load()
     difference = ImageChops.difference(target.convert("RGB"), reference.convert("RGB")).convert("L").load()
     outfit: set[tuple[int, int]] = set()
-    for y in range(86, 150):
+    for y in range(75, 150):
         for x in range(CANVAS_SIZE[0]):
             if not alpha[x, y] or difference[x, y] < 24:
                 continue
@@ -164,7 +217,7 @@ def extract_outfit_layer(target: Image.Image, reference: Image.Image) -> Image.I
     # large connected components (torso, sleeves, blouse, ribbon).
     kept: set[tuple[int, int]] = set()
     for component in connected_components(outfit):
-        if len(component) >= 5:
+        if len(component) >= 5 and any(y >= 90 for _, y in component):
             kept.update(component)
     return render_masked(target, kept)
 
@@ -179,12 +232,14 @@ def save_layer(layer: Image.Image, relative_path: str) -> None:
 def main() -> None:
     PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
 
-    bare = normalize("girl-study-bare-chroma.png")
+    bare_without_pencil = soften_double_neckline(normalize("girl-study-bare-chroma.png"))
+    bare = bare_without_pencil
+    hand_front = generated_study_hands_layer()
     hair_composite = normalize("girl-study-default-hair-composite-chroma.png")
     default_composite = normalize("girl-study-default-outfit-composite-chroma.png")
     hoodie_composite = normalize("girl-study-hoodie-composite-chroma.png")
 
-    hair_front = extract_hair_layer(hair_composite, bare)
+    hair_front = extract_hair_layer(hair_composite, bare_without_pencil)
     hair_back = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
     default_outfit = extract_outfit_layer(default_composite, hair_composite)
     hoodie = extract_outfit_layer(hoodie_composite, hair_composite)
@@ -201,9 +256,14 @@ def main() -> None:
     save_layer(glasses, "face-accessory/glasses/girl/study.png")
     save_layer(headphones, "head-accessory/headphones/girl/study.png")
 
+    room_hand_layer = Image.new("RGBA", (640, 800), (0, 0, 0, 0))
+    room_hand_layer.alpha_composite(hand_front.resize((360, 360), Image.Resampling.NEAREST), (140, 128))
+    room_hand_layer.save(ROOT / "public" / "sprites" / "room" / "default-night" / "study-hands.png", format="PNG")
+
     default_character = Image.alpha_composite(Image.alpha_composite(bare, hair_front), default_outfit)
     hoodie_character = Image.alpha_composite(Image.alpha_composite(bare, hair_front), hoodie)
     previews = {
+        "study-hands.png": hand_front,
         "bare.png": bare,
         "default-hair.png": Image.alpha_composite(bare, hair_front),
         "default-outfit.png": default_character,
@@ -226,6 +286,8 @@ def main() -> None:
         rendered_character = character.resize((360, 360), Image.Resampling.NEAREST)
         scene.alpha_composite(rendered_character, (140, 128))
         for layer_name in (
+            "study-tools.png",
+            "study-hands.png",
             "desk-front-study.png",
             "lamp.png",
             "books.png",

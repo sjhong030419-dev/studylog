@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw, ImageOps
 # is from the repository root), while retaining a safe direct-run fallback.
 ROOT = Path.cwd() if (Path.cwd() / "package.json").exists() else Path(__file__).resolve().parents[1]
 SOURCE_DIR = ROOT / "docs" / "assets" / "room-layer-sources" / "v1"
+SOURCE_DIR_V2 = ROOT / "docs" / "assets" / "room-layer-sources" / "v2"
 OUTPUT_DIR = ROOT / "public" / "sprites" / "room" / "default-night"
 PREVIEW_DIR = ROOT / "docs" / "assets" / "room-layer-drafts" / "v1"
 CANVAS_SIZE = (640, 800)
@@ -56,6 +57,11 @@ def sheet_quadrant(source: Image.Image, column: int, row: int) -> Image.Image:
             (row + 1) * cell_height,
         )
     )
+
+
+def sheet_half(source: Image.Image, column: int) -> Image.Image:
+    half_width = source.width // 2
+    return source.crop((column * half_width, 0, (column + 1) * half_width, source.height))
 
 
 def harden_pixel_alpha(source: Image.Image, cutoff: int = 150) -> Image.Image:
@@ -177,6 +183,15 @@ def main() -> None:
     prepared_layers["foreground.png"] = foreground
     print(f"Wrote {OUTPUT_DIR / 'lamp-glow.png'} ({lamp_glow.width}x{lamp_glow.height}, {lamp_glow.mode})")
     print(f"Wrote {OUTPUT_DIR / 'foreground.png'} ({foreground.width}x{foreground.height}, {foreground.mode})")
+
+    study_sheet = Image.open(SOURCE_DIR_V2 / "study-tools-sheet-alpha.png").convert("RGBA")
+    study_tools = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
+    # The notebook sits below the dedicated study-hands layer. The pencil is
+    # already held by that layer, so do not draw it again here.
+    study_tools.alpha_composite(place_object(sheet_half(study_sheet, 0), (255, 448, 385, 505)))
+    study_tools.save(OUTPUT_DIR / "study-tools.png", format="PNG")
+    prepared_layers["study-tools.png"] = study_tools
+    print(f"Wrote {OUTPUT_DIR / 'study-tools.png'} ({study_tools.width}x{study_tools.height}, {study_tools.mode})")
 
     composite = background.copy()
     for name in ("rug.png", "window-night.png", "shelf.png", "desk-back.png"):
