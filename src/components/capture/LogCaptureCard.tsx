@@ -244,12 +244,13 @@ export function LogCaptureCard() {
         )}
       </div>
 
-      {/* 1. 카드 헤더(브랜드/날짜) -> 2. 캐릭터 씬 -> 3. 오늘 공부시간 -> 4. 하이라이트 카드
-          -> 5. 과목별 -> 6. 배지 -> 7. 한 줄 메모 -> 8. 큰 공유 버튼(카드 밖) */}
+      {/* 1. 카드 헤더(브랜드/날짜) -> 2. 캐릭터 씬 -> 2b. 레벨 배지/메시지(씬 아래,
+          겹치지 않는 별도 영역) -> 3. 오늘 공부시간 -> 4. 하이라이트 카드
+          -> 5. 과목별 -> 6. 배지(9:16만) -> 7. 한 줄 메모 -> 8. 큰 공유 버튼(카드 밖) */}
       <div
         ref={cardRef}
         className={`w-[320px] ${RATIO_CLASS[ratio]} rounded-3xl overflow-hidden flex flex-col relative ${
-          compact ? 'px-3 py-2 gap-0.5' : 'px-4 py-4 gap-2'
+          compact ? 'px-3 py-2 gap-0.5' : 'px-4 py-3 gap-1.5'
         }`}
         style={{ background: 'linear-gradient(165deg, #efe5ff 0%, #f4e5f5 35%, #e2edff 70%, #dff5ff 100%)' }}
       >
@@ -267,31 +268,46 @@ export function LogCaptureCard() {
 
         <CaptureCardVisualHeader dateLabel={formatDate()} />
 
-        {/* 2. 캐릭터 씬 — 세로 공간의 40~45% (가장 중요한 영역, 압축 대상 아님) */}
+        {/* 2. 캐릭터 씬 — 가장 중요한 영역이지만, 레벨 배지가 더는 씬 위에 겹쳐
+            그려지지 않고 아래 별도 flow 요소로 빠지면서 카드 전체 높이 예산에
+            새로 편입됐다. 정사각형 비율은 여유가 거의 없어(§14 필수 항목인
+            과목별 막대가 밀려 사라지는 회귀를 실측으로 확인) 압축 비율을 살짝
+            더 준다 — 9:16은 원래도 여유가 있어 42%를 그대로 유지. */}
         <div
           className="relative w-full rounded-2xl overflow-hidden shrink-0 shadow-md"
-          style={{ height: '42%', border: '1px solid rgba(255,255,255,0.6)' }}
+          style={{ height: compact ? '36%' : '42%', border: '1px solid rgba(255,255,255,0.6)' }}
         >
           {/* Static frame — animating a DOM that html-to-image is actively
               cloning/serializing makes capture unreliable (and a moving
               character makes no sense in a still shareable image anyway). */}
-          <RoomScene state="happy" gender={gender} appearance={appearance} level={level.level} animated={false} />
-          <div className="absolute top-2 left-2">
-            <CaptureExpBadge level={level.level} progressRatio={level.progressRatio} levelBefore={levelBeforeLastSession} />
-          </div>
-          <div
-            className="absolute top-2 right-2 max-w-[55%] rounded-xl px-2 py-1.5 shadow-sm"
-            style={{ background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(6px)' }}
-          >
-            {/* Clamped to one line in compact (square) mode — the 42%-tall
-                scene leaves little headroom, and a message that wraps to two
-                lines reaches down far enough to cover the character's face. */}
+          <RoomScene
+            state="happy"
+            gender={gender}
+            appearance={appearance}
+            level={level.level}
+            animated={false}
+            preferFullScene
+          />
+        </div>
+
+        {/* Capture metadata */}
+        {/* Keep metadata outside the artwork so the character remains fully
+            visible. Empty-state copy is omitted because 00:00 is sufficient. */}
+        <div className="flex items-center gap-2 min-w-0 shrink-0 px-0.5">
+          <CaptureExpBadge
+            level={level.level}
+            progressRatio={level.progressRatio}
+            levelBefore={levelBeforeLastSession}
+          />
+          {todayTotalSec > 0 && (
             <span
-              className={`font-cute text-ink text-[10px] leading-snug ${compact ? 'line-clamp-1' : ''}`}
+              className={`min-w-0 flex-1 font-cute text-ink text-[10px] leading-snug ${
+                compact ? 'line-clamp-1' : 'line-clamp-2'
+              }`}
             >
               {message}
             </span>
-          </div>
+          )}
         </div>
 
         {/* 3. 오늘 공부시간 */}
@@ -335,8 +351,11 @@ export function LogCaptureCard() {
           />
         </div>
 
-        {/* 6. 획득 배지 */}
-        <CaptureBadges achievements={achievements} compact={compact} />
+        {/* 6. 획득 배지 — 정사각형 비율에서는 메모/해시태그와 같은 이유로
+            생략한다: 레벨 배지 행이 더는 씬 위에 겹쳐 그려지지 않고 실제
+            높이를 차지하게 되면서, 배지까지 함께 표시하면 §14 필수 항목인
+            과목별 막대(flex-1)가 완전히 밀려 사라지는 걸 실측으로 확인했다. */}
+        {!compact && <CaptureBadges achievements={achievements} compact={compact} />}
 
         {/* 7. 한 줄 메모 — compact(정사각형) 카드는 이미 고정 높이 예산이 빠듯해서,
             메모까지 넣으면 flex-1인 과목별 막대(§14 필수 항목)가 밀려 사라진다.

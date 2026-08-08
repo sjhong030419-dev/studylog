@@ -8,9 +8,10 @@ interface CaptureExpBadgeProps {
   levelBefore?: number
 }
 
-/** Compact pink game-UI-style Lv/EXP bar, overlaid near the character
- * inside the scene — distinct from Home's HomeProgressHeader (lavender,
- * lives in its own card) per this card's own spec (pink, sits in-scene). */
+/** Compact pink game-UI-style Lv/EXP bar. Rendered in LogCaptureCard just
+ * below the character/room illustration (not overlaid on top of it, so it
+ * never covers the character's face) — distinct from Home's
+ * HomeProgressHeader (lavender, lives in its own card). */
 export function CaptureExpBadge({ level, progressRatio, levelBefore }: CaptureExpBadgeProps) {
   const percent = Math.round(Math.min(1, Math.max(0, progressRatio)) * 100)
 
