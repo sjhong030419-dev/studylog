@@ -68,13 +68,13 @@ export function CharacterView({
     [resolvedAppearance.equippedAssetIds],
   )
 
-  // Use the real PNG sprite only when the WHOLE look can be represented:
-  // the base image, the requested gender, the requested state, and every
-  // equipped cosmetic item all need real support. If any equipped
-  // hair/outfit/accessory has no PNG layer yet, fall back to the SVG
-  // renderer entirely — it already draws every cosmetic correctly — rather
-  // than rendering the new base without that item and making it silently
-  // disappear (docs/character-system.md §14).
+  // Uses the real PNG sprite whenever the base image is available for this
+  // gender/state — deliberately independent of which cosmetics are
+  // equipped (character/engine/spriteSupport.ts shouldUseSprites). An
+  // unsupported hair/outfit/accessory never falls the WHOLE character back
+  // to the SVG renderer; PixelSpriteRenderer instead omits just that one
+  // item's layer, so the user's look never flips art style depending on
+  // what happens to be equipped (docs/character-system.md "캐릭터 일관성").
   const useSprites = shouldUseSprites({
     spriteAssetsAvailable: SPRITE_ASSETS_AVAILABLE,
     spriteLoadFailed,

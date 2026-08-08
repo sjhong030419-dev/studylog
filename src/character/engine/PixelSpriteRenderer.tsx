@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react'
 import { resolveCatalogEntries } from '../catalog/items'
+import { resolveActiveBaseLayerDefaults } from '../catalog/baseLayers'
 import {
-  LAYER_TO_FOLDER,
+  CHARACTER_SLOT_TO_AVATAR_LAYER_FOLDER,
+  resolveBareBaseFramePath,
   resolveBaseFramePath,
-  resolveCosmeticFramePath,
+  resolveCosmeticLayerPath,
   resolveEffectFramePath,
   SLOT_TO_LAYER,
   SPRITE_CANVAS_SIZE,
   SPRITE_LAYER_ORDER,
   type SpriteLayer,
 } from './spriteManifest'
-import { SUPPORTED_COSMETIC_ASSET_KEYS, SUPPORTED_EFFECT_STATES } from './spriteSupport'
+import { shouldUseBareBase, SUPPORTED_COSMETIC_ASSET_KEYS, SUPPORTED_EFFECT_STATES } from './spriteSupport'
 import type { CharacterAppearance, CharacterState, Gender } from '../types'
 
 interface PixelSpriteRendererProps {
@@ -70,7 +72,17 @@ export function PixelSpriteRenderer({
       byLayer.set(img.layer, list)
     }
 
-    push({ key: 'base', layer: 'base', src: resolveBaseFramePath(gender, state, frame) })
+    // Bare base (character/engine/spriteSupport.ts shouldUseBareBase) is
+    // false for every gender today, so this always takes the existing
+    // baked-in-default base — zero change from before this file's Phase 2
+    // prep work. Once a gender's bare base + default-hair/default-outfit
+    // layers are all confirmed together, that gender switches here.
+    const useBareBase = shouldUseBareBase(gender)
+    push({
+      key: 'base',
+      layer: 'base',
+      src: useBareBase ? resolveBareBaseFramePath(gender, state) : resolveBaseFramePath(gender, state, frame),
+    })
 
     // This is now the ONLY place an unsupported cosmetic gets handled —
     // CharacterView mounts this renderer regardless of what's equipped (the
@@ -78,12 +90,30 @@ export function PixelSpriteRenderer({
     // real PNG layer is simply omitted here rather than causing the whole
     // character to fall back to the SVG renderer. Also means this component
     // never issues a network request for a file it already knows 404s.
+    const equippedLayersRendering = new Set<SpriteLayer>()
     for (const entry of cosmeticEntries) {
       if (!SUPPORTED_COSMETIC_ASSET_KEYS.has(entry.assetKey)) continue
       const layer = SLOT_TO_LAYER[entry.slot]
-      const folder = LAYER_TO_FOLDER[layer]
-      if (folder === 'hair' || folder === 'outfit' || folder === 'accessory') {
-        push({ key: entry.id, layer, src: resolveCosmeticFramePath(folder, entry.assetKey) })
+      const folder = CHARACTER_SLOT_TO_AVATAR_LAYER_FOLDER[entry.slot]
+      if (!folder) continue
+      equippedLayersRendering.add(layer)
+      push({ key: entry.id, layer, src: resolveCosmeticLayerPath(folder, entry.assetKey, gender, state) })
+    }
+
+    // BASE_LAYER_DEFAULTS (character/catalog/baseLayers.ts) are only ever
+    // attempted alongside the bare base — the legacy baked-in base already
+    // has its own default hair/outfit painted in, so stacking these on top
+    // of THAT would double-draw. resolveActiveBaseLayerDefaults skips a
+    // default whenever a real, supported cosmetic already renders into the
+    // same SpriteLayer (e.g. a confirmed outfit swap replaces
+    // default-outfit, never stacks under it).
+    if (useBareBase) {
+      for (const def of resolveActiveBaseLayerDefaults(equippedLayersRendering, SUPPORTED_COSMETIC_ASSET_KEYS)) {
+        push({
+          key: `default-${def.layer}`,
+          layer: def.layer,
+          src: resolveCosmeticLayerPath(def.folder, def.assetKey, gender, state),
+        })
       }
     }
 

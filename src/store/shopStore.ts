@@ -7,7 +7,11 @@ import { usePointsStore } from './pointsStore'
 export const AD_BONUS_POINTS = 5
 export const AD_DAILY_LIMIT = 3
 
-const SHOP_ITEMS: ShopItem[] = [
+// Exported (not just used internally) so the new cosmetic-domain adapter
+// (src/cosmetics/) can derive its catalog from the one real source of
+// truth without going through a React hook — this is a read-only export,
+// nothing about how the store itself uses this array changes.
+export const SHOP_ITEMS: ShopItem[] = [
   { id: 'hair-ribbon', category: 'hair', name: '리본 헤어핀', priceType: 'points', price: 30, emoji: '🎀' },
   { id: 'hair-straw', category: 'hair', name: '밀짚모자', priceType: 'points', price: 50, emoji: '👒' },
   { id: 'hair-cap', category: 'hair', name: '야구모자', priceType: 'cash', price: 1500, emoji: '🧢' },

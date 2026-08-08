@@ -175,13 +175,15 @@ function assetPath(theme: RoomThemeId, file: string): string {
 }
 
 /**
- * The 15-file `default-night` layer set (requirement #2), grouped and
- * z-ordered per the 6-stage pipeline. `minLevel` on plant/cat mirrors the
- * exact thresholds already used by the SVG room's GROWTH_STAGES (level 10 /
- * 20) so switching renderers never changes when furniture unlocks. None of
- * these files exist on disk yet (see roomThemeSupport.ts
- * CONFIRMED_ROOM_LAYER_IDS) — declaring the path here does not activate
- * anything.
+ * The 15 baseline `default-night` layers (requirement #2) plus 1 planned,
+ * shop-gated desk-prop layer (16 total), grouped and z-ordered per the
+ * 6-stage pipeline. `minLevel` on plant/cat mirrors the exact thresholds
+ * already used by the SVG room's GROWTH_STAGES (level 10 / 20) so switching
+ * renderers never changes when furniture unlocks. None of these files exist
+ * on disk yet (see roomThemeSupport.ts CONFIRMED_ROOM_LAYER_IDS) —
+ * declaring the path here does not activate anything, and the desk-prop
+ * entry's `shopItemId` isn't a real purchasable item yet either (see its
+ * own comment below).
  */
 export const ROOM_ASSET_MANIFEST: Record<RoomThemeId, RoomLayerAsset[]> = {
   'default-night': [
@@ -203,6 +205,19 @@ export const ROOM_ASSET_MANIFEST: Record<RoomThemeId, RoomLayerAsset[]> = {
     { id: 'books', group: 'deskFront', src: assetPath('default-night', 'books.png'), zIndex: 32 },
     { id: 'mug', group: 'deskFront', src: assetPath('default-night', 'mug.png'), zIndex: 33 },
     { id: 'stationery', group: 'deskFront', src: assetPath('default-night', 'stationery.png'), zIndex: 34 },
+
+    // First-vertical-slice desk prop (docs/First_Vertical_Slice_Asset_Request.md,
+    // docs/StudyLog_Asset_Layer_Spec_v1.0.md §6 "room-items/desk-prop/").
+    // `shopItemId` deliberately points at an id that does NOT exist in
+    // store/shopStore.ts's real SHOP_ITEMS — this layer can never actually
+    // render for a real user (resolveActiveLayers only shows a
+    // shopItemId-gated layer when it's in the caller's equippedShopItemIds,
+    // and no one can ever equip an id nothing sells). The manifest entry
+    // exists purely so the file path/z-index/gating mechanism is ready:
+    // once a real "desk-prop-plant-pot" shop item AND its PNG both exist,
+    // activation is (a) add the item to SHOP_ITEMS, (b) add 'desk-prop-plant-pot'
+    // to CONFIRMED_ROOM_LAYER_IDS['default-night'] — no renderer change.
+    { id: 'desk-prop-plant-pot', group: 'deskFront', src: assetPath('default-night', 'desk-prop-plant-pot.png'), zIndex: 35, shopItemId: 'desk-prop-plant-pot' },
 
     { id: 'plant', group: 'foreground', src: assetPath('default-night', 'plant.png'), zIndex: 40, minLevel: 10 },
     { id: 'cat', group: 'foreground', src: assetPath('default-night', 'cat.png'), zIndex: 41, minLevel: 20 },

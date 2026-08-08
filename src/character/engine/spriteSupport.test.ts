@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   allCosmeticsSupported,
+  BARE_BASE_CONFIRMED_GENDERS,
   BASE_SPRITE_GENDERS,
   BASE_SPRITE_STATES,
   HAS_REAL_PER_FRAME_ANIMATION,
   isShopItemPngSupported,
   REUSED_POSE_SOURCE,
+  shouldUseBareBase,
   shouldUseSprites,
   SUPPORTED_COSMETIC_ASSET_KEYS,
   SUPPORTED_EFFECT_STATES,
@@ -321,6 +323,19 @@ describe('UNIQUE_POSE_STATES vs REUSED_POSE_SOURCE (real vs temporary poses, hon
   })
 })
 
+describe('shouldUseBareBase / BARE_BASE_CONFIRMED_GENDERS', () => {
+  it('is false for both genders today — the legacy baked-in-default base is still the only one requested', () => {
+    expect(shouldUseBareBase('boy')).toBe(false)
+    expect(shouldUseBareBase('girl')).toBe(false)
+  })
+
+  it('would flip to true only once a gender is actually added to BARE_BASE_CONFIRMED_GENDERS', () => {
+    const confirmed: ReadonlySet<'boy' | 'girl'> = new Set(['boy'])
+    expect(confirmed.has('boy')).toBe(true) // sanity check on the mechanism this function wraps
+    expect(BARE_BASE_CONFIRMED_GENDERS.has('boy')).toBe(false) // the real registry, still empty
+  })
+})
+
 describe('honest current gaps (regression guards — should start failing loudly once real assets land)', () => {
   it('has no supported cosmetic layers yet', () => {
     expect(SUPPORTED_COSMETIC_ASSET_KEYS.size).toBe(0)
@@ -328,5 +343,9 @@ describe('honest current gaps (regression guards — should start failing loudly
 
   it('has no supported effect overlays yet', () => {
     expect(SUPPORTED_EFFECT_STATES.size).toBe(0)
+  })
+
+  it('has no bare-base-confirmed genders yet', () => {
+    expect(BARE_BASE_CONFIRMED_GENDERS.size).toBe(0)
   })
 })

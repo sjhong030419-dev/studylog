@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  CHARACTER_SLOT_TO_AVATAR_LAYER_FOLDER,
   LAYER_TO_FOLDER,
+  resolveBareBaseFramePath,
   resolveBaseFramePath,
-  resolveCosmeticFramePath,
+  resolveCosmeticLayerPath,
   resolveEffectFramePath,
   resolveFaceFramePath,
   SLOT_TO_LAYER,
@@ -27,12 +29,51 @@ describe('sprite path resolvers (public/sprites/avatar/ file naming contract)', 
     expect(resolveEffectFramePath('sleep', 0)).toBe('/sprites/avatar/effects/sleep_01.png')
   })
 
-  it('resolves a cosmetic frame path from its assetKey, defaulting to frame 1', () => {
-    expect(resolveCosmeticFramePath('hair', 'ribbon')).toBe('/sprites/avatar/hair/ribbon_01.png')
+  it('resolves a bare-base frame path under the new avatar-layers root, with no frame number', () => {
+    expect(resolveBareBaseFramePath('boy', 'study')).toBe('/sprites/avatar-layers/base/boy/study.png')
+  })
+})
+
+describe('resolveCosmeticLayerPath (docs/StudyLog_Asset_Layer_Spec_v1.0.md §5 — gender/state-aware, replaces the old flat resolveCosmeticFramePath)', () => {
+  it('resolves a real gender + state combination', () => {
+    expect(resolveCosmeticLayerPath('outfit', 'purple-hoodie', 'boy', 'study')).toBe(
+      '/sprites/avatar-layers/outfit/purple-hoodie/boy/study.png',
+    )
   })
 
-  it('resolves an explicit cosmetic frame index', () => {
-    expect(resolveCosmeticFramePath('outfit', 'hoodie', 1)).toBe('/sprites/avatar/outfit/hoodie_02.png')
+  it('accepts "unisex" in place of a specific gender for shared art', () => {
+    expect(resolveCosmeticLayerPath('head-accessory', 'ribbon', 'unisex', 'idle')).toBe(
+      '/sprites/avatar-layers/head-accessory/ribbon/unisex/idle.png',
+    )
+  })
+
+  it('resolves every declared folder', () => {
+    const folders = ['hair-back', 'outfit', 'hair-front', 'head-accessory', 'face-accessory', 'neck-accessory'] as const
+    for (const folder of folders) {
+      expect(resolveCosmeticLayerPath(folder, 'test-key', 'girl', 'happy')).toBe(
+        `/sprites/avatar-layers/${folder}/test-key/girl/happy.png`,
+      )
+    }
+  })
+})
+
+describe('CHARACTER_SLOT_TO_AVATAR_LAYER_FOLDER', () => {
+  it('maps every real slot used by the 12 existing shop items to a real folder', () => {
+    // top/onePiece (outfit), headAccessory, faceAccessory, backAccessory —
+    // every CharacterSlot character/catalog/items.ts actually uses today.
+    for (const slot of ['top', 'onePiece', 'headAccessory', 'faceAccessory', 'backAccessory'] as CharacterSlot[]) {
+      expect(CHARACTER_SLOT_TO_AVATAR_LAYER_FOLDER[slot]).toBeDefined()
+    }
+  })
+
+  it('maps backAccessory to its own neck-accessory folder, not head/face', () => {
+    expect(CHARACTER_SLOT_TO_AVATAR_LAYER_FOLDER.backAccessory).toBe('neck-accessory')
+  })
+
+  it('has no folder for slots this path family does not cover (body/face/shoe/handheld/stateEffect)', () => {
+    for (const slot of ['bodyBase', 'skin', 'face', 'eyes', 'eyebrows', 'mouth', 'blush', 'bottom', 'shoes', 'handheld', 'stateEffect'] as CharacterSlot[]) {
+      expect(CHARACTER_SLOT_TO_AVATAR_LAYER_FOLDER[slot]).toBeUndefined()
+    }
   })
 })
 
