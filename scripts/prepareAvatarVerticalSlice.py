@@ -3,7 +3,7 @@
 from collections import deque
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageFilter
+from PIL import Image, ImageChops
 
 
 ROOT = Path.cwd() if (Path.cwd() / "package.json").exists() else Path(__file__).resolve().parents[1]
@@ -75,43 +75,98 @@ def normalize(source_name: str) -> Image.Image:
     return aligned
 
 
-def align_existing_layer(source: Image.Image, scale: float = 1.25) -> Image.Image:
+def align_existing_layer(
+    source: Image.Image,
+    scale: float = 1.25,
+    offset_y: int = ROOM_ALIGNMENT_OFFSET_Y,
+) -> Image.Image:
     scaled_size = round(CANVAS_SIZE[0] * scale), round(CANVAS_SIZE[1] * scale)
     scaled = source.convert("RGBA").resize(scaled_size, Image.Resampling.NEAREST)
     crop_x = (scaled.width - CANVAS_SIZE[0]) // 2
     crop_y = (scaled.height - CANVAS_SIZE[1]) // 2
     scaled = scaled.crop((crop_x, crop_y, crop_x + CANVAS_SIZE[0], crop_y + CANVAS_SIZE[1]))
     aligned = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
-    aligned.alpha_composite(scaled, (0, ROOM_ALIGNMENT_OFFSET_Y))
+    aligned.alpha_composite(scaled, (0, offset_y))
     return aligned
 
 
-def difference_layer(
-    target: Image.Image,
-    reference: Image.Image,
-    *,
-    min_y: int,
-    max_y: int,
-    preserve_skin: bool,
-) -> Image.Image:
-    difference = ImageChops.difference(target.convert("RGB"), reference.convert("RGB")).convert("L")
-    mask = difference.point(lambda value: 255 if value >= 26 else 0).filter(ImageFilter.MaxFilter(3))
-    result = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
-    target_pixels = target.load()
-    target_alpha = target.getchannel("A").load()
-    mask_pixels = mask.load()
-    result_pixels = result.load()
+def connected_components(mask: set[tuple[int, int]]) -> list[set[tuple[int, int]]]:
+    remaining = set(mask)
+    components: list[set[tuple[int, int]]] = []
+    while remaining:
+        start = remaining.pop()
+        component = {start}
+        queue = deque([start])
+        while queue:
+            x, y = queue.popleft()
+            for point in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                if point in remaining:
+                    remaining.remove(point)
+                    component.add(point)
+                    queue.append(point)
+        components.append(component)
+    return components
 
-    for y in range(min_y, max_y + 1):
-        for x in range(CANVAS_SIZE[0]):
-            if mask_pixels[x, y] == 0 or target_alpha[x, y] == 0:
-                continue
-            red, green, blue, alpha = target_pixels[x, y]
-            looks_like_skin = red > 170 and red >= green + 18 and green >= blue - 5 and blue < 205
-            if preserve_skin and looks_like_skin:
-                continue
-            result_pixels[x, y] = (red, green, blue, alpha)
+
+def render_masked(target: Image.Image, mask: set[tuple[int, int]]) -> Image.Image:
+    result = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
+    source_pixels = target.load()
+    result_pixels = result.load()
+    for x, y in mask:
+        result_pixels[x, y] = source_pixels[x, y]
     return result
+
+
+def extract_hair_layer(target: Image.Image, bare: Image.Image) -> Image.Image:
+    pixels = target.load()
+    alpha = target.getchannel("A").load()
+    candidates: set[tuple[int, int]] = set()
+    for y in range(6, 108):
+        for x in range(CANVAS_SIZE[0]):
+            red, green, blue, _ = pixels[x, y]
+            is_hair_brown = red >= green + 16 and green >= blue + 4 and green < 172 and blue < 145
+            if alpha[x, y] and is_hair_brown:
+                candidates.add((x, y))
+
+    components = connected_components(candidates)
+    hair = max(components, key=len)
+    difference = ImageChops.difference(target.convert("RGB"), bare.convert("RGB")).convert("L").load()
+
+    # Add one outline ring around the connected brown silhouette. Eyes and
+    # eyebrows are separate islands and therefore never enter this mask.
+    outline = set(hair)
+    for x, y in tuple(hair):
+        for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+            if 0 <= nx < 160 and 0 <= ny < 108 and alpha[nx, ny] and difference[nx, ny] >= 18:
+                red, green, blue, _ = pixels[nx, ny]
+                is_skin = red > 175 and green > 125 and blue > 95
+                if not is_skin:
+                    outline.add((nx, ny))
+    return render_masked(target, outline)
+
+
+def extract_outfit_layer(target: Image.Image, reference: Image.Image) -> Image.Image:
+    pixels = target.load()
+    alpha = target.getchannel("A").load()
+    difference = ImageChops.difference(target.convert("RGB"), reference.convert("RGB")).convert("L").load()
+    outfit: set[tuple[int, int]] = set()
+    for y in range(86, 150):
+        for x in range(CANVAS_SIZE[0]):
+            if not alpha[x, y] or difference[x, y] < 24:
+                continue
+            red, green, blue, _ = pixels[x, y]
+            is_skin = red > 170 and red >= green + 18 and green >= blue - 5 and blue < 210
+            is_hair_brown = red >= green + 16 and green >= blue + 4 and green < 172 and blue < 145
+            if not is_skin and not is_hair_brown:
+                outfit.add((x, y))
+
+    # Discard tiny regenerated face/hair noise; real garment regions form
+    # large connected components (torso, sleeves, blouse, ribbon).
+    kept: set[tuple[int, int]] = set()
+    for component in connected_components(outfit):
+        if len(component) >= 5:
+            kept.update(component)
+    return render_masked(target, kept)
 
 
 def save_layer(layer: Image.Image, relative_path: str) -> None:
@@ -129,12 +184,12 @@ def main() -> None:
     default_composite = normalize("girl-study-default-outfit-composite-chroma.png")
     hoodie_composite = normalize("girl-study-hoodie-composite-chroma.png")
 
-    hair_front = difference_layer(hair_composite, bare, min_y=10, max_y=96, preserve_skin=True)
+    hair_front = extract_hair_layer(hair_composite, bare)
     hair_back = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
-    default_outfit = difference_layer(default_composite, hair_composite, min_y=72, max_y=135, preserve_skin=True)
-    hoodie = difference_layer(hoodie_composite, hair_composite, min_y=72, max_y=138, preserve_skin=True)
+    default_outfit = extract_outfit_layer(default_composite, hair_composite)
+    hoodie = extract_outfit_layer(hoodie_composite, hair_composite)
     ribbon = align_existing_layer(Image.open(LEGACY_DRAFT_DIR / "lavender-ribbon.png"))
-    glasses = align_existing_layer(Image.open(LEGACY_DRAFT_DIR / "round-glasses.png"))
+    glasses = align_existing_layer(Image.open(LEGACY_DRAFT_DIR / "round-glasses.png"), scale=1.15, offset_y=25)
     headphones = align_existing_layer(Image.open(LEGACY_DRAFT_DIR / "lavender-headphones.png"))
 
     save_layer(bare, "base/girl/study.png")
