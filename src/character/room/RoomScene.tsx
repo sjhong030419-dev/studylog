@@ -60,8 +60,9 @@ const ACTIVE_THEME_ID: RoomThemeId = 'default-night'
  * the layered/legacy pair below and still shows equipped cosmetics. If
  * FullSceneRoomRenderer's image 404s, `onError` permanently falls back to
  * that same layered/legacy pair for this mounted instance —
- * `shouldUsePixelRoom` is false for every theme today (no real layer PNGs
- * exist yet — roomThemeSupport.ts CONFIRMED_ROOM_LAYER_IDS is empty), so
+ * `shouldUsePixelRoom` remains false until the delivered room art and the
+ * layered avatar are composition-compatible (the legacy study avatar still
+ * contains desk pixels), so
  * that fallback lands on LegacySvgRoomRenderer in practice.
  */
 export function RoomScene(props: RoomSceneProps) {
