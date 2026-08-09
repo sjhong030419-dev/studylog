@@ -4,6 +4,8 @@ import { PixelRoomRenderer } from './PixelRoomRenderer'
 import { FullSceneRoomRenderer } from './FullSceneRoomRenderer'
 import { shouldUsePixelRoom } from './roomThemeSupport'
 import { shouldUseFullScene } from './fullSceneState'
+import { resolveWholeAvatarVariant } from '../engine/wholeAvatarSupport'
+import { resolveAppearance } from '../presets/defaultPresets'
 import type { RoomThemeId } from './roomAssetManifest'
 import type { CharacterAppearance, CharacterState, Gender } from '../types'
 
@@ -85,16 +87,21 @@ export function RoomScene(props: RoomSceneProps) {
   const handleFullSceneError = useCallback(() => setFullSceneLoadFailed(true), [])
   const handlePixelRoomError = useCallback(() => setPixelRoomLoadFailed(true), [])
 
+  const gender = props.gender ?? 'boy'
+  const resolvedAppearance = resolveAppearance(gender, props.appearance)
+  const hasRenderableAppearanceVariant = Boolean(resolveWholeAvatarVariant(resolvedAppearance, gender))
+
   const usesFullScene = shouldUseFullScene({
     preferFullScene: props.preferFullScene ?? false,
     fullSceneLoadFailed,
+    hasRenderableAppearanceVariant,
   })
 
   if (usesFullScene) {
     return (
       <FullSceneRoomRenderer
         state={props.state}
-        gender={props.gender ?? 'boy'}
+        gender={gender}
         onError={handleFullSceneError}
       />
     )

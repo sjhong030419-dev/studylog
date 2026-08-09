@@ -25,19 +25,53 @@ describe('resolveFullSceneName', () => {
 
 describe('shouldUseFullScene (scoping — fixes: RoomScene used to always try FullSceneRoomRenderer first, overriding LogCaptureCard\'s appearance/level/animated)', () => {
   it('is false by default (preferFullScene not opted in) — LogCaptureCard\'s share card behavior', () => {
-    expect(shouldUseFullScene({ preferFullScene: false, fullSceneLoadFailed: false })).toBe(false)
+    expect(
+      shouldUseFullScene({
+        preferFullScene: false,
+        fullSceneLoadFailed: false,
+        hasRenderableAppearanceVariant: false,
+      }),
+    ).toBe(false)
   })
 
   it('is true once a caller opts in and nothing has failed — CharacterRoomCard\'s timer screen behavior', () => {
-    expect(shouldUseFullScene({ preferFullScene: true, fullSceneLoadFailed: false })).toBe(true)
+    expect(
+      shouldUseFullScene({
+        preferFullScene: true,
+        fullSceneLoadFailed: false,
+        hasRenderableAppearanceVariant: false,
+      }),
+    ).toBe(true)
   })
 
   it('falls back once the scene image has failed to load, even for an opted-in caller', () => {
-    expect(shouldUseFullScene({ preferFullScene: true, fullSceneLoadFailed: true })).toBe(false)
+    expect(
+      shouldUseFullScene({
+        preferFullScene: true,
+        fullSceneLoadFailed: true,
+        hasRenderableAppearanceVariant: false,
+      }),
+    ).toBe(false)
   })
 
   it('stays false for a non-opted-in caller regardless of load-failure state', () => {
-    expect(shouldUseFullScene({ preferFullScene: false, fullSceneLoadFailed: true })).toBe(false)
+    expect(
+      shouldUseFullScene({
+        preferFullScene: false,
+        fullSceneLoadFailed: true,
+        hasRenderableAppearanceVariant: false,
+      }),
+    ).toBe(false)
+  })
+
+  it('skips baked full-scene art when an equipped whole-avatar variant must remain visible', () => {
+    expect(
+      shouldUseFullScene({
+        preferFullScene: true,
+        fullSceneLoadFailed: false,
+        hasRenderableAppearanceVariant: true,
+      }),
+    ).toBe(false)
   })
 })
 

@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { SPRITE_CANVAS_SIZE } from './spriteManifest'
-import { resolveWholeAvatarPath } from './wholeAvatarSupport'
+import { resolveWholeAvatarLoadState, resolveWholeAvatarPathWithFallback } from './wholeAvatarSupport'
 import type { CharacterAppearance, CharacterState, Gender } from '../types'
 
 interface WholeAvatarRendererProps {
@@ -16,6 +17,15 @@ interface WholeAvatarRendererProps {
  * Renders exactly one approved character image. No facial, hair, outfit or
  * accessory layers are composited here. Cosmetic looks are added later as
  * complete baked variants through wholeAvatarSupport.ts.
+ *
+ * A matched cosmetic variant (e.g. black-hair) is tried first; if that one
+ * image fails to load, the approved default base image for this exact
+ * gender/state/frame is retried before giving up — `onError` (which flips
+ * the caller, CharacterView, to its non-PNG SVG fallback) only fires once
+ * BOTH have failed. This keeps a single missing/broken cosmetic frame from
+ * ever swapping the whole character's art style, not just its hair color.
+ * See wholeAvatarSupport.ts#resolveWholeAvatarLoadState for the (pure,
+ * unit-tested) decision logic this delegates to.
  */
 export function WholeAvatarRenderer({
   gender,
@@ -26,6 +36,24 @@ export function WholeAvatarRenderer({
   fit = 'width',
   onError,
 }: WholeAvatarRendererProps) {
+  const resolution = resolveWholeAvatarPathWithFallback(gender, state, frame, appearance)
+
+  // The last `primary` src that failed to load — not a permanent flag.
+  // Comparing it against the current resolution's `primary` inside
+  // `resolveWholeAvatarLoadState` (recomputed every render) is what lets a
+  // state/frame change immediately retry the real variant image again
+  // instead of getting stuck on the fallback forever.
+  const [failedPrimarySrc, setFailedPrimarySrc] = useState<string | null>(null)
+  const { src, isFinalAttempt } = resolveWholeAvatarLoadState(resolution, failedPrimarySrc)
+
+  function handleError() {
+    if (isFinalAttempt) {
+      onError?.()
+      return
+    }
+    setFailedPrimarySrc(resolution.primary)
+  }
+
   const boxStyle =
     fit === 'height'
       ? { position: 'relative' as const, height: '100%', width: 'auto', maxWidth: '100%', aspectRatio: '1 / 1' }
@@ -34,13 +62,13 @@ export function WholeAvatarRenderer({
   return (
     <div style={boxStyle}>
       <img
-        src={resolveWholeAvatarPath(gender, state, frame, appearance)}
+        src={src}
         alt=""
         aria-hidden="true"
         width={SPRITE_CANVAS_SIZE}
         height={SPRITE_CANVAS_SIZE}
         draggable={false}
-        onError={onError}
+        onError={handleError}
         style={{
           position: 'absolute',
           inset: 0,

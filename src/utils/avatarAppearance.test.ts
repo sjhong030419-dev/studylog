@@ -8,6 +8,7 @@ const ITEMS: ShopItem[] = [
   { id: 'outfit-pink', category: 'outfit', name: '핑크 원피스', priceType: 'points', price: 40, emoji: '🌸', colorHex: '#ffd6e8' },
   { id: 'acc-glasses', category: 'accessory', name: '동그란 안경', priceType: 'points', price: 20, emoji: '👓' },
   { id: 'hair-ribbon', category: 'hair', name: '리본 헤어핀', priceType: 'points', price: 30, emoji: '🎀' },
+  { id: 'hair-color-black', category: 'hairColor', name: '검정머리', priceType: 'points', price: 30, emoji: '⚫', colorHex: '#1B1A21' },
   { id: 'bg-night', category: 'background', name: '별 헤는 밤', priceType: 'points', price: 25, emoji: '🌙', colorHex: '#2d2a4a' },
 ]
 
@@ -28,6 +29,12 @@ describe('resolveAvatarAppearance', () => {
   it('maps an equipped accessory into the equipped asset list', () => {
     const result = resolveAvatarAppearance(ITEMS, { accessory: 'acc-glasses' })
     expect(result.equippedAssetIds).toContain('acc-glasses')
+  })
+
+  it('maps an equipped hairColor into the equipped asset list, independent of the hair category', () => {
+    const result = resolveAvatarAppearance(ITEMS, { hair: 'hair-ribbon', hairColor: 'hair-color-black' })
+    expect(result.equippedAssetIds).toContain('hair-color-black')
+    expect(result.equippedAssetIds).toContain('hair-ribbon')
   })
 
   it('maps an equipped background to the room', () => {

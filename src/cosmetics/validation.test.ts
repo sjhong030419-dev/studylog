@@ -75,7 +75,7 @@ describe('validateCosmeticCatalog', () => {
   })
 
   describe('honest current gap — regression guard, should start failing loudly once real default items exist', () => {
-    it('the real derived catalog has no default-owned item for either required slot yet (none of the 12 existing shop items are free/starter items)', () => {
+    it('the real derived catalog has no default-owned item for either required slot yet (none of the existing shop items are free/starter items)', () => {
       const issues = validateCosmeticCatalog(COSMETIC_CATALOG)
       const missingDefaultSlots = issues.filter((i) => i.type === 'missing-default-for-slot').map((i) => i.slot).sort()
       expect(missingDefaultSlots).toEqual(['hair', 'outfit'])

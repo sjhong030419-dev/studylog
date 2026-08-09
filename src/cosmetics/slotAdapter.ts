@@ -28,12 +28,20 @@ const CHARACTER_SLOT_TO_COSMETIC_SLOT: Partial<Record<CharacterSlot, CosmeticSlo
   hairBack: 'hair',
 }
 
-/** `ShopCategory` (store/shopStore.ts, 4 values) fallback used only when an
- * item has no `CharacterAssetDefinition` at all — today that's exactly the
- * 3 `background` items, which were never part of the character catalog
- * (they recolor the room, not the character). */
+/** `ShopCategory` (store/shopStore.ts, 5 values) fallback used only when an
+ * item has no `CharacterAssetDefinition` at all — today that's the 3
+ * `background` items (never part of the character catalog; they recolor
+ * the room, not the character) and `hair-color-black` (a whole-avatar item —
+ * character/engine/wholeAvatarSupport.ts — with no `CharacterAssetDefinition`
+ * either, since it never goes through the layered-cosmetic renderer this
+ * catalog was originally built around). `hairColor` items map to the
+ * `hair` CosmeticSlot: `hair` had zero real occupants before this (the 3
+ * "hair"-category shop items are actually head accessories — see
+ * `CHARACTER_SLOT_TO_COSMETIC_SLOT` above), and a hair *color* is the
+ * closest fit for that slot's original intent. */
 const SHOP_CATEGORY_FALLBACK: Partial<Record<ShopCategory, CosmeticSlot>> = {
   background: 'roomTheme',
+  hairColor: 'hair',
 }
 
 /**

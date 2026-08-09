@@ -11,7 +11,7 @@ describe('buildCosmeticCatalog (adapter fidelity — every existing shop item su
     expect(catalogIds).toEqual(shopIds)
   })
 
-  it('resolves a CosmeticSlot for all 12 real shop items today (none silently unmapped)', () => {
+  it('resolves a CosmeticSlot for every real shop item today (none silently unmapped)', () => {
     for (const item of SHOP_ITEMS) {
       expect(resolveCosmeticSlot(item), `${item.id} should resolve to a slot`).toBeDefined()
     }
@@ -30,7 +30,15 @@ describe('buildCosmeticCatalog (adapter fidelity — every existing shop item su
     for (const id of ['hair-ribbon', 'hair-straw', 'hair-cap']) {
       expect(catalog.find((i) => i.id === id)?.slot).toBe('headAccessory')
     }
-    expect(catalog.filter((i) => i.slot === 'hair')).toHaveLength(0)
+  })
+
+  it('maps the "hairColor" ShopCategory item to the "hair" CosmeticSlot — its first real occupant', () => {
+    const catalog = buildCosmeticCatalog(SHOP_ITEMS)
+    expect(catalog.find((i) => i.id === 'hair-color-black')?.slot).toBe('hair')
+    // The 3 "hair"-category head accessories still don't occupy this slot —
+    // only the new whole-avatar hairColor item does.
+    const hairSlotItems = catalog.filter((i) => i.slot === 'hair')
+    expect(hairSlotItems.map((i) => i.id)).toEqual(['hair-color-black'])
   })
 
   it('maps outfit items (top and onePiece CharacterSlots) onto the single "outfit" CosmeticSlot', () => {

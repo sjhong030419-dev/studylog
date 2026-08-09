@@ -34,14 +34,22 @@ export interface ShouldUseFullSceneInput {
    * permanent for the mounted instance, same defense-in-depth pattern as
    * roomThemeSupport.ts's `pixelRoomLoadFailed`. */
   fullSceneLoadFailed: boolean
+  /** True when the user's equipped appearance resolves to a complete
+   * whole-avatar variant. Baked full-scene artwork cannot reflect that
+   * appearance, so RoomScene must use the live character renderer instead. */
+  hasRenderableAppearanceVariant: boolean
 }
 
 /** The single decision RoomScene uses to pick FullSceneRoomRenderer over
  * the layered/legacy pair — mirrors roomThemeSupport.ts's
  * `shouldUsePixelRoom`. Pure function so every branch (opted in vs not,
  * failed vs not) is independently testable without rendering React. */
-export function shouldUseFullScene({ preferFullScene, fullSceneLoadFailed }: ShouldUseFullSceneInput): boolean {
-  return preferFullScene && !fullSceneLoadFailed
+export function shouldUseFullScene({
+  preferFullScene,
+  fullSceneLoadFailed,
+  hasRenderableAppearanceVariant,
+}: ShouldUseFullSceneInput): boolean {
+  return preferFullScene && !fullSceneLoadFailed && !hasRenderableAppearanceVariant
 }
 
 export type FullSceneSwapDecision =

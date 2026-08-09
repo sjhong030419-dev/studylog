@@ -97,7 +97,11 @@ export const LAYER_TO_FOLDER: Record<SpriteLayer, SpriteFolder> = {
   stateEffect: 'effects',
 }
 
-const STATE_FILE_NAME: Record<CharacterState, string> = {
+/** Exported so any new sprite family sharing this exact file-naming
+ * convention (e.g. character/engine/wholeAvatarSupport.ts's whole-avatar
+ * variants) reuses this one table instead of duplicating a
+ * state-name-to-filename mapping that could drift out of sync. */
+export const STATE_FILE_NAME: Record<CharacterState, string> = {
   idle: 'idle',
   study: 'study',
   thinking: 'thinking',
@@ -113,7 +117,9 @@ const STATE_FILE_NAME: Record<CharacterState, string> = {
   away: 'away',
 }
 
-function pad(frameIndex: number): string {
+/** Exported for the same reason as `STATE_FILE_NAME` above — one shared
+ * zero-padded frame-number convention (`01`, `02`, …). */
+export function pad(frameIndex: number): string {
   return String(frameIndex + 1).padStart(2, '0')
 }
 

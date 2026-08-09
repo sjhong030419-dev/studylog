@@ -18,8 +18,11 @@
 
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { pad, STATE_FILE_NAME } from '../src/character/engine/spriteManifest.ts'
 import { ROOM_ASSET_MANIFEST } from '../src/character/room/roomAssetManifest.ts'
+import { STATE_FRAME_COUNT } from '../src/character/types.ts'
+import type { CharacterState } from '../src/character/types.ts'
 import { validateLayerPng, type LayerPngValidationIssue } from './pngLayerValidation.ts'
 
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url))
@@ -37,6 +40,7 @@ interface ExpectedFile {
 
 const AVATAR_LAYER_SIZE = { width: 160, height: 160 }
 const ROOM_LAYER_SIZE = { width: 640, height: 800 }
+const WHOLE_AVATAR_SIZE = { width: 160, height: 160 }
 
 function avatarLayerFiles(folder: string, assetKey: string): ExpectedFile[] {
   return GENDERS.flatMap((gender) =>
@@ -80,12 +84,39 @@ const ROOM_FILES: ExpectedFile[] = ROOM_ASSET_MANIFEST['default-night'].map((lay
 
 const EXPECTED_FILES: ExpectedFile[] = [...AVATAR_FILES, ...ROOM_FILES]
 
-type FileReport =
+/**
+ * The 104 delivered whole-avatar black-hair files
+ * (docs/Claude_Black_Hair_Whole_Avatar_Implementation_Prompt.md) —
+ * `public/sprites/avatar/whole/black-hair/girl_{state}_{frame}.png`, girl
+ * only, every `CharacterState` at its real `STATE_FRAME_COUNT`. Reuses the
+ * same `STATE_FILE_NAME`/`pad` filename convention as the base sprites
+ * (character/engine/spriteManifest.ts) and the same `STATE_FRAME_COUNT`
+ * table the app itself animates against (character/types.ts) rather than
+ * hand-listing state names or frame counts a second time here, so this
+ * check can never silently drift out of sync with what
+ * wholeAvatarSupport.ts actually resolves paths against.
+ *
+ * A wholly separate, independently-reported check from `AVATAR_FILES`/
+ * `ROOM_FILES` above (a different asset family, different delivery status)
+ * — see `main()`'s dedicated "Whole-avatar black-hair files" summary line.
+ */
+export function buildBlackHairExpectedFiles(): ExpectedFile[] {
+  return (Object.keys(STATE_FRAME_COUNT) as CharacterState[]).flatMap((state) =>
+    Array.from({ length: STATE_FRAME_COUNT[state] }, (_, frameIndex) => ({
+      relativePath: `sprites/avatar/whole/black-hair/girl_${STATE_FILE_NAME[state]}_${pad(frameIndex)}.png`,
+      ...WHOLE_AVATAR_SIZE,
+    })),
+  )
+}
+
+const BLACK_HAIR_FILES: ExpectedFile[] = buildBlackHairExpectedFiles()
+
+export type FileReport =
   | { relativePath: string; status: 'missing' }
   | { relativePath: string; status: 'valid' }
   | { relativePath: string; status: 'invalid'; issues: LayerPngValidationIssue[] }
 
-function checkFile(expected: ExpectedFile): FileReport {
+export function checkFile(expected: ExpectedFile): FileReport {
   const absolutePath = join(PUBLIC_ROOT, expected.relativePath)
   if (!existsSync(absolutePath)) {
     return { relativePath: expected.relativePath, status: 'missing' }
@@ -122,11 +153,45 @@ function main() {
     console.log(`\n${missing.length} file(s) not delivered yet — see docs/First_Vertical_Slice_Asset_Request.md.`)
   }
 
-  if (valid.length === EXPECTED_FILES.length) {
+  // Reported separately from the block above: a wholly different, already-
+  // delivered asset family (docs/Claude_Black_Hair_Whole_Avatar_Implementation_Prompt.md),
+  // not part of the intentionally-incomplete avatar-layers vertical slice.
+  const blackHairReports = BLACK_HAIR_FILES.map(checkFile)
+  const blackHairMissing = blackHairReports.filter((r) => r.status === 'missing')
+  const blackHairInvalid = blackHairReports.filter((r) => r.status === 'invalid')
+  const blackHairValid = blackHairReports.filter((r) => r.status === 'valid')
+
+  console.log(
+    `\nWhole-avatar black-hair files: ${blackHairValid.length} valid, ${blackHairMissing.length} missing, ${blackHairInvalid.length} invalid`,
+  )
+
+  if (blackHairInvalid.length > 0) {
+    console.log('\nInvalid black-hair files:')
+    for (const r of blackHairInvalid) {
+      if (r.status !== 'invalid') continue
+      console.log(`  ${r.relativePath}`)
+      for (const issue of r.issues) console.log(`    - [${issue.type}] ${issue.message}`)
+    }
+  }
+
+  if (blackHairMissing.length > 0) {
+    console.log('\nMissing black-hair files:')
+    for (const r of blackHairMissing) console.log(`  ${r.relativePath}`)
+  }
+
+  const allValid = valid.length === EXPECTED_FILES.length && blackHairValid.length === BLACK_HAIR_FILES.length
+
+  if (allValid) {
     console.log('\nAll expected files present and valid.')
     process.exit(0)
   }
   process.exit(1)
 }
 
-main()
+// Only run as a CLI (`node scripts/validateLayerAssets.ts`) — importing this
+// module from a test file (scripts/validateLayerAssets.test.ts) must be able
+// to reuse `buildBlackHairExpectedFiles`/`checkFile` without triggering a
+// real filesystem walk + `process.exit()` as a side effect of import.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main()
+}

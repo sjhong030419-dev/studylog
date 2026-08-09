@@ -86,6 +86,63 @@ describe('unequipCategory', () => {
   })
 })
 
+describe('hairColor category (required test 1/2 — docs/Claude_Black_Hair_Whole_Avatar_Implementation_Prompt.md)', () => {
+  it('is independent from the existing hair accessory category — equipping both at once is possible', () => {
+    useShopStore.getState().purchaseWithPoints('hair-ribbon') // category: hair
+    useShopStore.getState().purchaseWithPoints('hair-color-black') // category: hairColor
+
+    expect(useShopStore.getState().equipped.hair).toBe('hair-ribbon')
+    expect(useShopStore.getState().equipped.hairColor).toBe('hair-color-black')
+  })
+
+  it('unequipping hairColor never touches the hair category, and vice versa', () => {
+    useShopStore.getState().purchaseWithPoints('hair-ribbon')
+    useShopStore.getState().purchaseWithPoints('hair-color-black')
+
+    useShopStore.getState().unequipCategory('hairColor')
+    expect(useShopStore.getState().equipped.hairColor).toBeUndefined()
+    expect(useShopStore.getState().equipped.hair).toBe('hair-ribbon') // untouched
+
+    useShopStore.getState().unequipCategory('hair')
+    expect(useShopStore.getState().equipped.hair).toBeUndefined()
+  })
+
+  it('can be purchased, spending exactly the listed points once', () => {
+    const before = usePointsStore.getState().balance()
+    const ok = useShopStore.getState().purchaseWithPoints('hair-color-black')
+    expect(ok).toBe(true)
+    expect(usePointsStore.getState().balance()).toBe(before - 30)
+    expect(useShopStore.getState().ownedItemIds).toContain('hair-color-black')
+  })
+
+  it('auto-equips on purchase, and can be explicitly equipped/unequipped afterward', () => {
+    useShopStore.getState().purchaseWithPoints('hair-color-black')
+    expect(useShopStore.getState().equipped.hairColor).toBe('hair-color-black')
+
+    useShopStore.getState().unequipCategory('hairColor')
+    expect(useShopStore.getState().equipped.hairColor).toBeUndefined()
+
+    useShopStore.getState().equipItem('hair-color-black')
+    expect(useShopStore.getState().equipped.hairColor).toBe('hair-color-black')
+  })
+
+  it('cannot be equipped before purchase', () => {
+    useShopStore.getState().equipItem('hair-color-black')
+    expect(useShopStore.getState().equipped.hairColor).toBeUndefined()
+  })
+
+  it('survives a JSON round-trip (the shop\'s persisted shape) once purchased and equipped', () => {
+    useShopStore.getState().purchaseWithPoints('hair-color-black')
+    const shape = {
+      ownedItemIds: useShopStore.getState().ownedItemIds,
+      equipped: useShopStore.getState().equipped,
+    }
+    const roundTripped = JSON.parse(JSON.stringify(shape))
+    expect(roundTripped).toEqual(shape)
+    expect(roundTripped.equipped.hairColor).toBe('hair-color-black')
+  })
+})
+
 describe('persisted-state shape is JSON-safe (NOT a real rehydration test)', () => {
   // This only proves ownedItemIds/equipped contain no value JSON can't
   // round-trip (a Map, a Set, undefined-in-an-array, etc.) — it does not
