@@ -70,15 +70,44 @@ export const REUSED_POSE_SOURCE: Partial<Record<CharacterState, CharacterState>>
 export const HAS_REAL_PER_FRAME_ANIMATION = false
 
 /** assetKeys (character/catalog/items.ts: ribbon, strawHat, cap, hoodie,
- * dress, glasses, headphones, necklace) with a real cosmetic-layer PNG
- * under hair/, outfit/, or accessory/. Empty today — those three folders
- * only contain `.gitkeep`. Populate as real layer art lands; nothing else
- * needs to change (`allCosmeticsSupported` below picks it up automatically). */
+ * dress, glasses, headphones, necklace — plus `default-hair`/`default-outfit`,
+ * character/catalog/baseLayers.ts's bare-base pieces) with a real,
+ * gender-and-state-complete cosmetic-layer PNG set under
+ * `avatar-layers/{folder}/{assetKey}/` (spriteManifest.ts
+ * `resolveCosmeticLayerPath`). Empty today — no real files exist under that
+ * root yet. Populate as real layer art lands, only once every required
+ * gender × state file for that assetKey is confirmed present (never
+ * partial — PixelSpriteRenderer has no per-state/per-gender fallback
+ * within one assetKey, only whole-layer omission); nothing else needs to
+ * change (`allCosmeticsSupported` below and `shouldUseBareBase`'s
+ * consumers pick it up automatically). */
 export const SUPPORTED_COSMETIC_ASSET_KEYS: ReadonlySet<string> = new Set([])
 
 /** CharacterStates with a real overlay PNG under effects/. Empty today —
  * that folder only contains `.gitkeep`. */
 export const SUPPORTED_EFFECT_STATES: ReadonlySet<CharacterState> = new Set([])
+
+/**
+ * Genders with a confirmed BARE base body (no baked-in default hair/outfit)
+ * under `avatar-layers/base/` (spriteManifest.ts `resolveBareBaseFramePath`)
+ * — empty today, so `resolveBaseFramePath`'s existing baked-in-default base
+ * stays the only base art any renderer actually requests. Once a gender is
+ * added here, `PixelSpriteRenderer` switches that gender to the bare base
+ * AND starts attempting `BASE_LAYER_DEFAULTS`' default-hair/default-outfit
+ * layers on top of it (character/catalog/baseLayers.ts) — both the bare
+ * base image itself AND its default-hair/default-outfit layers must be
+ * confirmed together (add the gender here only once all three are real),
+ * since a bare base with no default-hair/outfit layer would render an
+ * undressed character.
+ */
+export const BARE_BASE_CONFIRMED_GENDERS: ReadonlySet<Gender> = new Set([])
+
+/** The single decision `PixelSpriteRenderer` uses to choose the bare base
+ * over the legacy baked-in-default base for one gender. Pure function,
+ * mirrors `shouldUseSprites`/`roomThemeSupport.ts`'s `shouldUsePixelRoom`. */
+export function shouldUseBareBase(gender: Gender): boolean {
+  return BARE_BASE_CONFIRMED_GENDERS.has(gender)
+}
 
 /**
  * True only if every equipped cosmetic item has a real supported PNG

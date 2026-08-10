@@ -97,7 +97,11 @@ export const LAYER_TO_FOLDER: Record<SpriteLayer, SpriteFolder> = {
   stateEffect: 'effects',
 }
 
-const STATE_FILE_NAME: Record<CharacterState, string> = {
+/** Exported so any new sprite family sharing this exact file-naming
+ * convention (e.g. character/engine/wholeAvatarSupport.ts's whole-avatar
+ * variants) reuses this one table instead of duplicating a
+ * state-name-to-filename mapping that could drift out of sync. */
+export const STATE_FILE_NAME: Record<CharacterState, string> = {
   idle: 'idle',
   study: 'study',
   thinking: 'thinking',
@@ -113,7 +117,9 @@ const STATE_FILE_NAME: Record<CharacterState, string> = {
   away: 'away',
 }
 
-function pad(frameIndex: number): string {
+/** Exported for the same reason as `STATE_FILE_NAME` above — one shared
+ * zero-padded frame-number convention (`01`, `02`, …). */
+export function pad(frameIndex: number): string {
   return String(frameIndex + 1).padStart(2, '0')
 }
 
@@ -136,14 +142,77 @@ export function resolveEffectFramePath(state: CharacterState, frameIndex: number
   return `/sprites/avatar/effects/${STATE_FILE_NAME[state]}_${pad(frameIndex)}.png`
 }
 
-/** `(hair|outfit|accessory)/(assetKey)_(frame).png` — one file per cosmetic
- * item's `assetKey` (character/catalog/items.ts), defaulting to a single
- * static frame (`_01`). An item can still declare more frames later (e.g. a
- * swaying ribbon) without changing this function's contract. */
-export function resolveCosmeticFramePath(
-  folder: Extract<SpriteFolder, 'hair' | 'outfit' | 'accessory'>,
+/**
+ * Root for the newer, spec-compliant layered avatar asset family
+ * (docs/StudyLog_Asset_Layer_Spec_v1.0.md §5) — deliberately NOT under
+ * `/sprites/avatar/`, which already holds ~208 flat, `{gender}_{state}_{frame}`
+ * -named baked-in-default files (`resolveBaseFramePath` above). Mixing the
+ * two naming conventions in the same folder risks real filename collisions
+ * and confuses "is this the old baked-in system or the new decomposed
+ * one" — a separate root makes that unambiguous from the path alone.
+ */
+const AVATAR_LAYERS_ROOT = '/sprites/avatar-layers'
+
+/** The avatar cosmetic-layer folders — the 5 the Asset Layer Spec §5
+ * lists, plus `neck-accessory` (not in the spec's list; added so
+ * `acc-necklace`, which the Phase 1 cosmetic domain already gives its own
+ * `neckAccessory` CosmeticSlot — src/cosmetics/types.ts — has a real
+ * folder to resolve a path into instead of being silently unmappable).
+ * Finer-grained than `LAYER_TO_FOLDER`'s 3 legacy folders, which collapse
+ * hairBack+hairFront into one `hair/` folder and every accessory kind
+ * (head/face/back) into one `accessory/` folder. New assets use these;
+ * nothing currently maps `SLOT_TO_LAYER`/`LAYER_TO_FOLDER` to them because
+ * no real file exists under either scheme yet — see spriteSupport.ts. */
+export type AvatarLayerFolder = 'hair-back' | 'outfit' | 'hair-front' | 'head-accessory' | 'face-accessory' | 'neck-accessory'
+
+/** Maps a `CharacterSlot` (character/catalog/types.ts) to the new,
+ * gender/state-aware `AvatarLayerFolder` a real cosmetic file for that slot
+ * would live under. `undefined` for every slot this new path family has no
+ * folder for yet (body/face/shoe slots, `handheld`, `stateEffect`) — those
+ * simply never resolve a cosmetic-layer path, exactly like today. */
+export const CHARACTER_SLOT_TO_AVATAR_LAYER_FOLDER: Partial<Record<CharacterSlot, AvatarLayerFolder>> = {
+  hairBack: 'hair-back',
+  hairFront: 'hair-front',
+  top: 'outfit',
+  onePiece: 'outfit',
+  outerwear: 'outfit',
+  headAccessory: 'head-accessory',
+  faceAccessory: 'face-accessory',
+  backAccessory: 'neck-accessory',
+}
+
+/**
+ * `avatar-layers/base/{gender}/{state}.png` — the "bare" body with no hair
+ * or outfit baked in, per the Asset Layer Spec's target architecture
+ * (§5, §10 "Full-scene migration" step 2). Not requested by any renderer
+ * until `spriteSupport.ts`'s `BARE_BASE_CONFIRMED_GENDERS` includes a
+ * gender (empty today) — until then `resolveBaseFramePath`'s existing
+ * baked-in-default base stays the only base art ever actually fetched.
+ */
+export function resolveBareBaseFramePath(gender: Gender, state: CharacterState): string {
+  return `${AVATAR_LAYERS_ROOT}/base/${gender}/${STATE_FILE_NAME[state]}.png`
+}
+
+/**
+ * `avatar-layers/{folder}/{assetKey}/{genderOrUnisex}/{state}.png` — every
+ * cosmetic layer's real file path, gender- AND state-aware. Replaces the
+ * old `resolveCosmeticFramePath` (removed — its one caller,
+ * PixelSpriteRenderer.tsx, now calls this instead), which had neither: a
+ * single `{assetKey}_{frame}.png` file per item could never represent an
+ * outfit drawn differently for a standing `idle` pose vs. a leaning `sleep`
+ * pose, or a boy vs. girl body shape. That gap would have forced a real
+ * redesign the moment per-state/per-gender cosmetic art actually arrived —
+ * fixing the resolver now, while nothing real depends on its old shape
+ * (`SUPPORTED_COSMETIC_ASSET_KEYS` is still empty either way), avoids that.
+ *
+ * `genderOrUnisex` lets one file cover both presets when the art doesn't
+ * need to differ (Asset Layer Spec §5: "Shared art may use `unisex`").
+ */
+export function resolveCosmeticLayerPath(
+  folder: AvatarLayerFolder,
   assetKey: string,
-  frameIndex = 0,
+  genderOrUnisex: Gender | 'unisex',
+  state: CharacterState,
 ): string {
-  return `/sprites/avatar/${folder}/${assetKey}_${pad(frameIndex)}.png`
+  return `${AVATAR_LAYERS_ROOT}/${folder}/${assetKey}/${genderOrUnisex}/${STATE_FILE_NAME[state]}.png`
 }

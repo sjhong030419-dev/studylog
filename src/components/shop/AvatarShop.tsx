@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CharacterView } from '../../character/components/CharacterView'
 import { isShopItemPngSupported } from '../../character/engine/spriteSupport'
+import { isWholeAvatarItemSupportedForGender } from '../../character/engine/wholeAvatarSupport'
 import { useMyAvatarAppearance } from '../../hooks/useMyAvatarAppearance'
 import { useProfileStore } from '../../store/profileStore'
 import { usePointsStore } from '../../store/pointsStore'
@@ -10,12 +11,13 @@ import type { ShopCategory } from '../../types'
 
 const CATEGORY_LABEL: Record<ShopCategory, string> = {
   hair: '헤어',
+  hairColor: '머리색',
   outfit: '옷',
   accessory: '액세서리',
   background: '배경',
 }
 
-const CATEGORIES: ShopCategory[] = ['hair', 'outfit', 'accessory', 'background']
+const CATEGORIES: ShopCategory[] = ['hair', 'hairColor', 'outfit', 'accessory', 'background']
 
 export function AvatarShop() {
   const items = useShopStore((s) => s.items)
@@ -92,10 +94,18 @@ export function AvatarShop() {
         {categoryItems.map((item) => {
           const owned = ownedItemIds.includes(item.id)
           const isEquipped = equipped[item.category] === item.id
+          const isHairColor = item.category === 'hairColor'
           // Shown regardless of owned/equipped — cash items exist, so a
           // buyer must see this BEFORE purchasing, not only after equipping
           // (character/engine/spriteSupport.ts is the single source of truth).
           const isPngSupported = isShopItemPngSupported(item.id)
+          // hairColor items are whole-avatar swaps (character/engine/
+          // wholeAvatarSupport.ts), not layered cosmetics — isPngSupported
+          // doesn't know about them at all (no CharacterAssetDefinition
+          // exists for hair-color-black), so their support check is
+          // separate and gender-specific: girl-only until boy art lands.
+          const isGenderSupported = !isHairColor || isWholeAvatarItemSupportedForGender(item.id, gender)
+          const canPurchase = isPngSupported && isGenderSupported
           return (
             <div
               key={item.id}
@@ -108,7 +118,17 @@ export function AvatarShop() {
               <span className="font-pixel text-[10px] text-ink-soft">
                 {item.priceType === 'points' ? `${item.price}P` : `₩${item.price.toLocaleString()}`}
               </span>
-              {!isPngSupported && (
+              {isHairColor && (
+                <span className="font-cute text-[9px] px-2 py-0.5 rounded-full bg-ink/10 text-ink-soft text-center">
+                  여자 캐릭터 지원
+                </span>
+              )}
+              {isHairColor && !isGenderSupported && (
+                <span className="font-cute text-[9px] px-2 py-0.5 rounded-full bg-pastel-pink text-ink text-center">
+                  지금은 남자 캐릭터라 적용되지 않아요
+                </span>
+              )}
+              {!isHairColor && !isPngSupported && (
                 <span className="font-cute text-[9px] px-2 py-0.5 rounded-full bg-ink/10 text-ink-soft text-center">
                   새 캐릭터 대응 준비 중
                 </span>
@@ -116,8 +136,11 @@ export function AvatarShop() {
 
               {owned ? (
                 // Already-owned items stay fully equippable/unequippable
-                // regardless of PNG support — nothing about owned purchase
-                // or equip data is ever blocked, only NEW purchases are.
+                // regardless of PNG/gender support — nothing about owned
+                // purchase or equip data is ever blocked, only NEW
+                // purchases are. Equipping a girl-only hairColor item as a
+                // boy is harmless: wholeAvatarSupport.ts's resolver falls
+                // back to the safe default character.
                 <button
                   type="button"
                   onClick={() => (isEquipped ? unequipCategory(item.category) : equipItem(item.id))}
@@ -131,9 +154,7 @@ export function AvatarShop() {
                 <button
                   type="button"
                   onClick={() => handleBuy(item.id, item.priceType)}
-                  disabled={
-                    checkoutLoading || !isPngSupported || (item.priceType === 'points' && balance < item.price)
-                  }
+                  disabled={checkoutLoading || !canPurchase || (item.priceType === 'points' && balance < item.price)}
                   className="font-cute text-[11px] px-3 py-1 rounded-full bg-pastel-lavender text-ink w-full disabled:opacity-50"
                 >
                   구매하기

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { SHOP_ITEMS } from '../../store/shopStore'
 import {
   CHARACTER_HEIGHT_RATIO,
   CHARACTER_WIDTH_RATIO,
@@ -18,14 +19,14 @@ import {
 describe('ROOM_ASSET_MANIFEST (public/sprites/room/ file naming contract)', () => {
   const layers = ROOM_ASSET_MANIFEST['default-night']
 
-  it('declares exactly the 15 layer files specified for default-night (14 base + desk-front-study)', () => {
-    expect(layers).toHaveLength(15)
+  it('declares exactly the 18 default-night layers, including study-only tools and hands', () => {
+    expect(layers).toHaveLength(18)
     const ids = layers.map((l) => l.id).sort()
     expect(ids).toEqual(
       [
         'background', 'window-night', 'shelf', 'desk-back', 'desk-front', 'desk-front-study',
         'lamp', 'books', 'mug', 'stationery', 'plant', 'cat', 'rug',
-        'foreground', 'lamp-glow',
+        'foreground', 'lamp-glow', 'desk-prop-plant-pot', 'study-tools', 'study-hands',
       ].sort(),
     )
   })
@@ -70,10 +71,22 @@ describe('ROOM_ASSET_MANIFEST (public/sprites/room/ file naming contract)', () =
     expect(layers.find((l) => l.id === 'cat')?.minLevel).toBe(20)
   })
 
-  it('gates no layer on a shop item yet (no purchasable room-prop item exists in the catalog today)', () => {
+  it('gates every layer except the planned desk-prop on a shop item — no other purchasable room-prop item exists in the catalog today', () => {
     for (const layer of layers) {
+      if (layer.id === 'desk-prop-plant-pot') continue
       expect(layer.shopItemId).toBeUndefined()
     }
+  })
+
+  it('the planned desk-prop\'s shopItemId does not correspond to any real SHOP_ITEMS entry — it can never actually render for a real user yet', () => {
+    const deskProp = layers.find((l) => l.id === 'desk-prop-plant-pot')!
+    expect(deskProp.shopItemId).toBe('desk-prop-plant-pot')
+    expect(SHOP_ITEMS.some((item) => item.id === deskProp.shopItemId)).toBe(false)
+  })
+
+  it('the planned desk-prop is optional (shop-gated), never required — does not block default-night from becoming ready', () => {
+    const required = layers.filter((l) => l.minLevel === undefined && l.shopItemId === undefined)
+    expect(required.some((l) => l.id === 'desk-prop-plant-pot')).toBe(false)
   })
 })
 

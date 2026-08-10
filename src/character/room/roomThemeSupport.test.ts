@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   CONFIRMED_ROOM_LAYER_IDS,
+  ROOM_AVATAR_COMPOSITION_READY,
   getRequiredLayers,
   isRoomThemeReady,
   resolveActiveLayers,
@@ -8,9 +9,11 @@ import {
 } from './roomThemeSupport'
 import type { RoomLayerAsset, RoomThemeId } from './roomAssetManifest'
 
-describe('honest current gap (regression guard — should start failing loudly once real room art lands)', () => {
-  it('has no confirmed real room layer files yet for default-night', () => {
-    expect(CONFIRMED_ROOM_LAYER_IDS['default-night']?.size ?? 0).toBe(0)
+describe('delivered default-night room art', () => {
+  it('has all real room layer files confirmed while avatar composition stays gated', () => {
+    expect(CONFIRMED_ROOM_LAYER_IDS['default-night']?.size).toBe(18)
+    expect(isRoomThemeReady('default-night')).toBe(true)
+    expect(ROOM_AVATAR_COMPOSITION_READY).toBe(false)
   })
 })
 
@@ -32,9 +35,9 @@ describe('getRequiredLayers', () => {
   })
 })
 
-describe('isRoomThemeReady (no real PNGs exist yet, so every theme must be unready)', () => {
-  it('is false for default-night today', () => {
-    expect(isRoomThemeReady('default-night')).toBe(false)
+describe('isRoomThemeReady', () => {
+  it('is true for the delivered default-night layer set', () => {
+    expect(isRoomThemeReady('default-night')).toBe(true)
   })
 
   it('is false for an undeclared theme (nothing to render)', () => {
@@ -111,7 +114,7 @@ describe('resolveActiveLayers', () => {
 })
 
 describe('shouldUsePixelRoom', () => {
-  it('is false when the theme is not ready, regardless of runtime failure state', () => {
+  it('stays false until the layered avatar is composition-compatible', () => {
     expect(shouldUsePixelRoom({ themeId: 'default-night', pixelRoomLoadFailed: false })).toBe(false)
     expect(shouldUsePixelRoom({ themeId: 'default-night', pixelRoomLoadFailed: true })).toBe(false)
   })
@@ -179,8 +182,8 @@ describe('per-theme layer confirmation isolation (fixes: a flat id Set let two t
     expect(isRoomThemeReady('ghost-theme' as RoomThemeId, { confirmedLayerIds })).toBe(false)
   })
 
-  it('real default-night still stays unready with the real manifest and real confirmed registry', () => {
+  it('real default-night is ready with the real manifest and confirmed registry', () => {
     // No overrides passed — exercises the actual production data end to end.
-    expect(isRoomThemeReady('default-night')).toBe(false)
+    expect(isRoomThemeReady('default-night')).toBe(true)
   })
 })

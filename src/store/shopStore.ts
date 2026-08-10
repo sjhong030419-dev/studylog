@@ -7,10 +7,20 @@ import { usePointsStore } from './pointsStore'
 export const AD_BONUS_POINTS = 5
 export const AD_DAILY_LIMIT = 3
 
-const SHOP_ITEMS: ShopItem[] = [
+// Exported (not just used internally) so the new cosmetic-domain adapter
+// (src/cosmetics/) can derive its catalog from the one real source of
+// truth without going through a React hook — this is a read-only export,
+// nothing about how the store itself uses this array changes.
+export const SHOP_ITEMS: ShopItem[] = [
   { id: 'hair-ribbon', category: 'hair', name: '리본 헤어핀', priceType: 'points', price: 30, emoji: '🎀' },
   { id: 'hair-straw', category: 'hair', name: '밀짚모자', priceType: 'points', price: 50, emoji: '👒' },
   { id: 'hair-cap', category: 'hair', name: '야구모자', priceType: 'cash', price: 1500, emoji: '🧢' },
+
+  // Whole-avatar hair color — a complete baked character image swap
+  // (character/engine/wholeAvatarSupport.ts), not a layered cosmetic.
+  // Girl-only today (public/sprites/avatar/whole/black-hair/) — see
+  // AvatarShop.tsx for the boy-gender pending UX this requires.
+  { id: 'hair-color-black', category: 'hairColor', name: '검정머리', priceType: 'points', price: 30, emoji: '⚫', colorHex: '#1B1A21' },
 
   { id: 'outfit-blue', category: 'outfit', name: '파란 니트', priceType: 'points', price: 40, emoji: '🔵', colorHex: '#a8d8ff' },
   { id: 'outfit-pink', category: 'outfit', name: '핑크 원피스', priceType: 'points', price: 40, emoji: '🌸', colorHex: '#ffd6e8' },
@@ -117,6 +127,35 @@ export const useShopStore = create<ShopState>()(
         return true
       },
     }),
-    { name: 'studylog-shop' },
+    {
+      name: 'studylog-shop',
+      // `items` is the live catalog (SHOP_ITEMS above), not user data — it
+      // must never be persisted or restored. `partialize` stops it from
+      // being WRITTEN to storage going forward; that alone isn't enough,
+      // because any browser that already has a `studylog-shop` entry saved
+      // from before this fix still has an `items` array frozen at
+      // whatever the catalog looked like on that user's first visit —
+      // zustand's default `merge` would layer that stale array on top of
+      // the fresh one on every load. `merge` below forces `items` to always
+      // come from the freshly-initialized state instead, so both an old
+      // stored blob and a new one behave the same way. (Found and fixed
+      // while implementing this feature: hair-color-black silently didn't
+      // appear in the shop for any browser with pre-existing shop data
+      // until this was added — not a pre-existing known issue.)
+      // `checkoutLoading` is transient UI state, excluded from `partialize`
+      // for the same "never persisted" reason, though it needs no `merge`
+      // override since a stale `true` value only self-corrects on the next
+      // purchase attempt.
+      partialize: (state) => ({
+        ownedItemIds: state.ownedItemIds,
+        equipped: state.equipped,
+        adWatchesToday: state.adWatchesToday,
+      }),
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...(persistedState as Partial<ShopState>),
+        items: currentState.items,
+      }),
+    },
   ),
 )

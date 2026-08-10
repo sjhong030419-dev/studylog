@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { SpriteAnimator } from '../engine/SpriteAnimator'
 import { ChibiFallbackArt } from '../fallback/ChibiFallbackArt'
-import { PixelSpriteRenderer } from '../engine/PixelSpriteRenderer'
+import { WholeAvatarRenderer } from '../engine/WholeAvatarRenderer'
 import { SPRITE_ASSETS_AVAILABLE } from '../engine/spriteAssetMap'
 import { shouldUseSprites } from '../engine/spriteSupport'
 import { resolveCatalogEntries } from '../catalog/items'
@@ -68,13 +68,13 @@ export function CharacterView({
     [resolvedAppearance.equippedAssetIds],
   )
 
-  // Use the real PNG sprite only when the WHOLE look can be represented:
-  // the base image, the requested gender, the requested state, and every
-  // equipped cosmetic item all need real support. If any equipped
-  // hair/outfit/accessory has no PNG layer yet, fall back to the SVG
-  // renderer entirely — it already draws every cosmetic correctly — rather
-  // than rendering the new base without that item and making it silently
-  // disappear (docs/character-system.md §14).
+  // Uses the real PNG sprite whenever the base image is available for this
+  // gender/state — deliberately independent of which cosmetics are
+  // equipped (character/engine/spriteSupport.ts shouldUseSprites). An
+  // unsupported hair/outfit/accessory never falls the WHOLE character back
+  // to the SVG renderer. WholeAvatarRenderer keeps the approved complete
+  // default image until a full baked cosmetic variant is registered; an
+  // equipped item can never distort the face or flip the art style.
   const useSprites = shouldUseSprites({
     spriteAssetsAvailable: SPRITE_ASSETS_AVAILABLE,
     spriteLoadFailed,
@@ -92,14 +92,14 @@ export function CharacterView({
       className={className}
       renderFrame={(frame) =>
         useSprites ? (
-          <PixelSpriteRenderer
+          <WholeAvatarRenderer
             gender={gender}
             state={effectiveState}
             frame={frame}
             appearance={resolvedAppearance}
             size={size}
             fit={fit}
-            onBaseLayerError={() => setSpriteLoadFailed(true)}
+            onError={() => setSpriteLoadFailed(true)}
           />
         ) : (
           <ChibiFallbackArt

@@ -4,6 +4,8 @@ import { PixelRoomRenderer } from './PixelRoomRenderer'
 import { FullSceneRoomRenderer } from './FullSceneRoomRenderer'
 import { shouldUsePixelRoom } from './roomThemeSupport'
 import { shouldUseFullScene } from './fullSceneState'
+import { resolveWholeAvatarVariant } from '../engine/wholeAvatarSupport'
+import { resolveAppearance } from '../presets/defaultPresets'
 import type { RoomThemeId } from './roomAssetManifest'
 import type { CharacterAppearance, CharacterState, Gender } from '../types'
 
@@ -60,8 +62,9 @@ const ACTIVE_THEME_ID: RoomThemeId = 'default-night'
  * the layered/legacy pair below and still shows equipped cosmetics. If
  * FullSceneRoomRenderer's image 404s, `onError` permanently falls back to
  * that same layered/legacy pair for this mounted instance —
- * `shouldUsePixelRoom` is false for every theme today (no real layer PNGs
- * exist yet — roomThemeSupport.ts CONFIRMED_ROOM_LAYER_IDS is empty), so
+ * `shouldUsePixelRoom` remains false until the delivered room art and the
+ * layered avatar are composition-compatible (the legacy study avatar still
+ * contains desk pixels), so
  * that fallback lands on LegacySvgRoomRenderer in practice.
  */
 export function RoomScene(props: RoomSceneProps) {
@@ -84,16 +87,21 @@ export function RoomScene(props: RoomSceneProps) {
   const handleFullSceneError = useCallback(() => setFullSceneLoadFailed(true), [])
   const handlePixelRoomError = useCallback(() => setPixelRoomLoadFailed(true), [])
 
+  const gender = props.gender ?? 'boy'
+  const resolvedAppearance = resolveAppearance(gender, props.appearance)
+  const hasRenderableAppearanceVariant = Boolean(resolveWholeAvatarVariant(resolvedAppearance, gender))
+
   const usesFullScene = shouldUseFullScene({
     preferFullScene: props.preferFullScene ?? false,
     fullSceneLoadFailed,
+    hasRenderableAppearanceVariant,
   })
 
   if (usesFullScene) {
     return (
       <FullSceneRoomRenderer
         state={props.state}
-        gender={props.gender ?? 'boy'}
+        gender={gender}
         onError={handleFullSceneError}
       />
     )

@@ -7,9 +7,9 @@ import type { CharacterState } from '../types'
  * character/engine/spriteSupport.ts. A layer path existing in
  * roomAssetManifest.ts only means "this is where the file would go if it
  * existed"; this file is the single place that declares which files are
- * actually real, verified against what's committed. Empty today: no PNG
- * layer for any theme has been produced yet, so every theme is unready and
- * RoomScene keeps using the existing SVG room (docs/StudyLog_Pixel_Room_Asset_Spec_v1.0.md).
+ * actually real, verified against what's committed. All default-night room
+ * layers are delivered; RoomScene still uses its safe fallback only because
+ * ROOM_AVATAR_COMPOSITION_READY guards the legacy desk-baked avatar.
  *
  * Keyed per theme (not a single flat Set) so two themes can each declare a
  * layer with the same id (e.g. both have a "background") without one
@@ -18,8 +18,34 @@ import type { CharacterState } from '../types'
  * readiness.
  */
 export const CONFIRMED_ROOM_LAYER_IDS: Partial<Record<RoomThemeId, ReadonlySet<string>>> = {
-  'default-night': new Set([]),
+  'default-night': new Set([
+    'background',
+    'rug',
+    'window-night',
+    'shelf',
+    'desk-back',
+    'desk-front',
+    'desk-front-study',
+    'lamp',
+    'books',
+    'mug',
+    'stationery',
+    'study-tools',
+    'study-hands',
+    'desk-prop-plant-pot',
+    'plant',
+    'cat',
+    'foreground',
+    'lamp-glow',
+  ]),
 }
+
+/**
+ * Room art is complete, but the shipped study avatar still contains legacy
+ * desk/book pixels. Keep the renderer off until the approved bare avatar
+ * layers land; otherwise the room would visibly draw two desks.
+ */
+export const ROOM_AVATAR_COMPOSITION_READY = false
 
 function confirmedLayerIdsFor(
   themeId: string,
@@ -112,5 +138,5 @@ export interface ShouldUsePixelRoomInput {
  * LegacySvgRoomRenderer. Pure function so every branch is independently
  * testable, matching character/engine/spriteSupport.ts's shouldUseSprites. */
 export function shouldUsePixelRoom({ themeId, pixelRoomLoadFailed }: ShouldUsePixelRoomInput): boolean {
-  return isRoomThemeReady(themeId) && !pixelRoomLoadFailed
+  return ROOM_AVATAR_COMPOSITION_READY && isRoomThemeReady(themeId) && !pixelRoomLoadFailed
 }
