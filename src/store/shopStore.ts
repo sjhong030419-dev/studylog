@@ -49,6 +49,32 @@ interface ShopState {
   watchAdForBonus: () => Promise<boolean>
 }
 
+/**
+ * Zustand's `persist` `merge` option, pulled out as a standalone pure
+ * function so the rehydration behavior itself is unit-testable (rather than
+ * only reachable by mounting the whole store) — see shopStore.test.ts's
+ * "persist merge" suite.
+ *
+ * Both `items` and `checkoutLoading` are runtime-only fields that must never
+ * come from a stored blob, old or new: `items` for the reason already
+ * documented on `partialize` below, and `checkoutLoading` because a stored
+ * `true` (an in-flight cash checkout interrupted by a closed tab/browser
+ * crash before `purchaseWithCash`'s `finally` block ran) would otherwise
+ * survive rehydration and permanently disable the purchase button — the
+ * button being disabled is exactly what would have "self-corrected" it on
+ * the next purchase attempt, so that never happens on its own. Every other
+ * field (ownedItemIds/equipped/adWatchesToday) is real user data and must
+ * still restore from `persistedState` normally.
+ */
+export function mergeShopPersistedState(persistedState: unknown, currentState: ShopState): ShopState {
+  return {
+    ...currentState,
+    ...(persistedState as Partial<ShopState>),
+    items: currentState.items,
+    checkoutLoading: currentState.checkoutLoading,
+  }
+}
+
 export const useShopStore = create<ShopState>()(
   persist(
     (set, get) => ({
@@ -143,19 +169,17 @@ export const useShopStore = create<ShopState>()(
       // appear in the shop for any browser with pre-existing shop data
       // until this was added — not a pre-existing known issue.)
       // `checkoutLoading` is transient UI state, excluded from `partialize`
-      // for the same "never persisted" reason, though it needs no `merge`
-      // override since a stale `true` value only self-corrects on the next
-      // purchase attempt.
+      // for the same "never persisted" reason. `merge` (mergeShopPersistedState
+      // above) also forces it back to `false` on every rehydrate — a stored
+      // `true` (from an interrupted cash checkout) would otherwise disable
+      // the purchase button permanently, since a disabled button can't be
+      // clicked to trigger the "next attempt" that would have reset it.
       partialize: (state) => ({
         ownedItemIds: state.ownedItemIds,
         equipped: state.equipped,
         adWatchesToday: state.adWatchesToday,
       }),
-      merge: (persistedState, currentState) => ({
-        ...currentState,
-        ...(persistedState as Partial<ShopState>),
-        items: currentState.items,
-      }),
+      merge: mergeShopPersistedState,
     },
   ),
 )
