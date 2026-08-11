@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { useShopStore } from './shopStore'
+import { mergeShopPersistedState, SHOP_ITEMS, useShopStore } from './shopStore'
 import { usePointsStore } from './pointsStore'
 
 /**
@@ -171,6 +171,83 @@ describe('persisted-state shape is JSON-safe (NOT a real rehydration test)', () 
     const roundTripped = JSON.parse(JSON.stringify(shape))
 
     expect(roundTripped).toEqual(shape)
+  })
+})
+
+describe('persist merge — mergeShopPersistedState (fix: prevent stale shop loading state on rehydrate)', () => {
+  // The real `currentState` zustand's persist middleware would hand to
+  // `merge` on load: a freshly-initialized store (real action functions,
+  // real live SHOP_ITEMS, checkoutLoading false).
+  const freshCurrentState = useShopStore.getState()
+
+  it('required test 1 — an old persisted checkoutLoading: true is restored as false', () => {
+    const staleBlob = { checkoutLoading: true }
+    const merged = mergeShopPersistedState(staleBlob, freshCurrentState)
+    expect(merged.checkoutLoading).toBe(false)
+  })
+
+  it('required test 2 — a stale persisted items array never overrides the live SHOP_ITEMS catalog', () => {
+    const oldTenItemBlob = { items: SHOP_ITEMS.slice(0, 3) } // e.g. a blob saved before hair-color-black existed
+    const merged = mergeShopPersistedState(oldTenItemBlob, freshCurrentState)
+    expect(merged.items).toBe(freshCurrentState.items)
+    expect(merged.items).toHaveLength(SHOP_ITEMS.length)
+  })
+
+  it('required test 3 — ownedItemIds restores correctly from persisted state', () => {
+    const persisted = { ownedItemIds: ['hair-ribbon', 'acc-glasses'] }
+    const merged = mergeShopPersistedState(persisted, freshCurrentState)
+    expect(merged.ownedItemIds).toEqual(['hair-ribbon', 'acc-glasses'])
+  })
+
+  it('required test 4 — equipped.hairColor restores correctly from persisted state', () => {
+    const persisted = { equipped: { hairColor: 'hair-color-black', hair: 'hair-ribbon' } }
+    const merged = mergeShopPersistedState(persisted, freshCurrentState)
+    expect(merged.equipped.hairColor).toBe('hair-color-black')
+    expect(merged.equipped.hair).toBe('hair-ribbon')
+  })
+
+  it('required test 5 — adWatchesToday restores correctly from persisted state', () => {
+    const persisted = { adWatchesToday: 2 }
+    const merged = mergeShopPersistedState(persisted, freshCurrentState)
+    expect(merged.adWatchesToday).toBe(2)
+  })
+
+  it('required test 6 — hair-color-black is present in the merged shop for an existing user with old stored data', () => {
+    // Simulates the exact bug this whole fix line was found under: a
+    // pre-hair-color-black persisted blob merged against the current
+    // (post-hair-color-black) build.
+    const oldUserBlob = {
+      ownedItemIds: ['hair-ribbon'],
+      equipped: { hair: 'hair-ribbon' },
+      adWatchesToday: 1,
+      items: SHOP_ITEMS.filter((i) => i.id !== 'hair-color-black'),
+    }
+    const merged = mergeShopPersistedState(oldUserBlob, freshCurrentState)
+    expect(merged.items.some((i) => i.id === 'hair-color-black')).toBe(true)
+  })
+
+  it('combines a realistic full old blob correctly: stale items/checkoutLoading dropped, user data kept', () => {
+    const realisticOldBlob = {
+      items: SHOP_ITEMS.slice(0, 2),
+      ownedItemIds: ['hair-ribbon', 'hair-color-black'],
+      equipped: { hair: 'hair-ribbon', hairColor: 'hair-color-black' },
+      adWatchesToday: 3,
+      checkoutLoading: true,
+    }
+    const merged = mergeShopPersistedState(realisticOldBlob, freshCurrentState)
+
+    expect(merged.checkoutLoading).toBe(false)
+    expect(merged.items).toBe(freshCurrentState.items)
+    expect(merged.ownedItemIds).toEqual(['hair-ribbon', 'hair-color-black'])
+    expect(merged.equipped).toEqual({ hair: 'hair-ribbon', hairColor: 'hair-color-black' })
+    expect(merged.adWatchesToday).toBe(3)
+  })
+
+  it('falls back to currentState defaults when persistedState is empty (first-ever visit)', () => {
+    const merged = mergeShopPersistedState({}, freshCurrentState)
+    expect(merged.checkoutLoading).toBe(false)
+    expect(merged.items).toBe(freshCurrentState.items)
+    expect(merged.ownedItemIds).toEqual(freshCurrentState.ownedItemIds)
   })
 })
 
