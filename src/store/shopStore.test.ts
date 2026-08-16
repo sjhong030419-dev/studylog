@@ -143,6 +143,25 @@ describe('hairColor category (required test 1/2 — docs/Claude_Black_Hair_Whole
   })
 })
 
+describe('complete skin category', () => {
+  it('purchases for exactly 120 points and auto-equips independently', () => {
+    useShopStore.getState().purchaseWithPoints('hair-color-black')
+    const before = usePointsStore.getState().balance()
+    expect(useShopStore.getState().purchaseWithPoints('skin-sakura-uniform-girl')).toBe(true)
+    expect(usePointsStore.getState().balance()).toBe(before - 120)
+    expect(useShopStore.getState().equipped.skin).toBe('skin-sakura-uniform-girl')
+    expect(useShopStore.getState().equipped.hairColor).toBe('hair-color-black')
+  })
+
+  it('unequipping the skin preserves the underlying black-hair selection', () => {
+    useShopStore.getState().purchaseWithPoints('hair-color-black')
+    useShopStore.getState().purchaseWithPoints('skin-sakura-uniform-girl')
+    useShopStore.getState().unequipCategory('skin')
+    expect(useShopStore.getState().equipped.skin).toBeUndefined()
+    expect(useShopStore.getState().equipped.hairColor).toBe('hair-color-black')
+  })
+})
+
 describe('persisted-state shape is JSON-safe (NOT a real rehydration test)', () => {
   // This only proves ownedItemIds/equipped contain no value JSON can't
   // round-trip (a Map, a Set, undefined-in-an-array, etc.) — it does not
@@ -224,6 +243,21 @@ describe('persist merge — mergeShopPersistedState (fix: prevent stale shop loa
     }
     const merged = mergeShopPersistedState(oldUserBlob, freshCurrentState)
     expect(merged.items.some((i) => i.id === 'hair-color-black')).toBe(true)
+  })
+
+  it('restores the equipped whole-avatar skin independently from underlying cosmetics', () => {
+    const persisted = {
+      ownedItemIds: ['skin-sakura-uniform-girl', 'hair-color-black'],
+      equipped: {
+        skin: 'skin-sakura-uniform-girl',
+        hairColor: 'hair-color-black',
+      },
+    }
+    const merged = mergeShopPersistedState(persisted, freshCurrentState)
+
+    expect(merged.ownedItemIds).toEqual(['skin-sakura-uniform-girl', 'hair-color-black'])
+    expect(merged.equipped.skin).toBe('skin-sakura-uniform-girl')
+    expect(merged.equipped.hairColor).toBe('hair-color-black')
   })
 
   it('combines a realistic full old blob correctly: stale items/checkoutLoading dropped, user data kept', () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { STATE_FRAME_COUNT } from '../src/character/types.ts'
 import type { CharacterState } from '../src/character/types.ts'
-import { buildBlackHairExpectedFiles, checkFile } from './validateLayerAssets.ts'
+import { buildBlackHairExpectedFiles, buildSakuraUniformExpectedFiles, checkFile } from './validateLayerAssets.ts'
 
 /**
  * Covers the black-hair whole-avatar asset validation added to
@@ -98,5 +98,13 @@ describe('checkFile — missing-file detection', () => {
     const reports = files.map(checkFile)
     expect(reports.filter((r) => r.status === 'missing')).toHaveLength(1)
     expect(reports.filter((r) => r.status === 'valid')).toHaveLength(104)
+  })
+})
+
+describe('sakura-uniform whole-avatar assets', () => {
+  it('expects and validates exactly 104 production files', () => {
+    const files = buildSakuraUniformExpectedFiles()
+    expect(files).toHaveLength(104)
+    expect(files.map(checkFile).filter((report) => report.status !== 'valid')).toEqual([])
   })
 })

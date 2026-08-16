@@ -14,7 +14,7 @@ export function resolveAvatarAppearance(
   const outfit = items.find((i) => i.id === equipped.outfit)
   const background = items.find((i) => i.id === equipped.background)
 
-  const equippedAssetIds = [equipped.hair, equipped.hairColor, equipped.outfit, equipped.accessory].filter(
+  const equippedAssetIds = [equipped.skin, equipped.hair, equipped.hairColor, equipped.outfit, equipped.accessory].filter(
     (id): id is string => Boolean(id),
   )
 

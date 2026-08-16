@@ -13,6 +13,8 @@ import type { CharacterAppearance, CharacterState, Gender } from '../types'
  */
 export interface WholeAvatarVariant {
   id: string
+  /** Higher values win when more than one complete appearance is equipped. */
+  priority?: number
   /** Exact equipped item ids required by this baked appearance. Matching is
    * subset-based (see `resolveWholeAvatarVariant`), not exact-set equality —
    * a variant matches whenever every one of its required ids is equipped,
@@ -36,6 +38,10 @@ function resolveBlackHairWholePath(gender: Gender, state: CharacterState, frameI
   return `/sprites/avatar/whole/black-hair/${gender}_${STATE_FILE_NAME[state]}_${pad(frameIndex)}.png`
 }
 
+function resolveSakuraUniformWholePath(gender: Gender, state: CharacterState, frameIndex: number): string {
+  return `/sprites/avatar/whole/sakura-uniform/${gender}_${STATE_FILE_NAME[state]}_${pad(frameIndex)}.png`
+}
+
 /**
  * Registered whole-avatar variants. Add a variant only when its complete
  * image family (every required gender × all 13 states × the state's full
@@ -49,9 +55,17 @@ function resolveBlackHairWholePath(gender: Gender, state: CharacterState, frameI
 export const WHOLE_AVATAR_VARIANTS: readonly WholeAvatarVariant[] = [
   {
     id: 'hair-color-black',
+    priority: 100,
     equippedAssetIds: ['hair-color-black'],
     supportedGenders: ['girl'],
     path: resolveBlackHairWholePath,
+  },
+  {
+    id: 'skin-sakura-uniform-girl',
+    priority: 1000,
+    equippedAssetIds: ['skin-sakura-uniform-girl'],
+    supportedGenders: ['girl'],
+    path: resolveSakuraUniformWholePath,
   },
 ]
 
@@ -84,9 +98,29 @@ export function resolveWholeAvatarVariant(
     (variant) => matchesEquipped(variant, equippedIds) && variant.supportedGenders.includes(gender),
   )
   if (candidates.length === 0) return undefined
-  return candidates.reduce((best, variant) =>
-    variant.equippedAssetIds.length > best.equippedAssetIds.length ? variant : best,
-  )
+  return candidates.reduce((best, variant) => {
+    if ((variant.priority ?? 0) !== (best.priority ?? 0)) {
+      return (variant.priority ?? 0) > (best.priority ?? 0) ? variant : best
+    }
+    return variant.equippedAssetIds.length > best.equippedAssetIds.length ? variant : best
+  })
+}
+
+/** Ordered, de-duplicated runtime load chain: explicit skin/most-specific
+ * variant, any supported underlying variant, then the approved base PNG. */
+export function resolveWholeAvatarSourceChain(
+  gender: Gender,
+  state: CharacterState,
+  frame: number,
+  appearance: CharacterAppearance,
+): string[] {
+  const equippedIds = appearance.equippedAssetIds ?? []
+  const variantPaths = WHOLE_AVATAR_VARIANTS
+    .filter((variant) => matchesEquipped(variant, equippedIds) && variant.supportedGenders.includes(gender))
+    .slice()
+    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0) || b.equippedAssetIds.length - a.equippedAssetIds.length)
+    .map((variant) => variant.path(gender, state, frame))
+  return [...new Set([...variantPaths, resolveBaseFramePath(gender, state, frame)])]
 }
 
 export function resolveWholeAvatarPath(

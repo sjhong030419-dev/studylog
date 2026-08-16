@@ -5,6 +5,7 @@ import {
   resolveWholeAvatarLoadState,
   resolveWholeAvatarPath,
   resolveWholeAvatarPathWithFallback,
+  resolveWholeAvatarSourceChain,
   resolveWholeAvatarVariant,
   WHOLE_AVATAR_VARIANTS,
 } from './wholeAvatarSupport'
@@ -272,5 +273,36 @@ describe('resolveWholeAvatarPath stays equal to resolveWholeAvatarPathWithFallba
     expect(resolveWholeAvatarPath('boy', 'sleep', 1, appearance)).toBe(
       resolveWholeAvatarPathWithFallback('boy', 'sleep', 1, appearance).primary,
     )
+  })
+})
+
+describe('sakura uniform complete skin', () => {
+  const appearance = {
+    ...DEFAULT_PRESETS.girl,
+    equippedAssetIds: ['skin-sakura-uniform-girl', 'hair-color-black'],
+  }
+
+  it('wins over black hair in every state', () => {
+    for (const state of ALL_STATES) {
+      expect(resolveWholeAvatarPath('girl', state, 0, appearance)).toContain('/whole/sakura-uniform/')
+    }
+  })
+
+  it('uses sakura, black hair, then base as the ordered failure chain', () => {
+    expect(resolveWholeAvatarSourceChain('girl', 'study', 0, appearance)).toEqual([
+      '/sprites/avatar/whole/sakura-uniform/girl_study_01.png',
+      '/sprites/avatar/whole/black-hair/girl_study_01.png',
+      '/sprites/avatar/base/girl_study_01.png',
+    ])
+  })
+
+  it('never requests the girl-only skin for boy', () => {
+    const sources = resolveWholeAvatarSourceChain('boy', 'study', 0, appearance)
+    expect(sources).toEqual(['/sprites/avatar/base/boy_study_01.png'])
+  })
+
+  it('reports the skin as supported for girl only', () => {
+    expect(isWholeAvatarItemSupportedForGender('skin-sakura-uniform-girl', 'girl')).toBe(true)
+    expect(isWholeAvatarItemSupportedForGender('skin-sakura-uniform-girl', 'boy')).toBe(false)
   })
 })
