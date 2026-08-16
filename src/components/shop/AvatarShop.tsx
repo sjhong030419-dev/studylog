@@ -20,6 +20,9 @@ const CATEGORY_LABEL: Record<ShopCategory, string> = {
 
 const CATEGORIES: ShopCategory[] = ['skin', 'hair', 'hairColor', 'outfit', 'accessory', 'background']
 
+type ShopView = 'shop' | 'wardrobe'
+type CategoryFilter = ShopCategory | 'all'
+
 export function AvatarShop() {
   const items = useShopStore((s) => s.items)
   const ownedItemIds = useShopStore((s) => s.ownedItemIds)
@@ -36,9 +39,18 @@ export function AvatarShop() {
   const gender = useProfileStore((s) => s.gender)
   const appearance = useMyAvatarAppearance()
 
-  const [category, setCategory] = useState<ShopCategory>('skin')
+  const [view, setView] = useState<ShopView>('shop')
+  const [category, setCategory] = useState<CategoryFilter>('skin')
 
-  const categoryItems = items.filter((i) => i.category === category)
+  const visibleItems = items.filter((item) => {
+    if (view === 'wardrobe' && !ownedItemIds.includes(item.id)) return false
+    return category === 'all' || item.category === category
+  })
+
+  function changeView(nextView: ShopView) {
+    setView(nextView)
+    setCategory(nextView === 'wardrobe' ? 'all' : 'skin')
+  }
 
   async function handleBuy(itemId: string, priceType: 'points' | 'cash') {
     if (priceType === 'points') {
@@ -50,7 +62,30 @@ export function AvatarShop() {
 
   return (
     <div className="min-h-screen flex flex-col items-center gap-4 px-4 py-10">
-      <h1 className="font-cute text-3xl text-ink">아바타 상점 🛍️</h1>
+      <h1 className="font-cute text-3xl text-ink">{view === 'shop' ? '아바타 상점 🛍️' : '내 옷장 👗'}</h1>
+
+      <div className="flex w-full max-w-sm rounded-2xl bg-white/70 p-1 shadow-sm" aria-label="아바타 메뉴">
+        <button
+          type="button"
+          onClick={() => changeView('shop')}
+          aria-pressed={view === 'shop'}
+          className={`flex-1 rounded-xl px-4 py-2 font-cute text-sm transition-colors ${
+            view === 'shop' ? 'bg-ink text-white shadow-sm' : 'text-ink-soft'
+          }`}
+        >
+          상점
+        </button>
+        <button
+          type="button"
+          onClick={() => changeView('wardrobe')}
+          aria-pressed={view === 'wardrobe'}
+          className={`flex-1 rounded-xl px-4 py-2 font-cute text-sm transition-colors ${
+            view === 'wardrobe' ? 'bg-ink text-white shadow-sm' : 'text-ink-soft'
+          }`}
+        >
+          내 옷장 ({ownedItemIds.length})
+        </button>
+      </div>
 
       <div
         className="backdrop-blur rounded-3xl shadow-lg px-8 py-6 flex flex-col items-center gap-2"
@@ -65,18 +100,31 @@ export function AvatarShop() {
         </span>
       </div>
 
-      <button
-        type="button"
-        onClick={watchAdForBonus}
-        disabled={adWatchesToday >= AD_DAILY_LIMIT || checkoutLoading}
-        className="font-cute text-xs px-4 py-2 rounded-full bg-pastel-mint text-ink shadow disabled:opacity-50"
-      >
-        {checkoutLoading
-          ? '광고 재생 중...'
-          : `📺 광고 보고 +${AD_BONUS_POINTS}P 받기 (오늘 ${adWatchesToday}/${AD_DAILY_LIMIT})`}
-      </button>
+      {view === 'shop' && (
+        <button
+          type="button"
+          onClick={watchAdForBonus}
+          disabled={adWatchesToday >= AD_DAILY_LIMIT || checkoutLoading}
+          className="font-cute text-xs px-4 py-2 rounded-full bg-pastel-mint text-ink shadow disabled:opacity-50"
+        >
+          {checkoutLoading
+            ? '광고 재생 중...'
+            : `📺 광고 보고 +${AD_BONUS_POINTS}P 받기 (오늘 ${adWatchesToday}/${AD_DAILY_LIMIT})`}
+        </button>
+      )}
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap justify-center gap-2">
+        {view === 'wardrobe' && (
+          <button
+            type="button"
+            onClick={() => setCategory('all')}
+            className={`font-cute px-3 py-1.5 rounded-full border text-sm ${
+              category === 'all' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
+            }`}
+          >
+            전체
+          </button>
+        )}
         {CATEGORIES.map((c) => (
           <button
             key={c}
@@ -92,7 +140,7 @@ export function AvatarShop() {
       </div>
 
       <div className="w-full max-w-sm grid grid-cols-2 gap-3">
-        {categoryItems.map((item) => {
+        {visibleItems.map((item) => {
           const owned = ownedItemIds.includes(item.id)
           const isEquipped = equipped[item.category] === item.id
           const isWholeAvatarItem = item.category === 'hairColor' || item.category === 'skin'
@@ -166,9 +214,26 @@ export function AvatarShop() {
         })}
       </div>
 
-      <p className="text-ink-soft text-xs font-cute text-center max-w-sm">
-        캐시 아이템은 Stripe 테스트 모드 구조로 연결돼 있어요. 실제 결제는 발생하지 않습니다.
-      </p>
+      {view === 'wardrobe' && visibleItems.length === 0 && (
+        <div className="w-full max-w-sm rounded-3xl bg-white/70 px-6 py-10 text-center shadow-sm">
+          <div className="mb-3 text-4xl" aria-hidden="true">🧺</div>
+          <p className="font-cute text-sm text-ink">아직 보유한 아이템이 없어요.</p>
+          <p className="mt-1 font-cute text-xs text-ink-soft">상점에서 마음에 드는 아이템을 모아보세요!</p>
+          <button
+            type="button"
+            onClick={() => changeView('shop')}
+            className="mt-4 rounded-full bg-pastel-lavender px-4 py-2 font-cute text-xs text-ink"
+          >
+            상점 구경하기
+          </button>
+        </div>
+      )}
+
+      {view === 'shop' && (
+        <p className="text-ink-soft text-xs font-cute text-center max-w-sm">
+          캐시 아이템은 Stripe 테스트 모드 구조로 연결돼 있어요. 실제 결제는 발생하지 않습니다.
+        </p>
+      )}
     </div>
   )
 }
