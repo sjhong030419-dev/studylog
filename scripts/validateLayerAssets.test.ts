@@ -102,9 +102,9 @@ describe('checkFile — missing-file detection', () => {
 })
 
 describe('sakura-uniform whole-avatar assets', () => {
-  it('expects and validates exactly 104 production files', () => {
+  it('expects and validates all 208 girl and boy production files', () => {
     const files = buildSakuraUniformExpectedFiles()
-    expect(files).toHaveLength(104)
+    expect(files).toHaveLength(208)
     expect(files.map(checkFile).filter((report) => report.status !== 'valid')).toEqual([])
   })
 })

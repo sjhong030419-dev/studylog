@@ -296,13 +296,36 @@ describe('sakura uniform complete skin', () => {
     ])
   })
 
-  it('never requests the girl-only skin for boy', () => {
+  it('resolves the complete male skin family for boy', () => {
     const sources = resolveWholeAvatarSourceChain('boy', 'study', 0, appearance)
-    expect(sources).toEqual(['/sprites/avatar/base/boy_study_01.png'])
+    expect(sources).toEqual([
+      '/sprites/avatar/whole/sakura-uniform/boy_study_01.png',
+      '/sprites/avatar/base/boy_study_01.png',
+    ])
   })
 
-  it('reports the skin as supported for girl only', () => {
+  it('uses the male skin in Home, Timer and Capture representative states', () => {
+    expect(resolveWholeAvatarPath('boy', 'idle', 0, appearance)).toBe(
+      '/sprites/avatar/whole/sakura-uniform/boy_idle_01.png',
+    )
+    expect(resolveWholeAvatarPath('boy', 'study', 0, appearance)).toBe(
+      '/sprites/avatar/whole/sakura-uniform/boy_study_01.png',
+    )
+    expect(resolveWholeAvatarPath('boy', 'happy', 0, appearance)).toBe(
+      '/sprites/avatar/whole/sakura-uniform/boy_happy_01.png',
+    )
+  })
+
+  it('covers every male state with the male skin family', () => {
+    for (const state of ALL_STATES) {
+      expect(resolveWholeAvatarPath('boy', state, 0, appearance)).toMatch(
+        /^\/sprites\/avatar\/whole\/sakura-uniform\/boy_.+_01\.png$/,
+      )
+    }
+  })
+
+  it('reports the skin as supported for both genders', () => {
     expect(isWholeAvatarItemSupportedForGender('skin-sakura-uniform-girl', 'girl')).toBe(true)
-    expect(isWholeAvatarItemSupportedForGender('skin-sakura-uniform-girl', 'boy')).toBe(false)
+    expect(isWholeAvatarItemSupportedForGender('skin-sakura-uniform-girl', 'boy')).toBe(true)
   })
 })

@@ -192,7 +192,7 @@ export function AvatarShop() {
               </span>
               {isWholeAvatarItem && (
                 <span className="font-cute text-[9px] px-2 py-0.5 rounded-full bg-ink/10 text-ink-soft text-center">
-                  여자 캐릭터 지원
+                  남녀 캐릭터 지원
                 </span>
               )}
               {isWholeAvatarItem && !isGenderSupported && (
