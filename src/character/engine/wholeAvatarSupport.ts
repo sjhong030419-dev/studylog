@@ -49,14 +49,14 @@ function resolveSakuraUniformWholePath(gender: Gender, state: CharacterState, fr
  * artwork.
  *
  * Every registered gender must have a complete 104-frame family. Black hair
- * remains girl-only; sakura uniform has complete girl and boy families.
+ * Black hair and sakura uniform both have complete girl and boy families.
  */
 export const WHOLE_AVATAR_VARIANTS: readonly WholeAvatarVariant[] = [
   {
     id: 'hair-color-black',
     priority: 100,
     equippedAssetIds: ['hair-color-black'],
-    supportedGenders: ['girl'],
+    supportedGenders: ['girl', 'boy'],
     path: resolveBlackHairWholePath,
   },
   {

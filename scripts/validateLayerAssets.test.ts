@@ -34,7 +34,7 @@ describe('buildBlackHairExpectedFiles', () => {
   const files = buildBlackHairExpectedFiles()
 
   it('required test 1 — expects exactly 104 files', () => {
-    expect(files).toHaveLength(104)
+    expect(files).toHaveLength(208)
   })
 
   it('required test 2 — covers all 13 CharacterState values', () => {
@@ -49,12 +49,13 @@ describe('buildBlackHairExpectedFiles', () => {
     for (const state of ALL_STATES) {
       const stateFileName = state === 'levelUp' ? 'levelup' : state
       const matches = files.filter((f) => f.relativePath.includes(`_${stateFileName}_`))
-      expect(matches).toHaveLength(STATE_FRAME_COUNT[state])
+      expect(matches).toHaveLength(STATE_FRAME_COUNT[state] * 2)
     }
   })
 
-  it('only builds girl paths — no boy black-hair asset family exists', () => {
-    expect(files.every((f) => f.relativePath.includes('/black-hair/girl_'))).toBe(true)
+  it('builds complete girl and boy paths', () => {
+    expect(files.some((f) => f.relativePath.includes('/black-hair/girl_'))).toBe(true)
+    expect(files.some((f) => f.relativePath.includes('/black-hair/boy_'))).toBe(true)
   })
 
   it('expects every file to be a 160x160 canvas', () => {
@@ -76,7 +77,7 @@ describe('checkFile against the real delivered black-hair assets', () => {
     const reports = files.map(checkFile)
     const invalid = reports.filter((r) => r.status !== 'valid')
     expect(invalid).toEqual([])
-    expect(reports.filter((r) => r.status === 'valid')).toHaveLength(104)
+    expect(reports.filter((r) => r.status === 'valid')).toHaveLength(208)
   })
 })
 
@@ -97,7 +98,7 @@ describe('checkFile — missing-file detection', () => {
     ]
     const reports = files.map(checkFile)
     expect(reports.filter((r) => r.status === 'missing')).toHaveLength(1)
-    expect(reports.filter((r) => r.status === 'valid')).toHaveLength(104)
+    expect(reports.filter((r) => r.status === 'valid')).toHaveLength(208)
   })
 })
 

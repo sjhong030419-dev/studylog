@@ -101,11 +101,13 @@ const EXPECTED_FILES: ExpectedFile[] = [...AVATAR_FILES, ...ROOM_FILES]
  * — see `main()`'s dedicated "Whole-avatar black-hair files" summary line.
  */
 export function buildBlackHairExpectedFiles(): ExpectedFile[] {
-  return (Object.keys(STATE_FRAME_COUNT) as CharacterState[]).flatMap((state) =>
-    Array.from({ length: STATE_FRAME_COUNT[state] }, (_, frameIndex) => ({
-      relativePath: `sprites/avatar/whole/black-hair/girl_${STATE_FILE_NAME[state]}_${pad(frameIndex)}.png`,
-      ...WHOLE_AVATAR_SIZE,
-    })),
+  return (['girl', 'boy'] as const).flatMap((gender) =>
+    (Object.keys(STATE_FRAME_COUNT) as CharacterState[]).flatMap((state) =>
+      Array.from({ length: STATE_FRAME_COUNT[state] }, (_, frameIndex) => ({
+        relativePath: `sprites/avatar/whole/black-hair/${gender}_${STATE_FILE_NAME[state]}_${pad(frameIndex)}.png`,
+        ...WHOLE_AVATAR_SIZE,
+      })),
+    ),
   )
 }
 
