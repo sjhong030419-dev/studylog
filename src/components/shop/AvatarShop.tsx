@@ -7,6 +7,7 @@ import { useProfileStore } from '../../store/profileStore'
 import { usePointsStore } from '../../store/pointsStore'
 import { AD_BONUS_POINTS, AD_DAILY_LIMIT, useShopStore } from '../../store/shopStore'
 import { readableInkColor } from '../../utils/contrastColor'
+import { buildPreviewEquipped, resolveAvatarAppearance } from '../../utils/avatarAppearance'
 import type { ShopCategory } from '../../types'
 
 const CATEGORY_LABEL: Record<ShopCategory, string> = {
@@ -41,6 +42,12 @@ export function AvatarShop() {
 
   const [view, setView] = useState<ShopView>('shop')
   const [category, setCategory] = useState<CategoryFilter>('skin')
+  const [previewItemId, setPreviewItemId] = useState<string | null>(null)
+
+  const previewItem = items.find((item) => item.id === previewItemId)
+  const previewAppearance = previewItem
+    ? resolveAvatarAppearance(items, buildPreviewEquipped(equipped, previewItem))
+    : appearance
 
   const visibleItems = items.filter((item) => {
     if (view === 'wardrobe' && !ownedItemIds.includes(item.id)) return false
@@ -50,13 +57,19 @@ export function AvatarShop() {
   function changeView(nextView: ShopView) {
     setView(nextView)
     setCategory(nextView === 'wardrobe' ? 'all' : 'skin')
+    setPreviewItemId(null)
+  }
+
+  function changeCategory(nextCategory: CategoryFilter) {
+    setCategory(nextCategory)
+    setPreviewItemId(null)
   }
 
   async function handleBuy(itemId: string, priceType: 'points' | 'cash') {
     if (priceType === 'points') {
-      purchaseWithPoints(itemId)
+      if (purchaseWithPoints(itemId)) setPreviewItemId(null)
     } else {
-      await purchaseWithCash(itemId)
+      if (await purchaseWithCash(itemId)) setPreviewItemId(null)
     }
   }
 
@@ -89,12 +102,20 @@ export function AvatarShop() {
 
       <div
         className="backdrop-blur rounded-3xl shadow-lg px-8 py-6 flex flex-col items-center gap-2"
-        style={{ backgroundColor: appearance.backgroundColor ?? 'rgba(255,255,255,0.7)' }}
+        style={{ backgroundColor: previewAppearance.backgroundColor ?? 'rgba(255,255,255,0.7)' }}
       >
-        <CharacterView state="happy" gender={gender} appearance={appearance} size={120} />
+        {previewItem && (
+          <div className="flex items-center gap-2 rounded-full bg-pastel-yellow px-3 py-1 font-cute text-[11px] text-ink">
+            <span>미리보기 · {previewItem.name}</span>
+            <button type="button" onClick={() => setPreviewItemId(null)} className="font-pixel text-xs" aria-label="미리보기 닫기">
+              ×
+            </button>
+          </div>
+        )}
+        <CharacterView state="happy" gender={gender} appearance={previewAppearance} size={120} />
         <span
           className="font-pixel text-sm"
-          style={{ color: readableInkColor(appearance.backgroundColor, 'var(--color-ink)') }}
+          style={{ color: readableInkColor(previewAppearance.backgroundColor, 'var(--color-ink)') }}
         >
           보유 {balance}P
         </span>
@@ -117,7 +138,7 @@ export function AvatarShop() {
         {view === 'wardrobe' && (
           <button
             type="button"
-            onClick={() => setCategory('all')}
+            onClick={() => changeCategory('all')}
             className={`font-cute px-3 py-1.5 rounded-full border text-sm ${
               category === 'all' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
             }`}
@@ -129,7 +150,7 @@ export function AvatarShop() {
           <button
             key={c}
             type="button"
-            onClick={() => setCategory(c)}
+            onClick={() => changeCategory(c)}
             className={`font-cute px-3 py-1.5 rounded-full border text-sm ${
               category === c ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
             }`}
@@ -155,6 +176,8 @@ export function AvatarShop() {
           // separate and gender-specific: girl-only until boy art lands.
           const isGenderSupported = !isWholeAvatarItem || isWholeAvatarItemSupportedForGender(item.id, gender)
           const canPurchase = isPngSupported && isGenderSupported
+          const canPreview = isPngSupported && isGenderSupported
+          const isPreviewing = previewItemId === item.id
           return (
             <div
               key={item.id}
@@ -183,6 +206,18 @@ export function AvatarShop() {
                 </span>
               )}
 
+              <button
+                type="button"
+                onClick={() => setPreviewItemId(isPreviewing ? null : item.id)}
+                disabled={!canPreview}
+                aria-pressed={isPreviewing}
+                className={`font-cute text-[11px] px-3 py-1 rounded-full w-full border disabled:opacity-40 ${
+                  isPreviewing ? 'bg-pastel-yellow border-ink/20 text-ink' : 'bg-white border-ink/20 text-ink'
+                }`}
+              >
+                {isPreviewing ? '미리보기 중' : '미리보기'}
+              </button>
+
               {owned ? (
                 // Already-owned items stay fully equippable/unequippable
                 // regardless of PNG/gender support — nothing about owned
@@ -192,7 +227,11 @@ export function AvatarShop() {
                 // back to the safe default character.
                 <button
                   type="button"
-                  onClick={() => (isEquipped ? unequipCategory(item.category) : equipItem(item.id))}
+                  onClick={() => {
+                    if (isEquipped) unequipCategory(item.category)
+                    else equipItem(item.id)
+                    setPreviewItemId(null)
+                  }}
                   className={`font-cute text-[11px] px-3 py-1 rounded-full w-full ${
                     isEquipped ? 'bg-ink text-white' : 'bg-white border border-ink/20 text-ink'
                   }`}

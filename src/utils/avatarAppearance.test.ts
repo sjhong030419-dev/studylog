@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveAvatarAppearance } from './avatarAppearance'
+import { buildPreviewEquipped, resolveAvatarAppearance } from './avatarAppearance'
 import { resolveCatalogEntries, findCatalogEntry } from '../character/catalog/items'
 import type { ShopItem } from '../types'
 
@@ -59,6 +59,30 @@ describe('resolveAvatarAppearance', () => {
   it('falls back safely for an unknown/missing equipped background', () => {
     const result = resolveAvatarAppearance(ITEMS, { background: 'not-a-real-id' })
     expect(result.backgroundColor).toBeUndefined()
+  })
+})
+
+describe('buildPreviewEquipped', () => {
+  it('replaces only the previewed category without mutating real equipment', () => {
+    const equipped = { hairColor: 'hair-color-black', accessory: 'acc-glasses' } as const
+    const skin = ITEMS.find((item) => item.id === 'skin-sakura-uniform-girl')!
+
+    const preview = buildPreviewEquipped(equipped, skin)
+
+    expect(preview).toEqual({
+      hairColor: 'hair-color-black',
+      accessory: 'acc-glasses',
+      skin: 'skin-sakura-uniform-girl',
+    })
+    expect(equipped).toEqual({ hairColor: 'hair-color-black', accessory: 'acc-glasses' })
+  })
+
+  it('temporarily replaces an item in the same category', () => {
+    const equipped = { background: 'bg-sky' }
+    const night = ITEMS.find((item) => item.id === 'bg-night')!
+
+    expect(buildPreviewEquipped(equipped, night).background).toBe('bg-night')
+    expect(equipped.background).toBe('bg-sky')
   })
 })
 

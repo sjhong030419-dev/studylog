@@ -24,3 +24,13 @@ export function resolveAvatarAppearance(
     equippedAssetIds,
   }
 }
+
+/** Builds a temporary equipment snapshot for shop preview without mutating
+ * the persisted shop state. Only the selected item's category is replaced;
+ * every other equipped category remains visible in the preview. */
+export function buildPreviewEquipped(
+  equipped: Partial<Record<ShopCategory, string>>,
+  item: ShopItem,
+): Partial<Record<ShopCategory, string>> {
+  return { ...equipped, [item.category]: item.id }
+}
