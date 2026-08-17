@@ -10,7 +10,11 @@ import { myOverallRank } from '../../utils/ranking'
 
 type Mode = 'normal' | 'pomodoro'
 
-export function TimerPage() {
+interface TimerPageProps {
+  onOpenShop: () => void
+}
+
+export function TimerPage({ onOpenShop }: TimerPageProps) {
   const [mode, setMode] = useState<Mode>('normal')
 
   const sessions = useTimerStore((s) => s.sessions)
@@ -52,7 +56,7 @@ export function TimerPage() {
           </div>
         </div>
 
-        {mode === 'normal' ? <StudyTimer /> : <PomodoroTimer />}
+        {mode === 'normal' ? <StudyTimer onOpenShop={onOpenShop} /> : <PomodoroTimer />}
 
         <GrowthSummaryGrid
           streakCount={streakCount}

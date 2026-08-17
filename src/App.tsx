@@ -50,7 +50,7 @@ function App() {
 
   return (
     <div className="pb-16">
-      {tab === 'timer' && <TimerPage />}
+      {tab === 'timer' && <TimerPage onOpenShop={() => setTab('shop')} />}
       {tab === 'room' && <RoomPage />}
       {tab === 'capture' && <LogCaptureCard />}
       {tab === 'stats' && <StatsHubPage />}

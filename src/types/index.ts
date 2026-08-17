@@ -34,7 +34,7 @@ export interface PointTransaction {
  * separate category deliberately, so a hair color and a head accessory can
  * be equipped at the same time instead of competing for one slot
  * (docs/Claude_Black_Hair_Whole_Avatar_Implementation_Prompt.md). */
-export type ShopCategory = 'hair' | 'hairColor' | 'outfit' | 'accessory' | 'background'
+export type ShopCategory = 'skin' | 'hair' | 'hairColor' | 'outfit' | 'accessory' | 'background'
 export type PriceType = 'points' | 'cash'
 
 export interface ShopItem {

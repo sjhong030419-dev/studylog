@@ -14,7 +14,7 @@ export function resolveAvatarAppearance(
   const outfit = items.find((i) => i.id === equipped.outfit)
   const background = items.find((i) => i.id === equipped.background)
 
-  const equippedAssetIds = [equipped.hair, equipped.hairColor, equipped.outfit, equipped.accessory].filter(
+  const equippedAssetIds = [equipped.skin, equipped.hair, equipped.hairColor, equipped.outfit, equipped.accessory].filter(
     (id): id is string => Boolean(id),
   )
 
@@ -23,4 +23,14 @@ export function resolveAvatarAppearance(
     backgroundColor: background?.colorHex,
     equippedAssetIds,
   }
+}
+
+/** Builds a temporary equipment snapshot for shop preview without mutating
+ * the persisted shop state. Only the selected item's category is replaced;
+ * every other equipped category remains visible in the preview. */
+export function buildPreviewEquipped(
+  equipped: Partial<Record<ShopCategory, string>>,
+  item: ShopItem,
+): Partial<Record<ShopCategory, string>> {
+  return { ...equipped, [item.category]: item.id }
 }

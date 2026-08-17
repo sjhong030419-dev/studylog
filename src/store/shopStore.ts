@@ -12,6 +12,15 @@ export const AD_DAILY_LIMIT = 3
 // truth without going through a React hook — this is a read-only export,
 // nothing about how the store itself uses this array changes.
 export const SHOP_ITEMS: ShopItem[] = [
+  {
+    id: 'skin-sakura-uniform-girl',
+    category: 'skin',
+    name: '벚꽃 교복 학생',
+    priceType: 'points',
+    price: 120,
+    emoji: '🌸',
+    colorHex: '#C97886',
+  },
   { id: 'hair-ribbon', category: 'hair', name: '리본 헤어핀', priceType: 'points', price: 30, emoji: '🎀' },
   { id: 'hair-straw', category: 'hair', name: '밀짚모자', priceType: 'points', price: 50, emoji: '👒' },
   { id: 'hair-cap', category: 'hair', name: '야구모자', priceType: 'cash', price: 1500, emoji: '🧢' },

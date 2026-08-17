@@ -16,13 +16,24 @@ import { deriveSpeechBubble } from '../../utils/speechBubble'
 import { deriveExpLevel } from '../../character/engine/expLevel'
 import { todayKey } from '../../utils/time'
 import { activeSubjectsOf } from '../../store/subjectMath'
+import { StudyRewardModal } from './StudyRewardModal'
 
 /** Continuous focus beyond this length shows the sleepy pose — a deterministic
  * read of real elapsed session time, not a fabricated or random cue. */
 const SLEEPY_THRESHOLD_SEC = 50 * 60
 const CELEBRATION_MS = 2600
 
-export function StudyTimer() {
+interface StudyTimerProps {
+  onOpenShop: () => void
+}
+
+interface StudyReward {
+  durationSec: number
+  earnedPoints: number
+  balance: number
+}
+
+export function StudyTimer({ onOpenShop }: StudyTimerProps) {
   const subjects = useTimerStore((s) => s.subjects)
   const selectedSubjectId = useTimerStore((s) => s.selectedSubjectId)
   const isRunning = useTimerStore((s) => s.isRunning)
@@ -47,6 +58,7 @@ export function StudyTimer() {
   const [awayMessage, setAwayMessage] = useState<string | null>(null)
   const [justCompleted, setJustCompleted] = useState(false)
   const [justLeveledUp, setJustLeveledUp] = useState(false)
+  const [studyReward, setStudyReward] = useState<StudyReward | null>(null)
   const completionTimeoutRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
@@ -93,8 +105,16 @@ export function StudyTimer() {
 
   const handleStop = () => {
     const hadProgress = elapsedSec > 0
+    const completedDurationSec = elapsedSec
+    const balanceBefore = usePointsStore.getState().balance()
     stop()
     if (hadProgress) {
+      const balanceAfter = usePointsStore.getState().balance()
+      setStudyReward({
+        durationSec: completedDurationSec,
+        earnedPoints: Math.max(0, balanceAfter - balanceBefore),
+        balance: balanceAfter,
+      })
       if (completionTimeoutRef.current !== undefined) window.clearTimeout(completionTimeoutRef.current)
       setJustCompleted(true)
       completionTimeoutRef.current = window.setTimeout(() => {
@@ -186,6 +206,19 @@ export function StudyTimer() {
       />
 
       <SubjectBreakdownCard perSubject={perSubject} maxSec={maxSec} />
+
+      {studyReward && (
+        <StudyRewardModal
+          durationSec={studyReward.durationSec}
+          earnedPoints={studyReward.earnedPoints}
+          balance={studyReward.balance}
+          onClose={() => setStudyReward(null)}
+          onOpenShop={() => {
+            setStudyReward(null)
+            onOpenShop()
+          }}
+        />
+      )}
     </div>
   )
 }

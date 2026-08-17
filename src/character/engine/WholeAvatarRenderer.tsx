@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { SPRITE_CANVAS_SIZE } from './spriteManifest'
-import { resolveWholeAvatarLoadState, resolveWholeAvatarPathWithFallback } from './wholeAvatarSupport'
+import { resolveWholeAvatarSourceChain } from './wholeAvatarSupport'
 import type { CharacterAppearance, CharacterState, Gender } from '../types'
 
 interface WholeAvatarRendererProps {
@@ -36,22 +36,24 @@ export function WholeAvatarRenderer({
   fit = 'width',
   onError,
 }: WholeAvatarRendererProps) {
-  const resolution = resolveWholeAvatarPathWithFallback(gender, state, frame, appearance)
+  const sources = resolveWholeAvatarSourceChain(gender, state, frame, appearance)
 
   // The last `primary` src that failed to load — not a permanent flag.
   // Comparing it against the current resolution's `primary` inside
   // `resolveWholeAvatarLoadState` (recomputed every render) is what lets a
   // state/frame change immediately retry the real variant image again
   // instead of getting stuck on the fallback forever.
-  const [failedPrimarySrc, setFailedPrimarySrc] = useState<string | null>(null)
-  const { src, isFinalAttempt } = resolveWholeAvatarLoadState(resolution, failedPrimarySrc)
+  const [failedSources, setFailedSources] = useState<string[]>([])
+  const sourceIndex = Math.max(0, sources.findIndex((candidate) => !failedSources.includes(candidate)))
+  const src = sources[sourceIndex]
+  const isFinalAttempt = sourceIndex === sources.length - 1
 
   function handleError() {
     if (isFinalAttempt) {
       onError?.()
       return
     }
-    setFailedPrimarySrc(resolution.primary)
+    setFailedSources((current) => (current.includes(src) ? current : [...current, src]))
   }
 
   const boxStyle =
