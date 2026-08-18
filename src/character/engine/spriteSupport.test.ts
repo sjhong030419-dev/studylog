@@ -241,9 +241,8 @@ describe('allCosmeticsSupported', () => {
 })
 
 describe('isShopItemPngSupported (shop purchase-gate / badge — single source of truth, no duplicated logic)', () => {
-  it('supports the delivered ribbon and keeps every undelivered cosmetic gated', () => {
-    expect(isShopItemPngSupported('hair-ribbon')).toBe(true)
-    for (const itemId of REAL_COSMETIC_ITEM_IDS.filter((id) => id !== 'hair-ribbon')) {
+  it('is false for every real hair/outfit/accessory item today (no PNG layer exists yet)', () => {
+    for (const itemId of REAL_COSMETIC_ITEM_IDS) {
       expect(isShopItemPngSupported(itemId)).toBe(false)
     }
   })
@@ -338,8 +337,8 @@ describe('shouldUseBareBase / BARE_BASE_CONFIRMED_GENDERS', () => {
 })
 
 describe('honest current gaps (regression guards — should start failing loudly once real assets land)', () => {
-  it('only declares the delivered ribbon cosmetic layer today', () => {
-    expect([...SUPPORTED_COSMETIC_ASSET_KEYS]).toEqual(['ribbon'])
+  it('has no supported cosmetic layers yet', () => {
+    expect(SUPPORTED_COSMETIC_ASSET_KEYS.size).toBe(0)
   })
 
   it('has no supported effect overlays yet', () => {

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { SPRITE_CANVAS_SIZE } from './spriteManifest'
 import { resolveWholeAvatarSourceChain } from './wholeAvatarSupport'
-import { hasSakuraRibbon, resolveAvatarRibbonPath } from './accessoryOverlaySupport'
 import type { CharacterAppearance, CharacterState, Gender } from '../types'
 
 interface WholeAvatarRendererProps {
@@ -15,10 +14,9 @@ interface WholeAvatarRendererProps {
 }
 
 /**
- * Renders exactly one approved character image. Facial, hair and outfit
- * pieces are never decomposed; those looks use complete baked variants
- * through wholeAvatarSupport.ts. A delivered, state-aligned small
- * accessory may be added above it (currently only the sakura ribbon).
+ * Renders exactly one approved character image. No facial, hair, outfit or
+ * accessory layers are composited here. Cosmetic looks are added later as
+ * complete baked variants through wholeAvatarSupport.ts.
  *
  * A matched cosmetic variant (e.g. black-hair) is tried first; if that one
  * image fails to load, the approved default base image for this exact
@@ -49,7 +47,6 @@ export function WholeAvatarRenderer({
   const sourceIndex = Math.max(0, sources.findIndex((candidate) => !failedSources.includes(candidate)))
   const src = sources[sourceIndex]
   const isFinalAttempt = sourceIndex === sources.length - 1
-  const ribbonSrc = hasSakuraRibbon(appearance) ? resolveAvatarRibbonPath(gender, state) : undefined
 
   function handleError() {
     if (isFinalAttempt) {
@@ -82,26 +79,6 @@ export function WholeAvatarRenderer({
           imageRendering: 'pixelated',
         }}
       />
-      {ribbonSrc && (
-        <img
-          src={ribbonSrc}
-          alt=""
-          aria-hidden="true"
-          width={SPRITE_CANVAS_SIZE}
-          height={SPRITE_CANVAS_SIZE}
-          draggable={false}
-          onLoad={(event) => { event.currentTarget.style.visibility = 'visible' }}
-          onError={(event) => { event.currentTarget.style.visibility = 'hidden' }}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            imageRendering: 'pixelated',
-            pointerEvents: 'none',
-          }}
-        />
-      )}
     </div>
   )
 }

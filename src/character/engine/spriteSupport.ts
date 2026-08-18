@@ -74,14 +74,14 @@ export const HAS_REAL_PER_FRAME_ANIMATION = false
  * character/catalog/baseLayers.ts's bare-base pieces) with a real,
  * gender-and-state-complete cosmetic-layer PNG set under
  * `avatar-layers/{folder}/{assetKey}/` (spriteManifest.ts
- * `resolveCosmeticLayerPath`). Currently contains only `ribbon`, whose
- * complete gender/state family is delivered. Add more only once every required
+ * `resolveCosmeticLayerPath`). Empty today — no real files exist under that
+ * root yet. Populate as real layer art lands, only once every required
  * gender × state file for that assetKey is confirmed present (never
  * partial — PixelSpriteRenderer has no per-state/per-gender fallback
  * within one assetKey, only whole-layer omission); nothing else needs to
  * change (`allCosmeticsSupported` below and `shouldUseBareBase`'s
  * consumers pick it up automatically). */
-export const SUPPORTED_COSMETIC_ASSET_KEYS: ReadonlySet<string> = new Set(['ribbon'])
+export const SUPPORTED_COSMETIC_ASSET_KEYS: ReadonlySet<string> = new Set([])
 
 /** CharacterStates with a real overlay PNG under effects/. Empty today —
  * that folder only contains `.gitkeep`. */

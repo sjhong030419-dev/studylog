@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CharacterState, Gender } from '../types'
-import { resolveRoomRibbonPathFromScenePath } from '../engine/accessoryOverlaySupport'
 import {
   resolveFullSceneName,
   resolveFullScenePath,
@@ -13,7 +12,6 @@ interface FullSceneRoomRendererProps {
   state: CharacterState
   gender: Gender
   theme: FullSceneTheme
-  showSakuraRibbon?: boolean
   /** Fires once if the resolved scene image fails to load — RoomScene
    * treats this as permanent for the mounted instance and falls back to
    * the layered/legacy renderers (see RoomScene.tsx's top-of-file doc
@@ -56,7 +54,7 @@ const IDLE_PRELOAD_TIMEOUT_MS = 2000
  * cosmetics or level-unlocked furniture (that data still exists and is used
  * elsewhere — this renderer just doesn't visualize it yet).
  */
-export function FullSceneRoomRenderer({ state, gender, theme, showSakuraRibbon = false, onError }: FullSceneRoomRendererProps) {
+export function FullSceneRoomRenderer({ state, gender, theme, onError }: FullSceneRoomRendererProps) {
   const scene = resolveFullSceneName(state)
   const [displaySrc, setDisplaySrc] = useState(() => resolveFullScenePath(theme, gender, scene))
   // Mirrors `displaySrc` synchronously (state updates are async/batched) so
@@ -153,27 +151,14 @@ export function FullSceneRoomRenderer({ state, gender, theme, showSakuraRibbon =
   }, [gender, scene, theme])
 
   return (
-    <div className="relative h-full w-full">
-      <img
-        src={displaySrc}
-        alt=""
-        aria-hidden="true"
-        className="block w-full h-full object-cover object-center"
-        draggable={false}
-        onLoad={() => loadedRef.current.add(displaySrc)}
-        onError={onError}
-      />
-      {showSakuraRibbon && (
-        <img
-          src={resolveRoomRibbonPathFromScenePath(displaySrc)}
-          alt=""
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
-          draggable={false}
-          onLoad={(event) => { event.currentTarget.style.visibility = 'visible' }}
-          onError={(event) => { event.currentTarget.style.visibility = 'hidden' }}
-        />
-      )}
-    </div>
+    <img
+      src={displaySrc}
+      alt=""
+      aria-hidden="true"
+      className="block w-full h-full object-cover object-center"
+      draggable={false}
+      onLoad={() => loadedRef.current.add(displaySrc)}
+      onError={onError}
+    />
   )
 }
