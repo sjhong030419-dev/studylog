@@ -46,9 +46,9 @@ describe('hair-color-black registration', () => {
     expect(WHOLE_AVATAR_VARIANTS.some((v) => v.id === 'hair-color-black')).toBe(true)
   })
 
-  it('is registered for girl only — no boy asset family was delivered', () => {
+  it('is registered for both genders', () => {
     const variant = WHOLE_AVATAR_VARIANTS.find((v) => v.id === 'hair-color-black')!
-    expect(variant.supportedGenders).toEqual(['girl'])
+    expect(variant.supportedGenders).toEqual(['girl', 'boy'])
   })
 })
 
@@ -82,22 +82,21 @@ describe('required test 3 — girl + hair-color-black resolves every state/frame
   })
 })
 
-describe('required test 4 — boy + hair-color-black resolves to the default base character', () => {
+describe('boy + hair-color-black complete family', () => {
   const appearance = { ...DEFAULT_PRESETS.boy, equippedAssetIds: ['hair-color-black'] }
 
-  it('never resolves a whole-avatar variant for boy', () => {
-    expect(resolveWholeAvatarVariant(appearance, 'boy')).toBeUndefined()
+  it('resolves a whole-avatar variant for boy', () => {
+    expect(resolveWholeAvatarVariant(appearance, 'boy')?.id).toBe('hair-color-black')
   })
 
-  it.each(ALL_STATES)('falls back to the approved default base for state %s', (state) => {
+  it.each(ALL_STATES)('resolves black hair for state %s', (state) => {
     const path = resolveWholeAvatarPath('boy', state, 0, appearance)
-    expect(path).toMatch(/^\/sprites\/avatar\/base\/boy_.+_01\.png$/)
-    expect(path).not.toContain('whole/black-hair')
+    expect(path).toMatch(/^\/sprites\/avatar\/whole\/black-hair\/boy_.+_01\.png$/)
   })
 
-  it('never returns a boy path under the black-hair family, even though no boy files exist there', () => {
+  it('returns the delivered boy black-hair path', () => {
     const path = resolveWholeAvatarPath('boy', 'study', 0, appearance)
-    expect(path).toBe('/sprites/avatar/base/boy_study_01.png')
+    expect(path).toBe('/sprites/avatar/whole/black-hair/boy_study_01.png')
   })
 })
 
@@ -163,8 +162,8 @@ describe('isWholeAvatarItemSupportedForGender', () => {
     expect(isWholeAvatarItemSupportedForGender('hair-color-black', 'girl')).toBe(true)
   })
 
-  it('is false for hair-color-black + boy — the honest signal AvatarShop.tsx uses to warn before purchase', () => {
-    expect(isWholeAvatarItemSupportedForGender('hair-color-black', 'boy')).toBe(false)
+  it('is true for hair-color-black + boy', () => {
+    expect(isWholeAvatarItemSupportedForGender('hair-color-black', 'boy')).toBe(true)
   })
 
   it('is false for an item with no registered whole-avatar variant at all', () => {
@@ -182,11 +181,11 @@ describe('renderer fallback — resolveWholeAvatarPathWithFallback', () => {
     expect(primary).not.toBe(fallback)
   })
 
-  it('required test 5/6 — no matched variant (boy, or default brown-hair girl) makes primary and fallback identical', () => {
+  it('boy black hair has a distinct base fallback; default girl does not', () => {
     const boyAppearance = { ...DEFAULT_PRESETS.boy, equippedAssetIds: ['hair-color-black'] }
     const boyResolution = resolveWholeAvatarPathWithFallback('boy', 'study', 0, boyAppearance)
-    expect(boyResolution.primary).toBe(boyResolution.fallback)
-    expect(boyResolution.primary).not.toContain('black-hair')
+    expect(boyResolution.primary).toContain('black-hair')
+    expect(boyResolution.fallback).toContain('/base/')
 
     const defaultGirlAppearance = { ...DEFAULT_PRESETS.girl, equippedAssetIds: [] }
     const girlResolution = resolveWholeAvatarPathWithFallback('girl', 'study', 0, defaultGirlAppearance)
@@ -243,12 +242,12 @@ describe('renderer fallback — resolveWholeAvatarLoadState (docs/... black hair
     expect(state.src).toBe(resolution.fallback)
   })
 
-  it('required test 5 — boy never gets a black-hair src, and a single failure is immediately final', () => {
+  it('boy gets black hair first and retains a safe base fallback', () => {
     const boyAppearance = { ...DEFAULT_PRESETS.boy, equippedAssetIds: ['hair-color-black'] }
     const boyResolution = resolveWholeAvatarPathWithFallback('boy', 'study', 0, boyAppearance)
     const state = resolveWholeAvatarLoadState(boyResolution, null)
-    expect(state.src).not.toContain('black-hair')
-    expect(state.isFinalAttempt).toBe(true) // primary === fallback, nothing left to retry
+    expect(state.src).toContain('black-hair')
+    expect(state.isFinalAttempt).toBe(false)
   })
 
   it('required test 6 — a default brown-hair user keeps the original single-attempt-then-SVG behavior', () => {
@@ -296,13 +295,37 @@ describe('sakura uniform complete skin', () => {
     ])
   })
 
-  it('never requests the girl-only skin for boy', () => {
+  it('resolves the complete male skin family for boy', () => {
     const sources = resolveWholeAvatarSourceChain('boy', 'study', 0, appearance)
-    expect(sources).toEqual(['/sprites/avatar/base/boy_study_01.png'])
+    expect(sources).toEqual([
+      '/sprites/avatar/whole/sakura-uniform/boy_study_01.png',
+      '/sprites/avatar/whole/black-hair/boy_study_01.png',
+      '/sprites/avatar/base/boy_study_01.png',
+    ])
   })
 
-  it('reports the skin as supported for girl only', () => {
+  it('uses the male skin in Home, Timer and Capture representative states', () => {
+    expect(resolveWholeAvatarPath('boy', 'idle', 0, appearance)).toBe(
+      '/sprites/avatar/whole/sakura-uniform/boy_idle_01.png',
+    )
+    expect(resolveWholeAvatarPath('boy', 'study', 0, appearance)).toBe(
+      '/sprites/avatar/whole/sakura-uniform/boy_study_01.png',
+    )
+    expect(resolveWholeAvatarPath('boy', 'happy', 0, appearance)).toBe(
+      '/sprites/avatar/whole/sakura-uniform/boy_happy_01.png',
+    )
+  })
+
+  it('covers every male state with the male skin family', () => {
+    for (const state of ALL_STATES) {
+      expect(resolveWholeAvatarPath('boy', state, 0, appearance)).toMatch(
+        /^\/sprites\/avatar\/whole\/sakura-uniform\/boy_.+_01\.png$/,
+      )
+    }
+  })
+
+  it('reports the skin as supported for both genders', () => {
     expect(isWholeAvatarItemSupportedForGender('skin-sakura-uniform-girl', 'girl')).toBe(true)
-    expect(isWholeAvatarItemSupportedForGender('skin-sakura-uniform-girl', 'boy')).toBe(false)
+    expect(isWholeAvatarItemSupportedForGender('skin-sakura-uniform-girl', 'boy')).toBe(true)
   })
 })

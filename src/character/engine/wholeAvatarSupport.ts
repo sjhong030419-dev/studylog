@@ -48,23 +48,22 @@ function resolveSakuraUniformWholePath(gender: Gender, state: CharacterState, fr
  * frame count) has been visually approved; never register partial layer
  * artwork.
  *
- * `hair-color-black`: 104 delivered PNGs, girl only (no boy assets exist —
- * `supportedGenders: ['girl']` is what makes a boy with this item equipped
- * safely fall back to the default base character, not a missing image).
+ * Every registered gender must have a complete 104-frame family. Black hair
+ * Black hair and sakura uniform both have complete girl and boy families.
  */
 export const WHOLE_AVATAR_VARIANTS: readonly WholeAvatarVariant[] = [
   {
     id: 'hair-color-black',
     priority: 100,
     equippedAssetIds: ['hair-color-black'],
-    supportedGenders: ['girl'],
+    supportedGenders: ['girl', 'boy'],
     path: resolveBlackHairWholePath,
   },
   {
     id: 'skin-sakura-uniform-girl',
     priority: 1000,
     equippedAssetIds: ['skin-sakura-uniform-girl'],
-    supportedGenders: ['girl'],
+    supportedGenders: ['girl', 'boy'],
     path: resolveSakuraUniformWholePath,
   },
 ]
