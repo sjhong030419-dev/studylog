@@ -122,8 +122,20 @@ export function buildSakuraUniformExpectedFiles(): ExpectedFile[] {
   )
 }
 
+export function buildSakuraUniformRibbonExpectedFiles(): ExpectedFile[] {
+  return (['girl', 'boy'] as const).flatMap((gender) =>
+    (Object.keys(STATE_FRAME_COUNT) as CharacterState[]).flatMap((state) =>
+      Array.from({ length: STATE_FRAME_COUNT[state] }, (_, frameIndex) => ({
+        relativePath: `sprites/avatar/whole/sakura-uniform-ribbon/${gender}_${STATE_FILE_NAME[state]}_${pad(frameIndex)}.png`,
+        ...WHOLE_AVATAR_SIZE,
+      })),
+    ),
+  )
+}
+
 const BLACK_HAIR_FILES: ExpectedFile[] = buildBlackHairExpectedFiles()
 const SAKURA_UNIFORM_FILES: ExpectedFile[] = buildSakuraUniformExpectedFiles()
+const SAKURA_UNIFORM_RIBBON_FILES: ExpectedFile[] = buildSakuraUniformRibbonExpectedFiles()
 
 export type FileReport =
   | { relativePath: string; status: 'missing' }
@@ -202,10 +214,20 @@ function main() {
     `\nWhole-avatar sakura-uniform files: ${sakuraValid.length} valid, ${sakuraMissing.length} missing, ${sakuraInvalid.length} invalid`,
   )
 
+  const sakuraRibbonReports = SAKURA_UNIFORM_RIBBON_FILES.map(checkFile)
+  const sakuraRibbonMissing = sakuraRibbonReports.filter((r) => r.status === 'missing')
+  const sakuraRibbonInvalid = sakuraRibbonReports.filter((r) => r.status === 'invalid')
+  const sakuraRibbonValid = sakuraRibbonReports.filter((r) => r.status === 'valid')
+
+  console.log(
+    `\nWhole-avatar sakura-uniform-ribbon files: ${sakuraRibbonValid.length} valid, ${sakuraRibbonMissing.length} missing, ${sakuraRibbonInvalid.length} invalid`,
+  )
+
   const allValid =
     valid.length === EXPECTED_FILES.length &&
     blackHairValid.length === BLACK_HAIR_FILES.length &&
-    sakuraValid.length === SAKURA_UNIFORM_FILES.length
+    sakuraValid.length === SAKURA_UNIFORM_FILES.length &&
+    sakuraRibbonValid.length === SAKURA_UNIFORM_RIBBON_FILES.length
 
   if (allValid) {
     console.log('\nAll expected files present and valid.')

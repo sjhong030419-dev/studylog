@@ -41,6 +41,13 @@ describe('resolveFullSceneTheme', () => {
     )
   })
 
+  it('uses the fully baked ribbon room when the sakura+ribbon variant wins', () => {
+    expect(resolveFullSceneTheme('skin-sakura-uniform-ribbon')).toBe('sakura-uniform-ribbon')
+    expect(resolveFullScenePath('sakura-uniform-ribbon', 'girl', 'sleep')).toBe(
+      '/sprites/room/sakura-uniform-ribbon/scenes/girl/sleep.webp',
+    )
+  })
+
   it('keeps unsupported appearance variants on the live avatar renderer', () => {
     expect(resolveFullSceneTheme('hair-color-black')).toBeUndefined()
   })

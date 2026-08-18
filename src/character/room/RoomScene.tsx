@@ -96,7 +96,7 @@ export function RoomScene(props: RoomSceneProps) {
   const usesFullScene = shouldUseFullScene({
     // A delivered appearance-specific room is safe on every surface,
     // including capture/share. Default art remains caller opt-in.
-    preferFullScene: (props.preferFullScene ?? false) || fullSceneTheme === 'sakura-uniform',
+    preferFullScene: (props.preferFullScene ?? false) || (fullSceneTheme !== undefined && fullSceneTheme !== 'default-night'),
     fullSceneLoadFailed,
     hasRenderableAppearanceVariant,
   })

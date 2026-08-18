@@ -21,7 +21,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     emoji: '🌸',
     colorHex: '#C97886',
   },
-  { id: 'hair-ribbon', category: 'hair', name: '리본 헤어핀', priceType: 'points', price: 30, emoji: '🎀' },
+  { id: 'hair-ribbon', category: 'hair', name: '벚꽃 리본 · 교복 전용', priceType: 'points', price: 30, emoji: '🎀' },
   { id: 'hair-straw', category: 'hair', name: '밀짚모자', priceType: 'points', price: 50, emoji: '👒' },
   { id: 'hair-cap', category: 'hair', name: '야구모자', priceType: 'cash', price: 1500, emoji: '🧢' },
 
