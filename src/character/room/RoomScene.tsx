@@ -5,6 +5,7 @@ import { FullSceneRoomRenderer } from './FullSceneRoomRenderer'
 import { shouldUsePixelRoom } from './roomThemeSupport'
 import { resolveFullSceneTheme, shouldUseFullScene } from './fullSceneState'
 import { resolveWholeAvatarVariant } from '../engine/wholeAvatarSupport'
+import { hasSakuraRibbon } from '../engine/accessoryOverlaySupport'
 import { resolveAppearance } from '../presets/defaultPresets'
 import type { RoomThemeId } from './roomAssetManifest'
 import type { CharacterAppearance, CharacterState, Gender } from '../types'
@@ -51,7 +52,8 @@ const ACTIVE_THEME_ID: RoomThemeId = 'default-night'
  *    └─ LegacySvgRoomRenderer (docs/character-system.md §6 — the existing procedural SVG room, final safety net)
  *
  * `FullSceneRoomRenderer` is one baked illustration per gender × state
- * (idle/study/sleep/happy) — it does not read `appearance`/`level`, so
+ * (idle/study/sleep/happy). It supports a separately delivered, coordinate-
+ * locked ribbon overlay; other cosmetics and `level` are not baked into it, so
  * equipped cosmetics, background shop items, and level-unlocked furniture
  * (plant/cat) are not visually reflected while it's active. That data is
  * still stored and applied everywhere else in the app; only this renderer's
@@ -107,6 +109,7 @@ export function RoomScene(props: RoomSceneProps) {
         state={props.state}
         gender={gender}
         theme={fullSceneTheme}
+        showSakuraRibbon={hasSakuraRibbon(resolvedAppearance)}
         onError={handleFullSceneError}
       />
     )
