@@ -42,6 +42,10 @@ function resolveSakuraUniformWholePath(gender: Gender, state: CharacterState, fr
   return `/sprites/avatar/whole/sakura-uniform/${gender}_${STATE_FILE_NAME[state]}_${pad(frameIndex)}.png`
 }
 
+function resolveSakuraUniformRibbonWholePath(gender: Gender, state: CharacterState, frameIndex: number): string {
+  return `/sprites/avatar/whole/sakura-uniform-ribbon/${gender}_${STATE_FILE_NAME[state]}_${pad(frameIndex)}.png`
+}
+
 /**
  * Registered whole-avatar variants. Add a variant only when its complete
  * image family (every required gender × all 13 states × the state's full
@@ -52,6 +56,13 @@ function resolveSakuraUniformWholePath(gender: Gender, state: CharacterState, fr
  * Black hair and sakura uniform both have complete girl and boy families.
  */
 export const WHOLE_AVATAR_VARIANTS: readonly WholeAvatarVariant[] = [
+  {
+    id: 'skin-sakura-uniform-ribbon',
+    priority: 2000,
+    equippedAssetIds: ['skin-sakura-uniform-girl', 'hair-ribbon'],
+    supportedGenders: ['girl', 'boy'],
+    path: resolveSakuraUniformRibbonWholePath,
+  },
   {
     id: 'hair-color-black',
     priority: 100,

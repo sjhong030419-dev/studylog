@@ -3,7 +3,7 @@ import { LegacySvgRoomRenderer } from './LegacySvgRoomRenderer'
 import { PixelRoomRenderer } from './PixelRoomRenderer'
 import { FullSceneRoomRenderer } from './FullSceneRoomRenderer'
 import { shouldUsePixelRoom } from './roomThemeSupport'
-import { shouldUseFullScene } from './fullSceneState'
+import { resolveFullSceneTheme, shouldUseFullScene } from './fullSceneState'
 import { resolveWholeAvatarVariant } from '../engine/wholeAvatarSupport'
 import { resolveAppearance } from '../presets/defaultPresets'
 import type { RoomThemeId } from './roomAssetManifest'
@@ -89,19 +89,24 @@ export function RoomScene(props: RoomSceneProps) {
 
   const gender = props.gender ?? 'boy'
   const resolvedAppearance = resolveAppearance(gender, props.appearance)
-  const hasRenderableAppearanceVariant = Boolean(resolveWholeAvatarVariant(resolvedAppearance, gender))
+  const appearanceVariant = resolveWholeAvatarVariant(resolvedAppearance, gender)
+  const fullSceneTheme = resolveFullSceneTheme(appearanceVariant?.id)
+  const hasRenderableAppearanceVariant = Boolean(appearanceVariant && !fullSceneTheme)
 
   const usesFullScene = shouldUseFullScene({
-    preferFullScene: props.preferFullScene ?? false,
+    // A delivered appearance-specific room is safe on every surface,
+    // including capture/share. Default art remains caller opt-in.
+    preferFullScene: (props.preferFullScene ?? false) || (fullSceneTheme !== undefined && fullSceneTheme !== 'default-night'),
     fullSceneLoadFailed,
     hasRenderableAppearanceVariant,
   })
 
-  if (usesFullScene) {
+  if (usesFullScene && fullSceneTheme) {
     return (
       <FullSceneRoomRenderer
         state={props.state}
         gender={gender}
+        theme={fullSceneTheme}
         onError={handleFullSceneError}
       />
     )

@@ -1,10 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CharacterState, Gender } from '../types'
-import { resolveFullSceneName, resolveFullSceneSwap, type FullSceneName } from './fullSceneState'
+import {
+  resolveFullSceneName,
+  resolveFullScenePath,
+  resolveFullSceneSwap,
+  type FullSceneName,
+  type FullSceneTheme,
+} from './fullSceneState'
 
 interface FullSceneRoomRendererProps {
   state: CharacterState
   gender: Gender
+  theme: FullSceneTheme
   /** Fires once if the resolved scene image fails to load — RoomScene
    * treats this as permanent for the mounted instance and falls back to
    * the layered/legacy renderers (see RoomScene.tsx's top-of-file doc
@@ -22,10 +29,6 @@ interface FullSceneRoomRendererProps {
  * docs/assets/room-v2/) is ~1.3MB per PNG; re-encoded as WebP at quality 85
  * these are ~100KB each with no visible quality loss, roughly a 13x
  * reduction across the 4 states × 2 genders. */
-function scenePath(gender: Gender, scene: FullSceneName): string {
-  return `/sprites/room/default-night/scenes/${gender}/${scene}.webp`
-}
-
 const ALL_SCENES: FullSceneName[] = ['idle', 'study', 'sleep', 'happy']
 
 /** requestIdleCallback isn't available in Safari — falls back to a plain
@@ -51,9 +54,9 @@ const IDLE_PRELOAD_TIMEOUT_MS = 2000
  * cosmetics or level-unlocked furniture (that data still exists and is used
  * elsewhere — this renderer just doesn't visualize it yet).
  */
-export function FullSceneRoomRenderer({ state, gender, onError }: FullSceneRoomRendererProps) {
+export function FullSceneRoomRenderer({ state, gender, theme, onError }: FullSceneRoomRendererProps) {
   const scene = resolveFullSceneName(state)
-  const [displaySrc, setDisplaySrc] = useState(() => scenePath(gender, scene))
+  const [displaySrc, setDisplaySrc] = useState(() => resolveFullScenePath(theme, gender, scene))
   // Mirrors `displaySrc` synchronously (state updates are async/batched) so
   // the swap effect below can read "what's on screen right now" without
   // needing `displaySrc` in its own dependency array — see that effect's
@@ -85,7 +88,7 @@ export function FullSceneRoomRenderer({ state, gender, onError }: FullSceneRoomR
     const preloaded: HTMLImageElement[] = []
     const cancelIdle = scheduleIdlePreload(() => {
       for (const name of ALL_SCENES) {
-        const path = scenePath(gender, name)
+        const path = resolveFullScenePath(theme, gender, name)
         if (loadedRef.current.has(path)) continue
         const image = new Image()
         image.onload = () => loadedRef.current.add(path)
@@ -104,7 +107,7 @@ export function FullSceneRoomRenderer({ state, gender, onError }: FullSceneRoomR
         image.src = ''
       }
     }
-  }, [gender])
+  }, [gender, theme])
 
   // Swaps the visible image only once the target has fully finished
   // loading in the background — a state/gender change never shows a blank
@@ -120,7 +123,7 @@ export function FullSceneRoomRenderer({ state, gender, onError }: FullSceneRoomR
   // ancestor's unrelated re-render (StudyTimer ticking every second) can
   // never tear down and restart an in-flight fetch mid-load.
   useEffect(() => {
-    const target = scenePath(gender, scene)
+    const target = resolveFullScenePath(theme, gender, scene)
     const decision = resolveFullSceneSwap(displaySrcRef.current, target, loadedRef.current.has(target))
 
     if (decision.kind === 'unchanged') return
@@ -145,7 +148,7 @@ export function FullSceneRoomRenderer({ state, gender, onError }: FullSceneRoomR
       image.onload = null
       image.onerror = null
     }
-  }, [gender, scene])
+  }, [gender, scene, theme])
 
   return (
     <img

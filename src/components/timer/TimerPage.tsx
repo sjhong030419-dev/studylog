@@ -28,17 +28,20 @@ export function TimerPage({ onOpenShop }: TimerPageProps) {
   const { rank, total } = myOverallRank(myTodaySec)
 
   return (
-    <div className="min-h-screen flex flex-col items-center gap-4 px-4 pt-4 pb-8">
-      <div className="w-full flex flex-col items-center gap-4" style={{ maxWidth: 430 }}>
+    <main className="min-h-screen px-4 pb-10 pt-4">
+      <div className="mx-auto flex w-full flex-col items-center gap-3.5" style={{ maxWidth: 430 }}>
         <HomeProgressHeader level={level.level} progressRatio={level.progressRatio} streakCount={streakCount} />
 
-        <div className="w-full flex items-center justify-between">
-          <h1 className="font-cute text-2xl text-ink">스터디로그 📖</h1>
+        <div className="flex w-full items-center justify-between px-0.5">
+          <div>
+            <p className="font-cute text-[11px] tracking-wide text-ink-soft">CHARACTER STUDY RPG</p>
+            <h1 className="font-cute text-2xl text-ink">스터디로그 <span aria-hidden="true">📖</span></h1>
+          </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setMode('normal')}
-              className={`font-cute px-4 py-1.5 rounded-full border text-sm min-h-[36px] ${
+              className={`font-cute min-h-[36px] rounded-full border px-3 py-1.5 text-sm shadow-sm transition-transform active:scale-95 ${
                 mode === 'normal' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
               }`}
             >
@@ -47,7 +50,7 @@ export function TimerPage({ onOpenShop }: TimerPageProps) {
             <button
               type="button"
               onClick={() => setMode('pomodoro')}
-              className={`font-cute px-4 py-1.5 rounded-full border text-sm min-h-[36px] ${
+              className={`font-cute min-h-[36px] rounded-full border px-3 py-1.5 text-sm shadow-sm transition-transform active:scale-95 ${
                 mode === 'pomodoro' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
               }`}
             >
@@ -66,6 +69,6 @@ export function TimerPage({ onOpenShop }: TimerPageProps) {
           points={points}
         />
       </div>
-    </div>
+    </main>
   )
 }

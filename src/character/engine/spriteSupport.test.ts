@@ -241,8 +241,9 @@ describe('allCosmeticsSupported', () => {
 })
 
 describe('isShopItemPngSupported (shop purchase-gate / badge — single source of truth, no duplicated logic)', () => {
-  it('is false for every real hair/outfit/accessory item today (no PNG layer exists yet)', () => {
-    for (const itemId of REAL_COSMETIC_ITEM_IDS) {
+  it('allows the baked sakura+ribbon combination item and gates undelivered cosmetics', () => {
+    expect(isShopItemPngSupported('hair-ribbon')).toBe(true)
+    for (const itemId of REAL_COSMETIC_ITEM_IDS.filter((id) => id !== 'hair-ribbon')) {
       expect(isShopItemPngSupported(itemId)).toBe(false)
     }
   })
@@ -267,12 +268,13 @@ describe('isShopItemPngSupported (shop purchase-gate / badge — single source o
     }
   })
 
-  it('agrees exactly with SUPPORTED_COSMETIC_ASSET_KEYS for every real catalog entry (no drift between shop gate and renderer skip)', () => {
+  it('agrees with the layer registry except for the explicitly baked sakura+ribbon combination', () => {
     // The shop's purchase/badge decision and PixelSpriteRenderer's
     // per-layer skip decision must never be able to disagree — both read
     // the same SUPPORTED_COSMETIC_ASSET_KEYS registry, this proves it.
     for (const entry of CHARACTER_ASSET_CATALOG) {
-      expect(isShopItemPngSupported(entry.id)).toBe(SUPPORTED_COSMETIC_ASSET_KEYS.has(entry.assetKey))
+      const expected = entry.id === 'hair-ribbon' || SUPPORTED_COSMETIC_ASSET_KEYS.has(entry.assetKey)
+      expect(isShopItemPngSupported(entry.id)).toBe(expected)
     }
   })
 })

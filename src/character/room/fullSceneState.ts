@@ -1,6 +1,21 @@
 import type { CharacterState } from '../types'
 
 export type FullSceneName = 'idle' | 'study' | 'sleep' | 'happy'
+export type FullSceneTheme = 'default-night' | 'sakura-uniform' | 'sakura-uniform-ribbon'
+
+/** Maps a complete whole-avatar variant to a baked room skin. `undefined`
+ * means the appearance still needs the live avatar renderer because no
+ * matching full-scene family has been delivered yet. */
+export function resolveFullSceneTheme(variantId?: string): FullSceneTheme | undefined {
+  if (!variantId) return 'default-night'
+  if (variantId === 'skin-sakura-uniform-ribbon') return 'sakura-uniform-ribbon'
+  if (variantId === 'skin-sakura-uniform-girl') return 'sakura-uniform'
+  return undefined
+}
+
+export function resolveFullScenePath(theme: FullSceneTheme, gender: 'girl' | 'boy', scene: FullSceneName): string {
+  return `/sprites/room/${theme}/scenes/${gender}/${scene}.webp`
+}
 
 const SCENE_BY_STATE: Record<CharacterState, FullSceneName> = {
   idle: 'idle',

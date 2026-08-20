@@ -22,20 +22,22 @@ export function GrowthSummaryGrid({ streakCount, totalStudySec, rank, rankTotal,
   ]
 
   return (
-    <div className="w-full grid grid-cols-2 gap-3">
+    <section className="w-full grid grid-cols-2 gap-3" aria-label="오늘의 성장 요약">
       {cards.map((c) => (
         <div
           key={c.label}
-          className="rounded-[22px] px-4 py-3 flex flex-col gap-1 shadow-sm"
+          className="relative overflow-hidden rounded-[22px] border border-white/70 px-4 py-3.5 shadow-[0_8px_22px_rgba(108,82,130,0.08)] transition-transform duration-200 hover:-translate-y-0.5 motion-reduce:transform-none"
           style={{ backgroundColor: c.bg }}
         >
-          <span className="text-lg" aria-hidden="true">
-            {c.icon}
-          </span>
-          <span className="font-cute text-ink-soft text-xs">{c.label}</span>
-          <span className="font-pixel text-ink text-base">{c.value}</span>
+          <div className="flex items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-white/65 text-base shadow-sm" aria-hidden="true">
+              {c.icon}
+            </span>
+            <span className="font-cute text-ink-soft text-xs">{c.label}</span>
+          </div>
+          <span className="mt-1 font-pixel text-ink text-base">{c.value}</span>
         </div>
       ))}
-    </div>
+    </section>
   )
 }

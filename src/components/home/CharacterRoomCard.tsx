@@ -17,17 +17,17 @@ interface CharacterRoomCardProps {
  * final production assets. */
 export function CharacterRoomCard({ state, gender, appearance, level, speech }: CharacterRoomCardProps) {
   return (
-    <div className="w-full flex flex-col items-center">
+    <section className="w-full flex flex-col items-center" aria-label="나의 공부방">
       {speech && (
-        <div className="relative z-10 -mb-2 max-w-[85%] bg-(--color-home-card) rounded-2xl px-4 py-2 shadow-md">
+        <div className="relative z-10 -mb-2 max-w-[88%] rounded-2xl border border-white/80 bg-(--color-home-card) px-4 py-2 shadow-[0_8px_22px_rgba(71,54,82,0.14)]">
           <span className="font-cute text-ink text-sm">{speech}</span>
           <div className="absolute left-8 -bottom-1.5 w-3 h-3 bg-(--color-home-card) rotate-45" aria-hidden="true" />
         </div>
       )}
 
       <div
-        className="relative w-full rounded-[24px] shadow-lg overflow-hidden"
-        style={{ height: 'clamp(300px, 46dvh, 460px)' }}
+        className="relative w-full overflow-hidden rounded-[26px] border-[3px] border-white shadow-[0_16px_34px_rgba(82,57,75,0.18)]"
+        style={{ height: 'clamp(300px, 44dvh, 440px)' }}
       >
         <RoomScene
           state={state}
@@ -38,6 +38,6 @@ export function CharacterRoomCard({ state, gender, appearance, level, speech }: 
           preferFullScene
         />
       </div>
-    </div>
+    </section>
   )
 }

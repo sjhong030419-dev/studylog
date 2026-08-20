@@ -135,6 +135,9 @@ export function allCosmeticsSupported(entries: CharacterAssetDefinition[]): bool
  * sync with `SUPPORTED_COSMETIC_ASSET_KEYS`.
  */
 export function isShopItemPngSupported(itemId: string): boolean {
+  // Delivered as a complete whole-avatar combination with the sakura skin,
+  // never as a runtime layer. It becomes visible when both are equipped.
+  if (itemId === 'hair-ribbon') return true
   const entry = findCatalogEntry(itemId)
   if (!entry) return true
   return SUPPORTED_COSMETIC_ASSET_KEYS.has(entry.assetKey)

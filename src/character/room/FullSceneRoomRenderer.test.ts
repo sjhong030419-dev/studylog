@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { resolveFullSceneName, resolveFullSceneSwap, shouldUseFullScene } from './fullSceneState'
+import {
+  resolveFullSceneName,
+  resolveFullScenePath,
+  resolveFullSceneSwap,
+  resolveFullSceneTheme,
+  shouldUseFullScene,
+} from './fullSceneState'
 import type { CharacterState } from '../types'
 
 describe('resolveFullSceneName', () => {
@@ -21,6 +27,30 @@ describe('resolveFullSceneName', () => {
     'maps neutral state %s to the idle scene',
     (state) => expect(resolveFullSceneName(state)).toBe('idle'),
   )
+})
+
+describe('resolveFullSceneTheme', () => {
+  it('uses the default room when no complete appearance variant is equipped', () => {
+    expect(resolveFullSceneTheme()).toBe('default-night')
+  })
+
+  it('uses the matching room family for the sakura uniform skin', () => {
+    expect(resolveFullSceneTheme('skin-sakura-uniform-girl')).toBe('sakura-uniform')
+    expect(resolveFullScenePath('sakura-uniform', 'boy', 'study')).toBe(
+      '/sprites/room/sakura-uniform/scenes/boy/study.webp',
+    )
+  })
+
+  it('uses the fully baked ribbon room when the sakura+ribbon variant wins', () => {
+    expect(resolveFullSceneTheme('skin-sakura-uniform-ribbon')).toBe('sakura-uniform-ribbon')
+    expect(resolveFullScenePath('sakura-uniform-ribbon', 'girl', 'sleep')).toBe(
+      '/sprites/room/sakura-uniform-ribbon/scenes/girl/sleep.webp',
+    )
+  })
+
+  it('keeps unsupported appearance variants on the live avatar renderer', () => {
+    expect(resolveFullSceneTheme('hair-color-black')).toBeUndefined()
+  })
 })
 
 describe('shouldUseFullScene (scoping — fixes: RoomScene used to always try FullSceneRoomRenderer first, overriding LogCaptureCard\'s appearance/level/animated)', () => {

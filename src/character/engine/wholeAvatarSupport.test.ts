@@ -166,9 +166,9 @@ describe('isWholeAvatarItemSupportedForGender', () => {
     expect(isWholeAvatarItemSupportedForGender('hair-color-black', 'boy')).toBe(true)
   })
 
-  it('is false for an item with no registered whole-avatar variant at all', () => {
-    expect(isWholeAvatarItemSupportedForGender('hair-ribbon', 'girl')).toBe(false)
-    expect(isWholeAvatarItemSupportedForGender('hair-ribbon', 'boy')).toBe(false)
+  it('reports the ribbon as covered by its complete two-item variant for both genders', () => {
+    expect(isWholeAvatarItemSupportedForGender('hair-ribbon', 'girl')).toBe(true)
+    expect(isWholeAvatarItemSupportedForGender('hair-ribbon', 'boy')).toBe(true)
   })
 })
 
@@ -327,5 +327,29 @@ describe('sakura uniform complete skin', () => {
   it('reports the skin as supported for both genders', () => {
     expect(isWholeAvatarItemSupportedForGender('skin-sakura-uniform-girl', 'girl')).toBe(true)
     expect(isWholeAvatarItemSupportedForGender('skin-sakura-uniform-girl', 'boy')).toBe(true)
+  })
+})
+
+describe('sakura uniform + ribbon baked combination', () => {
+  const appearance = {
+    ...DEFAULT_PRESETS.girl,
+    equippedAssetIds: ['skin-sakura-uniform-girl', 'hair-ribbon'],
+  }
+
+  it('selects the complete combination for both genders', () => {
+    expect(resolveWholeAvatarPath('girl', 'study', 0, appearance)).toBe(
+      '/sprites/avatar/whole/sakura-uniform-ribbon/girl_study_01.png',
+    )
+    expect(resolveWholeAvatarPath('boy', 'happy', 0, appearance)).toBe(
+      '/sprites/avatar/whole/sakura-uniform-ribbon/boy_happy_01.png',
+    )
+  })
+
+  it('falls back through plain sakura and base without any runtime accessory layer', () => {
+    expect(resolveWholeAvatarSourceChain('girl', 'sleep', 0, appearance)).toEqual([
+      '/sprites/avatar/whole/sakura-uniform-ribbon/girl_sleep_01.png',
+      '/sprites/avatar/whole/sakura-uniform/girl_sleep_01.png',
+      '/sprites/avatar/base/girl_sleep_01.png',
+    ])
   })
 })

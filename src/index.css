@@ -41,7 +41,11 @@ html,
 body {
   margin: 0;
   font-family: var(--font-cute);
-  background: linear-gradient(180deg, #fdf6ff 0%, #eef4ff 100%);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(255, 214, 232, 0.48), transparent 24rem),
+    radial-gradient(circle at 90% 20%, rgba(227, 217, 255, 0.55), transparent 26rem),
+    linear-gradient(180deg, var(--color-home-canvas) 0%, #f7f1ff 100%);
+  background-attachment: fixed;
   color: var(--color-ink);
 }
 
