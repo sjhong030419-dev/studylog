@@ -15,7 +15,7 @@ export function CaptureControls({ onShare, onSave, busy }: CaptureControlsProps)
         onClick={onShare}
         disabled={busy}
         aria-label="공유하기"
-        className="w-9 h-9 rounded-full flex items-center justify-center text-base shadow-sm bg-white border border-ink/15 disabled:opacity-50"
+        className="w-11 h-11 rounded-full flex items-center justify-center text-base shadow-sm bg-white border border-ink/15 disabled:opacity-50"
       >
         🔗
       </button>
@@ -24,7 +24,7 @@ export function CaptureControls({ onShare, onSave, busy }: CaptureControlsProps)
         onClick={onSave}
         disabled={busy}
         aria-label="이미지로 저장"
-        className="w-9 h-9 rounded-full flex items-center justify-center text-base shadow-sm bg-white border border-ink/15 disabled:opacity-50"
+        className="w-11 h-11 rounded-full flex items-center justify-center text-base shadow-sm bg-white border border-ink/15 disabled:opacity-50"
       >
         💾
       </button>

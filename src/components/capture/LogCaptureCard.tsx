@@ -204,12 +204,12 @@ export function LogCaptureCard() {
         <p className="mt-1 font-cute text-xs text-ink-soft">공부로 성장한 캐릭터와 오늘의 결과를 바로 공유해보세요.</p>
       </div>
 
-      <div className="w-full max-w-[320px] flex items-center justify-between">
-        <div className="flex gap-2">
+      <div className="w-full max-w-[320px] flex flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 gap-2">
           <button
             type="button"
             onClick={() => setRatio('square')}
-            className={`font-cute px-4 py-1.5 rounded-full border text-sm ${
+            className={`font-cute min-h-[44px] px-4 py-1.5 rounded-full border text-sm ${
               ratio === 'square' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
             }`}
           >
@@ -218,7 +218,7 @@ export function LogCaptureCard() {
           <button
             type="button"
             onClick={() => setRatio('story')}
-            className={`font-cute px-4 py-1.5 rounded-full border text-sm ${
+            className={`font-cute min-h-[44px] px-4 py-1.5 rounded-full border text-sm ${
               ratio === 'story' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
             }`}
           >
@@ -254,7 +254,7 @@ export function LogCaptureCard() {
           -> 5. 과목별 -> 6. 배지(9:16만) -> 7. 한 줄 메모 -> 8. 큰 공유 버튼(카드 밖) */}
       <div
         ref={cardRef}
-        className={`w-[320px] ${RATIO_CLASS[ratio]} rounded-3xl overflow-hidden flex flex-col relative ${
+        className={`w-full max-w-[320px] ${RATIO_CLASS[ratio]} rounded-3xl overflow-hidden flex flex-col relative ${
           compact ? 'px-3 py-2 gap-0.5' : 'px-4 py-3 gap-1.5'
         }`}
         style={{ background: 'linear-gradient(165deg, #efe5ff 0%, #f4e5f5 35%, #e2edff 70%, #dff5ff 100%)' }}

@@ -12,8 +12,9 @@
  *
  *   node scripts/validateLayerAssets.ts
  *
- * Exit code 0 only when every expected file exists and passes validation —
- * safe to use as a real readiness gate once art starts landing.
+ * Default mode validates every production asset family and reports the
+ * planned layered vertical slice as informational. Pass `--strict-planned`
+ * when an art-delivery task specifically needs every planned layer present.
  */
 
 import { existsSync, readFileSync } from 'node:fs'
@@ -41,6 +42,7 @@ interface ExpectedFile {
 const AVATAR_LAYER_SIZE = { width: 160, height: 160 }
 const ROOM_LAYER_SIZE = { width: 640, height: 800 }
 const WHOLE_AVATAR_SIZE = { width: 160, height: 160 }
+const FULL_SCENE_THEMES = ['default-night', 'sakura-uniform', 'sakura-uniform-ribbon'] as const
 
 function avatarLayerFiles(folder: string, assetKey: string): ExpectedFile[] {
   return GENDERS.flatMap((gender) =>
@@ -137,6 +139,24 @@ const BLACK_HAIR_FILES: ExpectedFile[] = buildBlackHairExpectedFiles()
 const SAKURA_UNIFORM_FILES: ExpectedFile[] = buildSakuraUniformExpectedFiles()
 const SAKURA_UNIFORM_RIBBON_FILES: ExpectedFile[] = buildSakuraUniformRibbonExpectedFiles()
 
+export function buildFullSceneExpectedFiles(): string[] {
+  return FULL_SCENE_THEMES.flatMap((theme) =>
+    GENDERS.flatMap((gender) =>
+      STATES.map((state) => `sprites/room/${theme}/scenes/${gender}/${state}.webp`),
+    ),
+  )
+}
+
+export function checkWebpFile(relativePath: string): 'valid' | 'missing' | 'invalid' {
+  const absolutePath = join(PUBLIC_ROOT, relativePath)
+  if (!existsSync(absolutePath)) return 'missing'
+  const buffer = readFileSync(absolutePath)
+  if (buffer.length < 12) return 'invalid'
+  const riff = buffer.toString('ascii', 0, 4)
+  const webp = buffer.toString('ascii', 8, 12)
+  return riff === 'RIFF' && webp === 'WEBP' ? 'valid' : 'invalid'
+}
+
 export type FileReport =
   | { relativePath: string; status: 'missing' }
   | { relativePath: string; status: 'valid' }
@@ -156,6 +176,7 @@ export function checkFile(expected: ExpectedFile): FileReport {
 }
 
 function main() {
+  const strictPlanned = process.argv.includes('--strict-planned')
   const reports = EXPECTED_FILES.map(checkFile)
   const missing = reports.filter((r) => r.status === 'missing')
   const invalid = reports.filter((r) => r.status === 'invalid')
@@ -223,14 +244,36 @@ function main() {
     `\nWhole-avatar sakura-uniform-ribbon files: ${sakuraRibbonValid.length} valid, ${sakuraRibbonMissing.length} missing, ${sakuraRibbonInvalid.length} invalid`,
   )
 
-  const allValid =
-    valid.length === EXPECTED_FILES.length &&
+  const fullSceneFiles = buildFullSceneExpectedFiles()
+  const fullSceneReports = fullSceneFiles.map((relativePath) => ({ relativePath, status: checkWebpFile(relativePath) }))
+  const fullSceneMissing = fullSceneReports.filter((report) => report.status === 'missing')
+  const fullSceneInvalid = fullSceneReports.filter((report) => report.status === 'invalid')
+  const fullSceneValid = fullSceneReports.filter((report) => report.status === 'valid')
+  console.log(
+    `\nBaked full-scene room files: ${fullSceneValid.length} valid, ${fullSceneMissing.length} missing, ${fullSceneInvalid.length} invalid`,
+  )
+
+  if (fullSceneMissing.length > 0 || fullSceneInvalid.length > 0) {
+    console.log('\nUnavailable full-scene room files:')
+    for (const report of [...fullSceneMissing, ...fullSceneInvalid]) {
+      console.log(`  [${report.status}] ${report.relativePath}`)
+    }
+  }
+
+  const deliveredFamiliesValid =
+    invalid.length === 0 &&
     blackHairValid.length === BLACK_HAIR_FILES.length &&
     sakuraValid.length === SAKURA_UNIFORM_FILES.length &&
-    sakuraRibbonValid.length === SAKURA_UNIFORM_RIBBON_FILES.length
+    sakuraRibbonValid.length === SAKURA_UNIFORM_RIBBON_FILES.length &&
+    fullSceneValid.length === fullSceneFiles.length
 
-  if (allValid) {
-    console.log('\nAll expected files present and valid.')
+  const plannedSliceReady = valid.length === EXPECTED_FILES.length
+  if (deliveredFamiliesValid && (!strictPlanned || plannedSliceReady)) {
+    console.log(
+      strictPlanned
+        ? '\nAll production and planned files are present and valid.'
+        : `\nAll production assets are valid. ${missing.length} optional planned layer(s) remain.`,
+    )
     process.exit(0)
   }
   process.exit(1)

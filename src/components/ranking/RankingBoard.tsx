@@ -55,13 +55,17 @@ export function RankingBoard() {
   })().sort((a, b) => b.avgSec - a.avgSec)
 
   return (
-    <div className="min-h-screen flex flex-col items-center gap-6 px-4 py-10">
+    <main className="min-h-screen px-4 pb-32 pt-6">
+      <div className="mx-auto flex w-full max-w-[430px] flex-col items-center gap-5">
       <div className="w-full max-w-sm flex items-center justify-between">
-        <h1 className="font-cute text-3xl text-ink">랭킹 🏆</h1>
+        <div>
+          <p className="font-cute text-[11px] tracking-wide text-ink-soft">GROW TOGETHER</p>
+          <h1 className="font-cute text-3xl text-ink">랭킹 🏆</h1>
+        </div>
         <button
           type="button"
           onClick={() => setView(view === 'ranking' ? 'history' : 'ranking')}
-          className="font-cute text-xs px-3 py-1.5 rounded-full border border-ink/20 text-ink-soft bg-white"
+          className="font-cute min-h-[44px] text-xs px-3 py-1.5 rounded-full border border-ink/20 text-ink-soft bg-white"
         >
           {view === 'ranking' ? '포인트 내역' : '랭킹으로'}
         </button>
@@ -88,7 +92,7 @@ export function RankingBoard() {
             <button
               type="button"
               onClick={() => setScope('all')}
-              className={`font-cute px-3 py-1.5 rounded-full border text-sm ${
+              className={`font-cute min-h-[44px] px-3 py-1.5 rounded-full border text-sm ${
                 scope === 'all' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
               }`}
             >
@@ -97,7 +101,7 @@ export function RankingBoard() {
             <button
               type="button"
               onClick={() => setScope('friends')}
-              className={`font-cute px-3 py-1.5 rounded-full border text-sm ${
+              className={`font-cute min-h-[44px] px-3 py-1.5 rounded-full border text-sm ${
                 scope === 'friends' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
               }`}
             >
@@ -106,7 +110,7 @@ export function RankingBoard() {
             <button
               type="button"
               onClick={() => setScope('school')}
-              className={`font-cute px-3 py-1.5 rounded-full border text-sm ${
+              className={`font-cute min-h-[44px] px-3 py-1.5 rounded-full border text-sm ${
                 scope === 'school' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
               }`}
             >
@@ -156,7 +160,7 @@ export function RankingBoard() {
                       setSchool(schoolInput)
                       setSchoolInput('')
                     }}
-                    className="font-cute px-3 py-1 rounded-full bg-ink text-white text-xs"
+                    className="font-cute min-h-[44px] px-3 py-1 rounded-full bg-ink text-white text-xs"
                   >
                     등록
                   </button>
@@ -190,6 +194,7 @@ export function RankingBoard() {
           <p className="text-ink-soft text-xs font-cute">* 친구/전체/학교 랭킹은 데모용 더미 데이터입니다</p>
         </>
       )}
-    </div>
+      </div>
+    </main>
   )
 }

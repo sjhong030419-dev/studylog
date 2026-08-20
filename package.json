@@ -10,7 +10,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "validate:assets": "node scripts/validateLayerAssets.ts"
+    "validate:assets": "node scripts/validateLayerAssets.ts",
+    "validate:assets:strict": "node scripts/validateLayerAssets.ts --strict-planned"
   },
   "dependencies": {
     "@kfonts/neodgm": "^0.5.0",

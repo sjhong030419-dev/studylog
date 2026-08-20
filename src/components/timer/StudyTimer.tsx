@@ -25,6 +25,7 @@ const CELEBRATION_MS = 2600
 
 interface StudyTimerProps {
   onOpenShop: () => void
+  onOpenCapture: () => void
 }
 
 interface StudyReward {
@@ -33,7 +34,7 @@ interface StudyReward {
   balance: number
 }
 
-export function StudyTimer({ onOpenShop }: StudyTimerProps) {
+export function StudyTimer({ onOpenShop, onOpenCapture }: StudyTimerProps) {
   const subjects = useTimerStore((s) => s.subjects)
   const selectedSubjectId = useTimerStore((s) => s.selectedSubjectId)
   const isRunning = useTimerStore((s) => s.isRunning)
@@ -213,6 +214,10 @@ export function StudyTimer({ onOpenShop }: StudyTimerProps) {
           earnedPoints={studyReward.earnedPoints}
           balance={studyReward.balance}
           onClose={() => setStudyReward(null)}
+          onOpenCapture={() => {
+            setStudyReward(null)
+            onOpenCapture()
+          }}
           onOpenShop={() => {
             setStudyReward(null)
             onOpenShop()

@@ -71,6 +71,24 @@ html.dark {
   min-height: 100svh;
 }
 
+@media (max-width: 520px) {
+  .app-shell {
+    padding-top: 3.75rem;
+  }
+}
+
+button,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(button, input, select, textarea, a):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-home-accent-primary) 70%, white);
+  outline-offset: 3px;
+}
+
 /* Dark-mode overrides for the "frosted white card" surfaces used throughout the app */
 .dark .bg-white\/60 { background-color: rgba(45, 40, 66, 0.6); }
 .dark .bg-white\/70 { background-color: rgba(45, 40, 66, 0.7); }

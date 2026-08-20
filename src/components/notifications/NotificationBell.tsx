@@ -11,7 +11,8 @@ export function NotificationBell({ onClick }: NotificationBellProps) {
     <button
       type="button"
       onClick={onClick}
-      className="fixed top-3 right-3 z-30 w-10 h-10 rounded-full bg-white/90 backdrop-blur shadow-md flex items-center justify-center text-lg"
+      className="fixed top-3 right-3 z-30 w-11 h-11 rounded-full bg-white/90 backdrop-blur shadow-md flex items-center justify-center text-lg"
+      aria-label={unread > 0 ? `알림 ${unread}개 열기` : '알림 열기'}
     >
       🔔
       {unread > 0 && (

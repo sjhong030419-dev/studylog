@@ -79,7 +79,7 @@ export function PomodoroTimer() {
               key={subject.id}
               type="button"
               onClick={() => setSubjectId(subject.id)}
-              className={`font-cute px-3 py-1.5 rounded-full border text-sm ${
+              className={`font-cute min-h-[44px] px-3 py-1.5 rounded-full border text-sm ${
                 subjectId === subject.id ? 'border-ink text-ink' : 'border-ink/15 text-ink-soft'
               }`}
               style={{ backgroundColor: subjectId === subject.id ? subject.color : 'white' }}

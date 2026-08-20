@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { STATE_FRAME_COUNT } from '../src/character/types.ts'
 import type { CharacterState } from '../src/character/types.ts'
-import { buildBlackHairExpectedFiles, buildSakuraUniformExpectedFiles, checkFile } from './validateLayerAssets.ts'
+import {
+  buildBlackHairExpectedFiles,
+  buildFullSceneExpectedFiles,
+  buildSakuraUniformExpectedFiles,
+  checkFile,
+  checkWebpFile,
+} from './validateLayerAssets.ts'
 
 /**
  * Covers the black-hair whole-avatar asset validation added to
@@ -107,5 +113,19 @@ describe('sakura-uniform whole-avatar assets', () => {
     const files = buildSakuraUniformExpectedFiles()
     expect(files).toHaveLength(208)
     expect(files.map(checkFile).filter((report) => report.status !== 'valid')).toEqual([])
+  })
+})
+
+describe('baked full-scene room assets', () => {
+  it('covers and validates 3 themes × 2 genders × 4 scenes', () => {
+    const files = buildFullSceneExpectedFiles()
+    expect(files).toHaveLength(24)
+    expect(files.every((file) => checkWebpFile(file) === 'valid')).toBe(true)
+    expect(files).toContain('sprites/room/default-night/scenes/boy/idle.webp')
+    expect(files).toContain('sprites/room/sakura-uniform-ribbon/scenes/girl/study.webp')
+  })
+
+  it('reports a missing WebP without throwing', () => {
+    expect(checkWebpFile('sprites/room/missing/scenes/boy/idle.webp')).toBe('missing')
   })
 })

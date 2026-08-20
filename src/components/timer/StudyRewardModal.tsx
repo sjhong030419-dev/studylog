@@ -5,6 +5,7 @@ interface StudyRewardModalProps {
   earnedPoints: number
   balance: number
   onClose: () => void
+  onOpenCapture: () => void
   onOpenShop: () => void
 }
 
@@ -13,6 +14,7 @@ export function StudyRewardModal({
   earnedPoints,
   balance,
   onClose,
+  onOpenCapture,
   onOpenShop,
 }: StudyRewardModalProps) {
   return (
@@ -48,17 +50,25 @@ export function StudyRewardModal({
 
         <button
           type="button"
-          onClick={onOpenShop}
-          className="w-full rounded-2xl bg-ink px-4 py-3 font-cute text-sm text-white shadow-sm"
+          onClick={onOpenCapture}
+          className="w-full min-h-[48px] rounded-2xl px-4 py-3 font-cute text-base text-white shadow-lg"
+          style={{ background: 'linear-gradient(135deg, var(--color-home-accent-lavender), var(--color-home-accent-primary))' }}
         >
-          상점과 내 옷장 보기
+          오늘 기록 공유하기 📸
+        </button>
+        <button
+          type="button"
+          onClick={onOpenShop}
+          className="mt-2 w-full min-h-[44px] rounded-2xl border border-ink/10 bg-white/70 px-4 py-2.5 font-cute text-xs text-ink"
+        >
+          받은 포인트로 상점 구경하기 🛍️
         </button>
         <button
           type="button"
           onClick={onClose}
-          className="mt-2 w-full rounded-2xl px-4 py-2.5 font-cute text-xs text-ink-soft"
+          className="mt-1 w-full min-h-[44px] rounded-2xl px-4 py-2.5 font-cute text-xs text-ink-soft"
         >
-          계속하기
+          홈으로 돌아가기
         </button>
       </section>
     </div>

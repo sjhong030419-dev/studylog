@@ -1,17 +1,6 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { TimerPage } from './components/timer/TimerPage'
-import { RoomPage } from './components/room/RoomPage'
-import { RoomConnection } from './components/room/RoomConnection'
-import { LogCaptureCard } from './components/capture/LogCaptureCard'
-import { StatsHubPage } from './components/stats/StatsHubPage'
-import { RankingBoard } from './components/ranking/RankingBoard'
-import { AiTutorChat } from './components/tutor/AiTutorChat'
-import { AvatarShop } from './components/shop/AvatarShop'
-import { MyPage } from './components/profile/MyPage'
-import { SettingsPage } from './components/settings/SettingsPage'
-import { SubjectManagerPage } from './components/subjects/SubjectManagerPage'
 import { NotificationBell } from './components/notifications/NotificationBell'
-import { NotificationsPage } from './components/notifications/NotificationsPage'
 import { BgmPlayer } from './components/audio/BgmPlayer'
 import { BottomNav, type Tab } from './components/layout/BottomNav'
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow'
@@ -20,6 +9,52 @@ import { useProfileStore } from './store/profileStore'
 import type { NavTarget } from './types'
 
 type Overlay = 'profile' | 'settings' | 'notifications' | 'subjects' | null
+
+// Timer is the first screen and stays eager. Every secondary surface is
+// loaded only when the user opens it, so the large capture library, shop,
+// ranking and settings code no longer delay the emotional first screen.
+const RoomPage = lazy(() => import('./components/room/RoomPage').then((module) => ({ default: module.RoomPage })))
+const RoomConnection = lazy(() => import('./components/room/RoomConnection').then((module) => ({ default: module.RoomConnection })))
+const LogCaptureCard = lazy(() => import('./components/capture/LogCaptureCard').then((module) => ({ default: module.LogCaptureCard })))
+const StatsHubPage = lazy(() => import('./components/stats/StatsHubPage').then((module) => ({ default: module.StatsHubPage })))
+const RankingBoard = lazy(() => import('./components/ranking/RankingBoard').then((module) => ({ default: module.RankingBoard })))
+const AiTutorChat = lazy(() => import('./components/tutor/AiTutorChat').then((module) => ({ default: module.AiTutorChat })))
+const AvatarShop = lazy(() => import('./components/shop/AvatarShop').then((module) => ({ default: module.AvatarShop })))
+const MyPage = lazy(() => import('./components/profile/MyPage').then((module) => ({ default: module.MyPage })))
+const SettingsPage = lazy(() => import('./components/settings/SettingsPage').then((module) => ({ default: module.SettingsPage })))
+const SubjectManagerPage = lazy(() => import('./components/subjects/SubjectManagerPage').then((module) => ({ default: module.SubjectManagerPage })))
+const NotificationsPage = lazy(() => import('./components/notifications/NotificationsPage').then((module) => ({ default: module.NotificationsPage })))
+
+function ScreenLoading() {
+  return (
+    <div className="grid min-h-[70svh] place-items-center px-6" role="status" aria-live="polite">
+      <div className="flex flex-col items-center gap-3 rounded-[24px] border border-white/80 bg-white/75 px-8 py-6 shadow-sm backdrop-blur">
+        <span className="animate-avatar-bob text-3xl" aria-hidden="true">📖</span>
+        <span className="font-cute text-sm text-ink-soft">공부방을 준비하고 있어요...</span>
+      </div>
+    </div>
+  )
+}
+
+/** Realtime presence is useful across tabs, but it must not compete with
+ * the character room for the first paint. The same persistent connection
+ * still mounts once for the app lifetime, just after the home becomes
+ * interactive. */
+function DeferredRoomConnection() {
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setReady(true), 1200)
+    return () => window.clearTimeout(timeoutId)
+  }, [])
+
+  if (!ready) return null
+  return (
+    <Suspense fallback={null}>
+      <RoomConnection />
+    </Suspense>
+  )
+}
 
 function App() {
   const [tab, setTab] = useState<Tab>('timer')
@@ -49,8 +84,9 @@ function App() {
   }
 
   return (
-    <div className="pb-24">
-      {tab === 'timer' && <TimerPage onOpenShop={() => setTab('shop')} />}
+    <div className="app-shell pb-24">
+      <Suspense fallback={<ScreenLoading />}>
+      {tab === 'timer' && <TimerPage onOpenShop={() => setTab('shop')} onOpenCapture={() => setTab('capture')} />}
       {tab === 'room' && <RoomPage />}
       {tab === 'capture' && <LogCaptureCard />}
       {tab === 'stats' && <StatsHubPage />}
@@ -70,17 +106,19 @@ function App() {
           )}
         </div>
       )}
+      </Suspense>
 
       <button
         type="button"
         onClick={() => setOverlay(overlay ? null : 'profile')}
-        className="fixed top-3 right-14 z-30 w-10 h-10 rounded-full bg-white/90 backdrop-blur shadow-md flex items-center justify-center text-lg"
+        className="fixed top-3 right-16 z-30 w-11 h-11 rounded-full bg-white/90 backdrop-blur shadow-md flex items-center justify-center text-lg"
+        aria-label={overlay ? '프로필 화면 닫기' : '내 프로필 열기'}
       >
         👤
       </button>
       <NotificationBell onClick={() => setOverlay('notifications')} />
 
-      <RoomConnection />
+      <DeferredRoomConnection />
       <BgmPlayer />
       <BottomNav active={tab} onChange={(next) => { setOverlay(null); setTab(next) }} />
     </div>

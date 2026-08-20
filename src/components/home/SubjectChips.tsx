@@ -35,7 +35,7 @@ export function SubjectChips({ subjects, selectedSubjectId, disabled, onSelect, 
             type="button"
             disabled={disabled}
             onClick={() => onSelect(subject.id)}
-            className={`font-cute px-3 py-1.5 rounded-full border text-sm transition disabled:opacity-50 disabled:cursor-not-allowed min-h-[36px] ${
+            className={`font-cute px-3 py-1.5 rounded-full border text-sm transition disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] ${
               selectedSubjectId === subject.id
                 ? 'border-ink text-ink'
                 : 'border-ink/15 text-ink-soft hover:border-ink/40'
@@ -53,7 +53,7 @@ export function SubjectChips({ subjects, selectedSubjectId, disabled, onSelect, 
             type="button"
             disabled={disabled}
             onClick={() => setAddingSubject(true)}
-            className="font-cute px-3 py-1.5 rounded-full border border-dashed border-ink/30 text-sm text-ink-soft disabled:opacity-50 min-h-[36px]"
+            className="font-cute px-3 py-1.5 rounded-full border border-dashed border-ink/30 text-sm text-ink-soft disabled:opacity-50 min-h-[44px]"
           >
             + 과목 추가
           </button>
@@ -76,7 +76,7 @@ export function SubjectChips({ subjects, selectedSubjectId, disabled, onSelect, 
             <button
               type="button"
               onClick={handleAddSubject}
-              className="font-cute px-2 py-1.5 rounded-full bg-ink text-white text-sm min-h-[36px]"
+              className="font-cute px-2 py-1.5 rounded-full bg-ink text-white text-sm min-h-[44px]"
             >
               확인
             </button>

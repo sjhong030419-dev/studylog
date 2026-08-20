@@ -37,16 +37,26 @@ export function AiTutorChat() {
 
   if (activeSubjects.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center gap-4 px-4 py-10">
-        <h1 className="font-cute text-3xl text-ink">AI 튜터 🤖</h1>
+      <main className="min-h-screen px-4 pb-32 pt-6">
+        <div className="mx-auto flex w-full max-w-[430px] flex-col items-center gap-4">
+        <div className="w-full text-left">
+          <p className="font-cute text-[11px] tracking-wide text-ink-soft">ASK FOR A HINT</p>
+          <h1 className="font-cute text-3xl text-ink">AI 튜터 🤖</h1>
+        </div>
         <SubjectEmptyState onAdd={addSubject} reason="튜터에게 질문하려면 과목이 필요해요." />
-      </div>
+        </div>
+      </main>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center gap-4 px-4 py-10">
-      <h1 className="font-cute text-3xl text-ink">AI 튜터 🤖</h1>
+    <main className="min-h-screen px-4 pb-32 pt-6">
+      <div className="mx-auto flex w-full max-w-[430px] flex-col items-center gap-4">
+      <div className="w-full text-left">
+        <p className="font-cute text-[11px] tracking-wide text-ink-soft">ASK FOR A HINT</p>
+        <h1 className="font-cute text-3xl text-ink">AI 튜터 🤖</h1>
+        <p className="mt-1 font-cute text-xs text-ink-soft">답을 대신 주기보다 스스로 풀 수 있는 다음 힌트를 찾아줘요.</p>
+      </div>
 
       <div className="flex flex-wrap justify-center gap-2">
         {activeSubjects.map((s) => (
@@ -54,7 +64,7 @@ export function AiTutorChat() {
             key={s.id}
             type="button"
             onClick={() => setSubjectId(s.id)}
-            className={`font-cute px-3 py-1.5 rounded-full border text-sm ${
+            className={`font-cute min-h-[44px] px-3 py-1.5 rounded-full border text-sm ${
               subjectId === s.id ? 'border-ink text-ink' : 'border-ink/15 text-ink-soft'
             }`}
             style={{ backgroundColor: subjectId === s.id ? s.color : 'white' }}
@@ -123,6 +133,7 @@ export function AiTutorChat() {
           </button>
         </div>
       )}
-    </div>
+      </div>
+    </main>
   )
 }

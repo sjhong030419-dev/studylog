@@ -131,7 +131,7 @@ export function AvatarShop() {
           type="button"
           onClick={watchAdForBonus}
           disabled={adWatchesToday >= AD_DAILY_LIMIT || checkoutLoading}
-          className="font-cute text-xs px-4 py-2 rounded-full bg-pastel-mint text-ink shadow disabled:opacity-50"
+          className="font-cute min-h-[44px] text-xs px-4 py-2 rounded-full bg-pastel-mint text-ink shadow disabled:opacity-50"
         >
           {checkoutLoading
             ? '광고 재생 중...'
@@ -144,7 +144,7 @@ export function AvatarShop() {
           <button
             type="button"
             onClick={() => changeCategory('all')}
-            className={`font-cute px-3 py-1.5 rounded-full border text-sm ${
+            className={`font-cute min-h-[44px] px-3 py-1.5 rounded-full border text-sm ${
               category === 'all' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
             }`}
           >
@@ -156,7 +156,7 @@ export function AvatarShop() {
             key={c}
             type="button"
             onClick={() => changeCategory(c)}
-            className={`font-cute px-3 py-1.5 rounded-full border text-sm ${
+            className={`font-cute min-h-[44px] px-3 py-1.5 rounded-full border text-sm ${
               category === c ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
             }`}
           >
