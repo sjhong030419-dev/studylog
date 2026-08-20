@@ -74,8 +74,13 @@ export function AvatarShop() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center gap-4 px-4 py-10">
-      <h1 className="font-cute text-3xl text-ink">{view === 'shop' ? '아바타 상점 🛍️' : '내 옷장 👗'}</h1>
+    <main className="min-h-screen px-4 pb-32 pt-6">
+      <div className="mx-auto flex w-full max-w-[430px] flex-col items-center gap-4">
+      <div className="w-full text-left">
+        <p className="font-cute text-[11px] tracking-wide text-ink-soft">MAKE IT YOUR CHARACTER</p>
+        <h1 className="font-cute text-3xl text-ink">{view === 'shop' ? '아바타 상점 🛍️' : '내 옷장 👗'}</h1>
+        <p className="mt-1 font-cute text-xs text-ink-soft">미리 입어보고, 모으고, 모든 공부 화면에 같은 모습으로 적용해요.</p>
+      </div>
 
       <div className="flex w-full max-w-sm rounded-2xl bg-white/70 p-1 shadow-sm" aria-label="아바타 메뉴">
         <button
@@ -101,7 +106,7 @@ export function AvatarShop() {
       </div>
 
       <div
-        className="backdrop-blur rounded-3xl shadow-lg px-8 py-6 flex flex-col items-center gap-2"
+        className="w-full backdrop-blur rounded-[26px] border border-white/80 shadow-[0_14px_35px_rgba(108,82,130,0.12)] px-8 py-6 flex flex-col items-center gap-2"
         style={{ backgroundColor: previewAppearance.backgroundColor ?? 'rgba(255,255,255,0.7)' }}
       >
         {previewItem && (
@@ -273,6 +278,7 @@ export function AvatarShop() {
           캐시 아이템은 Stripe 테스트 모드 구조로 연결돼 있어요. 실제 결제는 발생하지 않습니다.
         </p>
       )}
-    </div>
+      </div>
+    </main>
   )
 }

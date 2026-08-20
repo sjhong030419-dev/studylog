@@ -49,7 +49,7 @@ function App() {
   }
 
   return (
-    <div className="pb-16">
+    <div className="pb-24">
       {tab === 'timer' && <TimerPage onOpenShop={() => setTab('shop')} />}
       {tab === 'room' && <RoomPage />}
       {tab === 'capture' && <LogCaptureCard />}

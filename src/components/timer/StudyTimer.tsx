@@ -180,9 +180,7 @@ export function StudyTimer({ onOpenShop }: StudyTimerProps) {
         </div>
       )}
 
-      {hasNoSubjects ? (
-        <SubjectEmptyState onAdd={addSubject} />
-      ) : (
+      {!hasNoSubjects && (
         <SubjectChips
           subjects={activeSubjects}
           selectedSubjectId={selectedSubjectId}
@@ -204,6 +202,8 @@ export function StudyTimer({ onOpenShop }: StudyTimerProps) {
         onStop={handleStop}
         disabledReason={hasNoSubjects ? '과목을 먼저 추가해주세요.' : undefined}
       />
+
+      {hasNoSubjects && <SubjectEmptyState onAdd={addSubject} reason="시작 버튼을 활성화하려면 공부할 과목 하나만 만들어주세요." />}
 
       <SubjectBreakdownCard perSubject={perSubject} maxSec={maxSec} />
 

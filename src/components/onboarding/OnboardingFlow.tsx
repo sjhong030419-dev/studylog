@@ -71,7 +71,7 @@ export function OnboardingFlow() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-6 py-10 bg-gradient-to-b from-[#fdf6ff] to-[#eef4ff] dark:from-[#1c1830] dark:to-[#14121f]">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-6 py-10 bg-[radial-gradient(circle_at_top,#ffe4ec_0%,transparent_35%),linear-gradient(180deg,#fff8ed_0%,#f2edff_100%)] dark:bg-[linear-gradient(180deg,#1c1830_0%,#14121f_100%)]">
       {step !== 'welcome' && (
         <div className="w-full max-w-sm flex items-center justify-between">
           <div className="flex gap-1">
@@ -91,16 +91,17 @@ export function OnboardingFlow() {
       )}
 
       {step === 'welcome' && (
-        <div className="w-full max-w-sm flex flex-col items-center gap-6 text-center">
-          <div className="flex gap-2">
+        <div className="w-full max-w-sm rounded-[30px] border border-white/80 bg-white/75 px-6 py-8 shadow-[0_20px_55px_rgba(108,82,130,0.14)] backdrop-blur flex flex-col items-center gap-6 text-center">
+          <div className="flex gap-2 rounded-[24px] bg-(--color-home-soft-lavender) px-5 pt-4">
             <CharacterView state="happy" gender="boy" size={100} animated />
             <CharacterView state="happy" gender="girl" size={100} animated />
           </div>
           <div className="flex flex-col gap-2">
             <h1 className="font-cute text-2xl text-ink">스터디로그에 오신 걸 환영해요 📖</h1>
             <p className="font-cute text-sm text-ink-soft">
-              캐릭터와 함께, 오늘도 공부를 기록해봐요.
+              공부하고, 캐릭터를 키우고, 오늘의 성장을 자랑해요.
             </p>
+            <p className="mt-2 font-cute text-xs text-ink-soft">약 1분이면 나만의 공부방을 시작할 수 있어요.</p>
           </div>
           <button
             type="button"

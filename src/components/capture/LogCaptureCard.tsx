@@ -196,8 +196,13 @@ export function LogCaptureCard() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center gap-6 px-4 py-10">
-      <h1 className="font-cute text-3xl text-ink">오늘의 기록 📸</h1>
+    <main className="min-h-screen px-4 pb-32 pt-6">
+      <div className="mx-auto flex w-full max-w-[430px] flex-col items-center gap-5">
+      <div className="w-full text-left">
+        <p className="font-cute text-[11px] tracking-wide text-ink-soft">SHARE YOUR ADVENTURE</p>
+        <h1 className="font-cute text-3xl text-ink">오늘의 기록 <span aria-hidden="true">📸</span></h1>
+        <p className="mt-1 font-cute text-xs text-ink-soft">공부로 성장한 캐릭터와 오늘의 결과를 바로 공유해보세요.</p>
+      </div>
 
       <div className="w-full max-w-[320px] flex items-center justify-between">
         <div className="flex gap-2">
@@ -267,6 +272,12 @@ export function LogCaptureCard() {
         />
 
         <CaptureCardVisualHeader dateLabel={formatDate()} />
+
+        <div className="relative z-10 flex items-center justify-center gap-1 font-cute text-[10px] text-ink shrink-0">
+          <span aria-hidden="true">✨</span>
+          <span>{todayTotalSec > 0 ? '오늘의 퀘스트 완료!' : '오늘의 성장 기록'}</span>
+          <span aria-hidden="true">✨</span>
+        </div>
 
         {/* 2. 캐릭터 씬 — 가장 중요한 영역이지만, 레벨 배지가 더는 씬 위에 겹쳐
             그려지지 않고 아래 별도 flow 요소로 빠지면서 카드 전체 높이 예산에
@@ -389,6 +400,7 @@ export function LogCaptureCard() {
           이미지 생성에 실패했어요. 다시 시도해주세요.
         </p>
       )}
-    </div>
+      </div>
+    </main>
   )
 }
