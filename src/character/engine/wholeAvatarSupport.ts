@@ -46,6 +46,10 @@ function resolveSakuraUniformRibbonWholePath(gender: Gender, state: CharacterSta
   return `/sprites/avatar/whole/sakura-uniform-ribbon/${gender}_${STATE_FILE_NAME[state]}_${pad(frameIndex)}.png`
 }
 
+function resolveMoonlightAcademyWholePath(gender: Gender, state: CharacterState, frameIndex: number): string {
+  return `/sprites/avatar/whole/moonlight-academy/${gender}_${STATE_FILE_NAME[state]}_${pad(frameIndex)}.png`
+}
+
 /**
  * Registered whole-avatar variants. Add a variant only when its complete
  * image family (every required gender × all 13 states × the state's full
@@ -56,6 +60,13 @@ function resolveSakuraUniformRibbonWholePath(gender: Gender, state: CharacterSta
  * Black hair and sakura uniform both have complete girl and boy families.
  */
 export const WHOLE_AVATAR_VARIANTS: readonly WholeAvatarVariant[] = [
+  {
+    id: 'skin-moonlight-academy',
+    priority: 3000,
+    equippedAssetIds: ['skin-moonlight-academy'],
+    supportedGenders: ['girl', 'boy'],
+    path: resolveMoonlightAcademyWholePath,
+  },
   {
     id: 'skin-sakura-uniform-ribbon',
     priority: 2000,

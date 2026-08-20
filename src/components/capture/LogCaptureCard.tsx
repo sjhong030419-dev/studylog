@@ -14,6 +14,7 @@ import { usePointsStore } from '../../store/pointsStore'
 import { usePlannerStore } from '../../store/plannerStore'
 import { useAwayStore } from '../../store/awayStore'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useShopStore } from '../../store/shopStore'
 import { deriveExpLevel } from '../../character/engine/expLevel'
 import { computeDailyGoal } from '../../utils/dailyGoal'
 import { deriveLevelBeforeToday } from '../../utils/levelTransition'
@@ -23,6 +24,21 @@ import { myOverallRank } from '../../utils/ranking'
 import { formatDuration, todayKey, dateKeyOffset } from '../../utils/time'
 
 type Ratio = 'square' | 'story'
+
+const CAPTURE_THEME = {
+  lavender: {
+    label: '라벤더', emoji: '💜',
+    background: 'linear-gradient(165deg, #efe5ff 0%, #f4e5f5 35%, #e2edff 70%, #dff5ff 100%)',
+    number: 'linear-gradient(90deg, #9b86d9 0%, #f28ba8 100%)',
+    action: 'linear-gradient(135deg, #9b86d9 0%, #f28ba8 100%)',
+  },
+  moonlight: {
+    label: '달빛', emoji: '🌙',
+    background: 'linear-gradient(165deg, #171b35 0%, #29274b 38%, #40335f 72%, #6a4f72 100%)',
+    number: 'linear-gradient(90deg, #ffe2a3 0%, #d9c4ff 100%)',
+    action: 'linear-gradient(135deg, #252b50 0%, #7b5d91 100%)',
+  },
+} as const
 
 /** Kept short intentionally — a caption for the card, not a journal entry
  * (PRD §17 "short length limit"). */
@@ -46,6 +62,9 @@ export function LogCaptureCard() {
   const sessions = useTimerStore((s) => s.sessions)
   const plannerTasks = usePlannerStore((s) => s.tasks)
   const captureDefaultRatio = useSettingsStore((s) => s.captureDefaultRatio)
+  const captureTheme = useSettingsStore((s) => s.captureTheme)
+  const setCaptureTheme = useSettingsStore((s) => s.setCaptureTheme)
+  const ownedItemIds = useShopStore((s) => s.ownedItemIds)
 
   const streakCount = usePointsStore((s) => s.streakCount)
   const studyXpTotal = usePointsStore((s) => s.studyXpTotal())
@@ -62,6 +81,9 @@ export function LogCaptureCard() {
   // disrupting the current data model). Optional, never blocks sharing.
   const [note, setNote] = useState('')
   const compact = ratio === 'square'
+  const moonlightUnlocked = ownedItemIds.includes('skin-moonlight-academy')
+  const activeTheme = captureTheme === 'moonlight' && moonlightUnlocked ? 'moonlight' : 'lavender'
+  const theme = CAPTURE_THEME[activeTheme]
   const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -230,6 +252,26 @@ export function LogCaptureCard() {
         <CaptureControls onShare={handleShare} onSave={handleSave} busy={downloading} />
       </div>
 
+      <div className="w-full max-w-[320px] flex items-center gap-2" aria-label="공유 카드 테마">
+        {(Object.keys(CAPTURE_THEME) as Array<keyof typeof CAPTURE_THEME>).map((themeId) => {
+          const locked = themeId === 'moonlight' && !moonlightUnlocked
+          return (
+            <button
+              key={themeId}
+              type="button"
+              disabled={locked}
+              onClick={() => setCaptureTheme(themeId)}
+              aria-pressed={activeTheme === themeId}
+              className={`min-h-[44px] flex-1 rounded-2xl border px-3 font-cute text-xs transition-colors disabled:opacity-45 ${
+                activeTheme === themeId ? 'border-ink bg-ink text-white' : 'border-ink/15 bg-white/75 text-ink'
+              }`}
+            >
+              {CAPTURE_THEME[themeId].emoji} {CAPTURE_THEME[themeId].label}{locked ? ' · 스킨 보상' : ''}
+            </button>
+          )
+        })}
+      </div>
+
       {/* The input itself is a control, so — same rule as CaptureControls —
           it stays outside cardRef. Only the typed text (below) enters the
           image. Optional: leaving it blank never blocks sharing. */}
@@ -257,7 +299,8 @@ export function LogCaptureCard() {
         className={`w-full max-w-[320px] ${RATIO_CLASS[ratio]} rounded-3xl overflow-hidden flex flex-col relative ${
           compact ? 'px-3 py-2 gap-0.5' : 'px-4 py-3 gap-1.5'
         }`}
-        style={{ background: 'linear-gradient(165deg, #efe5ff 0%, #f4e5f5 35%, #e2edff 70%, #dff5ff 100%)' }}
+        data-capture-theme={activeTheme}
+        style={{ background: theme.background }}
       >
         {/* Decorative soft glow blobs — purely visual, sit behind everything */}
         <div
@@ -327,7 +370,7 @@ export function LogCaptureCard() {
           <span
             className={`font-pixel tracking-widest ${compact ? 'text-lg' : 'text-2xl'}`}
             style={{
-              backgroundImage: 'linear-gradient(90deg, #9b86d9 0%, #f28ba8 100%)',
+              backgroundImage: theme.number,
               WebkitBackgroundClip: 'text',
               backgroundClip: 'text',
               color: 'transparent',
@@ -391,7 +434,7 @@ export function LogCaptureCard() {
         onClick={handleShare}
         disabled={downloading}
         className="font-cute px-10 py-3.5 rounded-full text-white shadow-lg text-lg disabled:opacity-60"
-        style={{ background: 'linear-gradient(135deg, #9b86d9 0%, #f28ba8 100%)' }}
+        style={{ background: theme.action }}
       >
         {downloading ? '준비 중...' : '공유하기 🔗'}
       </button>

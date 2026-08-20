@@ -42,7 +42,7 @@ interface ExpectedFile {
 const AVATAR_LAYER_SIZE = { width: 160, height: 160 }
 const ROOM_LAYER_SIZE = { width: 640, height: 800 }
 const WHOLE_AVATAR_SIZE = { width: 160, height: 160 }
-const FULL_SCENE_THEMES = ['default-night', 'sakura-uniform', 'sakura-uniform-ribbon'] as const
+const FULL_SCENE_THEMES = ['default-night', 'sakura-uniform', 'sakura-uniform-ribbon', 'moonlight-academy'] as const
 
 function avatarLayerFiles(folder: string, assetKey: string): ExpectedFile[] {
   return GENDERS.flatMap((gender) =>
@@ -147,6 +147,17 @@ export function buildFullSceneExpectedFiles(): string[] {
   )
 }
 
+export function buildMoonlightAcademyExpectedFiles(): ExpectedFile[] {
+  return (['girl', 'boy'] as const).flatMap((gender) =>
+    (Object.keys(STATE_FRAME_COUNT) as CharacterState[]).flatMap((state) =>
+      Array.from({ length: STATE_FRAME_COUNT[state] }, (_, frameIndex) => ({
+        relativePath: `sprites/avatar/whole/moonlight-academy/${gender}_${STATE_FILE_NAME[state]}_${pad(frameIndex)}.png`,
+        ...WHOLE_AVATAR_SIZE,
+      })),
+    ),
+  )
+}
+
 export function checkWebpFile(relativePath: string): 'valid' | 'missing' | 'invalid' {
   const absolutePath = join(PUBLIC_ROOT, relativePath)
   if (!existsSync(absolutePath)) return 'missing'
@@ -244,6 +255,15 @@ function main() {
     `\nWhole-avatar sakura-uniform-ribbon files: ${sakuraRibbonValid.length} valid, ${sakuraRibbonMissing.length} missing, ${sakuraRibbonInvalid.length} invalid`,
   )
 
+  const moonlightFiles = buildMoonlightAcademyExpectedFiles()
+  const moonlightReports = moonlightFiles.map(checkFile)
+  const moonlightMissing = moonlightReports.filter((r) => r.status === 'missing')
+  const moonlightInvalid = moonlightReports.filter((r) => r.status === 'invalid')
+  const moonlightValid = moonlightReports.filter((r) => r.status === 'valid')
+  console.log(
+    `\nWhole-avatar moonlight-academy files: ${moonlightValid.length} valid, ${moonlightMissing.length} missing, ${moonlightInvalid.length} invalid`,
+  )
+
   const fullSceneFiles = buildFullSceneExpectedFiles()
   const fullSceneReports = fullSceneFiles.map((relativePath) => ({ relativePath, status: checkWebpFile(relativePath) }))
   const fullSceneMissing = fullSceneReports.filter((report) => report.status === 'missing')
@@ -265,6 +285,7 @@ function main() {
     blackHairValid.length === BLACK_HAIR_FILES.length &&
     sakuraValid.length === SAKURA_UNIFORM_FILES.length &&
     sakuraRibbonValid.length === SAKURA_UNIFORM_RIBBON_FILES.length &&
+    moonlightValid.length === moonlightFiles.length &&
     fullSceneValid.length === fullSceneFiles.length
 
   const plannedSliceReady = valid.length === EXPECTED_FILES.length

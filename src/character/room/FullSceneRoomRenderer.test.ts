@@ -48,6 +48,13 @@ describe('resolveFullSceneTheme', () => {
     )
   })
 
+  it('uses the Moonlight Academy room for its complete seasonal skin', () => {
+    expect(resolveFullSceneTheme('skin-moonlight-academy')).toBe('moonlight-academy')
+    expect(resolveFullScenePath('moonlight-academy', 'girl', 'happy')).toBe(
+      '/sprites/room/moonlight-academy/scenes/girl/happy.webp',
+    )
+  })
+
   it('keeps unsupported appearance variants on the live avatar renderer', () => {
     expect(resolveFullSceneTheme('hair-color-black')).toBeUndefined()
   })

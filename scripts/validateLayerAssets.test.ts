@@ -4,6 +4,7 @@ import type { CharacterState } from '../src/character/types.ts'
 import {
   buildBlackHairExpectedFiles,
   buildFullSceneExpectedFiles,
+  buildMoonlightAcademyExpectedFiles,
   buildSakuraUniformExpectedFiles,
   checkFile,
   checkWebpFile,
@@ -116,12 +117,21 @@ describe('sakura-uniform whole-avatar assets', () => {
   })
 })
 
+describe('moonlight-academy whole-avatar assets', () => {
+  it('expects and validates all 208 girl and boy production files', () => {
+    const files = buildMoonlightAcademyExpectedFiles()
+    expect(files).toHaveLength(208)
+    expect(files.map(checkFile).filter((report) => report.status !== 'valid')).toEqual([])
+  })
+})
+
 describe('baked full-scene room assets', () => {
-  it('covers and validates 3 themes × 2 genders × 4 scenes', () => {
+  it('covers and validates 4 themes × 2 genders × 4 scenes', () => {
     const files = buildFullSceneExpectedFiles()
-    expect(files).toHaveLength(24)
+    expect(files).toHaveLength(32)
     expect(files.every((file) => checkWebpFile(file) === 'valid')).toBe(true)
     expect(files).toContain('sprites/room/default-night/scenes/boy/idle.webp')
+    expect(files).toContain('sprites/room/moonlight-academy/scenes/girl/happy.webp')
     expect(files).toContain('sprites/room/sakura-uniform-ribbon/scenes/girl/study.webp')
   })
 

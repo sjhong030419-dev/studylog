@@ -4,10 +4,14 @@ import { useMyAvatarAppearance } from '../../hooks/useMyAvatarAppearance'
 import { useTimerStore } from '../../store/timerStore'
 import { usePointsStore } from '../../store/pointsStore'
 import { useProfileStore } from '../../store/profileStore'
+import { usePlannerStore } from '../../store/plannerStore'
 import { useAuthStore } from '../../store/authStore'
 import { isSupabaseConfigured } from '../../lib/supabaseClient'
 import { formatDuration } from '../../utils/time'
 import { readableInkColor } from '../../utils/contrastColor'
+import { ACHIEVEMENT_CATALOG, deriveEarnedAchievements } from '../../utils/achievements'
+import { computeDailyGoal } from '../../utils/dailyGoal'
+import { todayKey } from '../../utils/time'
 import type { StudySession } from '../../types'
 import type { Gender } from '../../character/types'
 
@@ -34,6 +38,7 @@ function formatShortDate(dateKey: string): string {
 export function MyPage({ onOpenSettings }: MyPageProps) {
   const subjects = useTimerStore((s) => s.subjects)
   const sessions = useTimerStore((s) => s.sessions)
+  const plannerTasks = usePlannerStore((s) => s.tasks)
 
   const balance = usePointsStore((s) => s.balance())
   const streakCount = usePointsStore((s) => s.streakCount)
@@ -59,6 +64,15 @@ export function MyPage({ onOpenSettings }: MyPageProps) {
   const [confirmAction, setConfirmAction] = useState<'logout' | 'delete' | null>(null)
 
   const totalStudySec = sessions.reduce((sum, s) => sum + s.durationSec, 0)
+  const dailyGoal = computeDailyGoal(plannerTasks, sessions, todayKey())
+  const earnedAchievementIds = new Set(
+    deriveEarnedAchievements({
+      hasAnySession: sessions.length > 0,
+      streakCount,
+      totalStudySec,
+      goalReachedToday: dailyGoal.configured && dailyGoal.reached,
+    }).map((achievement) => achievement.id),
+  )
 
   const recentDays: DayLog[] = useMemo(() => {
     const byDate = new Map<string, StudySession[]>()
@@ -244,6 +258,36 @@ export function MyPage({ onOpenSettings }: MyPageProps) {
           <span className="text-ink-soft text-[10px] font-cute">보유 포인트</span>
         </div>
       </div>
+
+      <section className="w-full max-w-sm rounded-3xl bg-white/70 px-5 py-5 shadow-sm" aria-labelledby="achievement-title">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="font-cute text-[10px] tracking-wide text-ink-soft">MY COLLECTION</p>
+            <h2 id="achievement-title" className="font-cute text-lg text-ink">성장 배지</h2>
+          </div>
+          <span className="font-pixel text-[10px] text-ink-soft">
+            {earnedAchievementIds.size}/{ACHIEVEMENT_CATALOG.length}
+          </span>
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          {ACHIEVEMENT_CATALOG.map((achievement) => {
+            const earned = earnedAchievementIds.has(achievement.id)
+            return (
+              <div
+                key={achievement.id}
+                className={`flex min-h-[82px] flex-col items-center justify-center gap-1 rounded-2xl border text-center ${
+                  earned ? 'border-white bg-pastel-yellow shadow-sm' : 'border-ink/10 bg-white/45 opacity-55 grayscale'
+                }`}
+                title={earned ? `${achievement.label} 획득` : `${achievement.label} 미획득`}
+              >
+                <span className="text-2xl" aria-hidden="true">{earned ? achievement.emoji : '🔒'}</span>
+                <span className="font-cute text-[10px] text-ink">{achievement.label}</span>
+              </div>
+            )
+          })}
+        </div>
+        <p className="mt-3 text-center font-cute text-[10px] text-ink-soft">실제 공부 기록을 쌓으면 하나씩 열려요.</p>
+      </section>
 
       <div className="w-full max-w-sm flex flex-col gap-2">
         <span className="font-cute text-ink-soft text-sm">최근 기록</span>

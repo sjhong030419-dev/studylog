@@ -4,6 +4,15 @@ export interface Achievement {
   label: string
 }
 
+export const ACHIEVEMENT_CATALOG: readonly Achievement[] = [
+  { id: 'first', emoji: '🏅', label: '첫 기록' },
+  { id: 'goal-today', emoji: '🎯', label: '목표 달성' },
+  { id: 'streak-7', emoji: '🔥', label: '7일 연속' },
+  { id: 'streak-30', emoji: '💎', label: '30일 연속' },
+  { id: 'hours-30', emoji: '⭐', label: '30시간' },
+  { id: 'hours-100', emoji: '👑', label: '100시간' },
+]
+
 interface AchievementInput {
   hasAnySession: boolean
   streakCount: number
