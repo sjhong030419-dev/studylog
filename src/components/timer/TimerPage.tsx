@@ -7,6 +7,7 @@ import { todaySessions, useTimerStore } from '../../store/timerStore'
 import { usePointsStore } from '../../store/pointsStore'
 import { deriveExpLevel } from '../../character/engine/expLevel'
 import { myOverallRank } from '../../utils/ranking'
+import { DailyQuestCard } from '../home/DailyQuestCard'
 
 type Mode = 'normal' | 'pomodoro'
 
@@ -61,6 +62,8 @@ export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
         </div>
 
         {mode === 'normal' ? <StudyTimer onOpenShop={onOpenShop} onOpenCapture={onOpenCapture} /> : <PomodoroTimer />}
+
+        <DailyQuestCard />
 
         <GrowthSummaryGrid
           streakCount={streakCount}
