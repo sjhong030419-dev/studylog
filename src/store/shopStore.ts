@@ -62,6 +62,7 @@ interface ShopState {
 
   purchaseWithPoints: (itemId: string) => boolean
   purchaseWithCash: (itemId: string) => Promise<boolean>
+  grantItem: (itemId: string, equip?: boolean) => boolean
   equipItem: (itemId: string) => void
   unequipCategory: (category: ShopCategory) => void
   watchAdForBonus: () => Promise<boolean>
@@ -148,6 +149,16 @@ export const useShopStore = create<ShopState>()(
         } finally {
           set({ checkoutLoading: false })
         }
+      },
+
+      grantItem: (itemId, equip = false) => {
+        const item = get().items.find((candidate) => candidate.id === itemId)
+        if (!item || get().ownedItemIds.includes(itemId)) return false
+        set({
+          ownedItemIds: [...get().ownedItemIds, itemId],
+          equipped: equip ? { ...get().equipped, [item.category]: itemId } : get().equipped,
+        })
+        return true
       },
 
       equipItem: (itemId) => {

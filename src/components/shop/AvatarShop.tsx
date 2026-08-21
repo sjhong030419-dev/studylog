@@ -9,6 +9,7 @@ import { AD_BONUS_POINTS, AD_DAILY_LIMIT, useShopStore } from '../../store/shopS
 import { readableInkColor } from '../../utils/contrastColor'
 import { buildPreviewEquipped, resolveAvatarAppearance } from '../../utils/avatarAppearance'
 import type { ShopCategory } from '../../types'
+import { MoonlightSeasonCard } from './MoonlightSeasonCard'
 
 const CATEGORY_LABEL: Record<ShopCategory, string> = {
   skin: '스킨',
@@ -81,6 +82,8 @@ export function AvatarShop() {
         <h1 className="font-cute text-3xl text-ink">{view === 'shop' ? '아바타 상점 🛍️' : '내 옷장 👗'}</h1>
         <p className="mt-1 font-cute text-xs text-ink-soft">미리 입어보고, 모으고, 모든 공부 화면에 같은 모습으로 적용해요.</p>
       </div>
+
+      {view === 'shop' && <MoonlightSeasonCard />}
 
       <div className="flex w-full max-w-sm rounded-2xl bg-white/70 p-1 shadow-sm" aria-label="아바타 메뉴">
         <button
