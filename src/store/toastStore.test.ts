@@ -1,14 +1,55 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { MAX_VISIBLE_TOASTS, useToastStore } from './toastStore'
+import { generateToastId, MAX_VISIBLE_TOASTS, useToastStore } from './toastStore'
 
 const INITIAL_STATE = useToastStore.getState()
 
+// Fake timers for the whole file, not just the describe blocks that assert
+// on timing: `pushToast` schedules a real 3.2s auto-dismiss `setTimeout` on
+// every single call, so any test that pushes a toast without fake timers
+// active leaves a genuine pending timer running past the end of that test.
+// One global on/off pair — cleared and torn down after every test — is what
+// actually guarantees zero pending timers once the whole file finishes,
+// not just the tests that were about timing specifically.
 beforeEach(() => {
+  vi.useFakeTimers()
   useToastStore.setState(INITIAL_STATE, true)
 })
 
 afterEach(() => {
+  vi.clearAllTimers()
+  vi.useRealTimers()
   vi.restoreAllMocks()
+})
+
+describe('generateToastId', () => {
+  // This is the real uniqueness guarantee — sampling ids off the store
+  // after many `pushToast` calls would only ever see the last
+  // `MAX_VISIBLE_TOASTS` survivors, since older toasts get evicted. Calling
+  // the id generator directly is the only way to check *every* id it ever
+  // produced, not just whichever ones happened to still be visible.
+  it('produces a unique id on every call across a large, unbounded sample', () => {
+    const ids = Array.from({ length: 10_000 }, () => generateToastId())
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('stays unique even when Date.now() and Math.random() are both pinned to the exact same value on every call', () => {
+    // The pathological case named in the task: proves uniqueness doesn't
+    // rest on probability (a fixed random value repeating is "supposed to
+    // be" astronomically unlikely) — the monotonic counter makes it
+    // impossible regardless, deterministically, not just improbable.
+    vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000)
+    vi.spyOn(Math, 'random').mockReturnValue(0.123456789)
+
+    const ids = Array.from({ length: 500 }, () => generateToastId())
+
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('every id is a non-empty string', () => {
+    const id = generateToastId()
+    expect(typeof id).toBe('string')
+    expect(id.length).toBeGreaterThan(0)
+  })
 })
 
 describe('pushToast', () => {
@@ -30,13 +71,10 @@ describe('pushToast', () => {
     expect(toast.points).toBeUndefined()
   })
 
-  it('assigns ids that never collide, even when pushed within the same millisecond', () => {
-    // Date.now() pinned to a single value so uniqueness can only come from
-    // the random suffix, not natural clock drift between calls.
-    vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000)
-    for (let i = 0; i < 20; i++) {
-      useToastStore.getState().pushToast({ icon: 'x', title: `t${i}` })
-    }
+  it('the currently-visible toasts always carry distinct ids (integration check, not the uniqueness proof — see generateToastId above)', () => {
+    useToastStore.getState().pushToast({ icon: '1', title: 'one' })
+    useToastStore.getState().pushToast({ icon: '2', title: 'two' })
+    useToastStore.getState().pushToast({ icon: '3', title: 'three' })
     const ids = useToastStore.getState().toasts.map((toast) => toast.id)
     expect(new Set(ids).size).toBe(ids.length)
   })
@@ -67,16 +105,7 @@ describe('dismissToast', () => {
   })
 })
 
-describe('auto-dismiss timer (fake timers)', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    vi.clearAllTimers()
-    vi.useRealTimers()
-  })
-
+describe('auto-dismiss timer', () => {
   it('does not remove the toast before its duration elapses', () => {
     useToastStore.getState().pushToast({ icon: '1', title: 'one' })
     vi.advanceTimersByTime(3199)
@@ -116,7 +145,7 @@ describe('auto-dismiss timer (fake timers)', () => {
   })
 })
 
-describe('max visible toasts (task 2 — MAX_VISIBLE_TOASTS)', () => {
+describe('max visible toasts (MAX_VISIBLE_TOASTS)', () => {
   it('never keeps more than MAX_VISIBLE_TOASTS toasts on screen', () => {
     for (let i = 0; i < MAX_VISIBLE_TOASTS + 2; i++) {
       useToastStore.getState().pushToast({ icon: 'x', title: `toast-${i}` })
@@ -142,23 +171,31 @@ describe('max visible toasts (task 2 — MAX_VISIBLE_TOASTS)', () => {
     expect(result).toBeUndefined()
   })
 
-  it('manual dismiss and auto-dismiss both still work normally once the cap is in effect', () => {
-    vi.useFakeTimers()
-    try {
-      for (let i = 0; i < MAX_VISIBLE_TOASTS + 1; i++) {
-        useToastStore.getState().pushToast({ icon: 'x', title: `toast-${i}` })
-      }
-      const [oldestVisible] = useToastStore.getState().toasts
-      useToastStore.getState().dismissToast(oldestVisible.id)
-      expect(useToastStore.getState().toasts).toHaveLength(MAX_VISIBLE_TOASTS - 1)
-
-      vi.advanceTimersByTime(3200)
-      expect(useToastStore.getState().toasts).toHaveLength(0)
-      expect(vi.getTimerCount()).toBe(0)
-    } finally {
-      vi.clearAllTimers()
-      vi.useRealTimers()
+  it('the auto-dismiss timer of a toast evicted by the cap still fires safely, with no effect on the toasts that replaced it', () => {
+    useToastStore.getState().pushToast({ icon: '1', title: 'one' }) // will be evicted below
+    for (let i = 2; i <= MAX_VISIBLE_TOASTS + 1; i++) {
+      useToastStore.getState().pushToast({ icon: String(i), title: `t${i}` })
     }
+    expect(useToastStore.getState().toasts.map((toast) => toast.title)).not.toContain('one')
+
+    // 'one'’s own setTimeout (scheduled back when it was pushed) fires here,
+    // trying to dismiss an id the store no longer has — must be a safe no-op.
+    expect(() => vi.advanceTimersByTime(3200)).not.toThrow()
+    expect(useToastStore.getState().toasts).toHaveLength(0)
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('manual dismiss and auto-dismiss both still work normally once the cap is in effect', () => {
+    for (let i = 0; i < MAX_VISIBLE_TOASTS + 1; i++) {
+      useToastStore.getState().pushToast({ icon: 'x', title: `toast-${i}` })
+    }
+    const [oldestVisible] = useToastStore.getState().toasts
+    useToastStore.getState().dismissToast(oldestVisible.id)
+    expect(useToastStore.getState().toasts).toHaveLength(MAX_VISIBLE_TOASTS - 1)
+
+    vi.advanceTimersByTime(3200)
+    expect(useToastStore.getState().toasts).toHaveLength(0)
+    expect(vi.getTimerCount()).toBe(0)
   })
 })
 
