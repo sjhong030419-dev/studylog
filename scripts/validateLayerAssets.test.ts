@@ -6,6 +6,7 @@ import {
   buildFullSceneExpectedFiles,
   buildMoonlightAcademyExpectedFiles,
   buildRainyStudyCafeExpectedFiles,
+  buildShopPreviewExpectedFiles,
   buildSakuraUniformExpectedFiles,
   checkFile,
   checkWebpFile,
@@ -147,5 +148,16 @@ describe('baked full-scene room assets', () => {
 
   it('reports a missing WebP without throwing', () => {
     expect(checkWebpFile('sprites/room/missing/scenes/boy/idle.webp')).toBe('missing')
+  })
+})
+
+describe('shop skin preview assets', () => {
+  it('covers three complete skin themes with thumbnail, banner and icon', () => {
+    const files = buildShopPreviewExpectedFiles()
+    expect(files).toHaveLength(9)
+    expect(files.every((file) => checkWebpFile(file) === 'valid')).toBe(true)
+    expect(files).toContain('sprites/shop/sakura-uniform/banner.webp')
+    expect(files).toContain('sprites/shop/moonlight-academy/thumbnail.webp')
+    expect(files).toContain('sprites/shop/rainy-study-cafe/icon.webp')
   })
 })

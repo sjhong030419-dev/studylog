@@ -11,6 +11,7 @@ import { buildPreviewEquipped, resolveAvatarAppearance } from '../../utils/avata
 import { useToastStore } from '../../store/toastStore'
 import type { ShopCategory, ShopItem } from '../../types'
 import { MoonlightSeasonCard } from './MoonlightSeasonCard'
+import { SHOP_PREVIEW_ASSETS } from './shopPreviewAssets'
 
 const CATEGORY_LABEL: Record<ShopCategory, string> = {
   skin: '스킨',
@@ -25,14 +26,6 @@ const CATEGORIES: ShopCategory[] = ['skin', 'hair', 'hairColor', 'outfit', 'acce
 
 type ShopView = 'shop' | 'wardrobe'
 type CategoryFilter = ShopCategory | 'all'
-
-const SHOP_PREVIEW_IMAGE: Partial<Record<string, string>> = {
-  'skin-rainy-study-cafe': '/sprites/shop/rainy-study-cafe/thumbnail.webp',
-}
-
-const SHOP_PREVIEW_BANNER: Partial<Record<string, string>> = {
-  'skin-rainy-study-cafe': '/sprites/shop/rainy-study-cafe/banner.webp',
-}
 
 export function AvatarShop() {
   const items = useShopStore((s) => s.items)
@@ -59,7 +52,7 @@ export function AvatarShop() {
   const previewAppearance = previewItem
     ? resolveAvatarAppearance(items, buildPreviewEquipped(equipped, previewItem))
     : appearance
-  const previewBanner = previewItem ? SHOP_PREVIEW_BANNER[previewItem.id] : undefined
+  const previewBanner = previewItem ? SHOP_PREVIEW_ASSETS[previewItem.id]?.banner : undefined
 
   const visibleItems = items.filter((item) => {
     if (view === 'wardrobe' && !ownedItemIds.includes(item.id)) return false
@@ -210,7 +203,7 @@ export function AvatarShop() {
           const canPurchase = isPngSupported && isGenderSupported
           const canPreview = isPngSupported && isGenderSupported
           const isPreviewing = previewItemId === item.id
-          const previewImage = SHOP_PREVIEW_IMAGE[item.id]
+          const previewImage = SHOP_PREVIEW_ASSETS[item.id]?.thumbnail
           return (
             <div
               key={item.id}

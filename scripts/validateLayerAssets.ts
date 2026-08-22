@@ -49,6 +49,7 @@ const FULL_SCENE_THEMES = [
   'moonlight-academy',
   'rainy-study-cafe',
 ] as const
+const SHOP_PREVIEW_THEMES = ['sakura-uniform', 'moonlight-academy', 'rainy-study-cafe'] as const
 
 function avatarLayerFiles(folder: string, assetKey: string): ExpectedFile[] {
   return GENDERS.flatMap((gender) =>
@@ -150,6 +151,12 @@ export function buildFullSceneExpectedFiles(): string[] {
     GENDERS.flatMap((gender) =>
       STATES.map((state) => `sprites/room/${theme}/scenes/${gender}/${state}.webp`),
     ),
+  )
+}
+
+export function buildShopPreviewExpectedFiles(): string[] {
+  return SHOP_PREVIEW_THEMES.flatMap((theme) =>
+    ['thumbnail', 'banner', 'icon'].map((name) => `sprites/shop/${theme}/${name}.webp`),
   )
 }
 
@@ -306,6 +313,15 @@ function main() {
     }
   }
 
+  const shopPreviewFiles = buildShopPreviewExpectedFiles()
+  const shopPreviewReports = shopPreviewFiles.map((relativePath) => ({ relativePath, status: checkWebpFile(relativePath) }))
+  const shopPreviewMissing = shopPreviewReports.filter((report) => report.status === 'missing')
+  const shopPreviewInvalid = shopPreviewReports.filter((report) => report.status === 'invalid')
+  const shopPreviewValid = shopPreviewReports.filter((report) => report.status === 'valid')
+  console.log(
+    `\nShop skin preview files: ${shopPreviewValid.length} valid, ${shopPreviewMissing.length} missing, ${shopPreviewInvalid.length} invalid`,
+  )
+
   const deliveredFamiliesValid =
     invalid.length === 0 &&
     blackHairValid.length === BLACK_HAIR_FILES.length &&
@@ -313,7 +329,8 @@ function main() {
     sakuraRibbonValid.length === SAKURA_UNIFORM_RIBBON_FILES.length &&
     moonlightValid.length === moonlightFiles.length &&
     rainyCafeValid.length === rainyCafeFiles.length &&
-    fullSceneValid.length === fullSceneFiles.length
+    fullSceneValid.length === fullSceneFiles.length &&
+    shopPreviewValid.length === shopPreviewFiles.length
 
   const plannedSliceReady = valid.length === EXPECTED_FILES.length
   if (deliveredFamiliesValid && (!strictPlanned || plannedSliceReady)) {
