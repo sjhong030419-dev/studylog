@@ -4,6 +4,7 @@ import {
   resolveFullScenePath,
   resolveFullSceneSwap,
   resolveFullSceneTheme,
+  resolveEquippedFullSceneTheme,
   shouldUseFullScene,
 } from './fullSceneState'
 import type { CharacterState } from '../types'
@@ -64,6 +65,15 @@ describe('resolveFullSceneTheme', () => {
 
   it('keeps unsupported appearance variants on the live avatar renderer', () => {
     expect(resolveFullSceneTheme('hair-color-black')).toBeUndefined()
+  })
+
+  it('resolves every new full-scene shop skin directly from equipped item ids', () => {
+    expect(resolveEquippedFullSceneTheme(['skin-autumn-forest-bookshop-v1'])).toBe('autumn-forest-bookshop-v1')
+    expect(resolveEquippedFullSceneTheme(['skin-ocean-glasshouse-library-v1'])).toBe('ocean-glasshouse-library-v1')
+    expect(resolveEquippedFullSceneTheme(['skin-snowy-reading-cabin-v1'])).toBe('snowy-reading-cabin-v1')
+    expect(resolveEquippedFullSceneTheme(['skin-hanok-dawn-study-v1'])).toBe('hanok-dawn-study-v1')
+    expect(resolveEquippedFullSceneTheme(['skin-neon-study-arcade-v1'])).toBe('neon-study-arcade-v1')
+    expect(resolveEquippedFullSceneTheme(['skin-celestial-observatory-academy-v1'])).toBe('celestial-observatory-academy-v1')
   })
 })
 

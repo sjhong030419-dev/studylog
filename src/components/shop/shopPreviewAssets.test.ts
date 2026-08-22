@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { SHOP_PREVIEW_ASSETS, resolveShopPreviewBanner, resolveShopPreviewThumbnail } from './shopPreviewAssets'
 
-const SKIN_ITEM_IDS = ['skin-sakura-uniform-girl', 'skin-moonlight-academy', 'skin-rainy-study-cafe']
+const SKIN_ITEM_IDS = [
+  'skin-sakura-uniform-girl',
+  'skin-moonlight-academy',
+  'skin-rainy-study-cafe',
+  'skin-autumn-forest-bookshop-v1',
+  'skin-ocean-glasshouse-library-v1',
+  'skin-snowy-reading-cabin-v1',
+  'skin-hanok-dawn-study-v1',
+  'skin-neon-study-arcade-v1',
+  'skin-celestial-observatory-academy-v1',
+]
 
 describe('shop skin illustration previews', () => {
   it.each(SKIN_ITEM_IDS)('provides a thumbnail, banner and icon for %s', (itemId) => {

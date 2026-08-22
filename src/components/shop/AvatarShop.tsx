@@ -12,6 +12,7 @@ import { useToastStore } from '../../store/toastStore'
 import type { ShopCategory, ShopItem } from '../../types'
 import { MoonlightSeasonCard } from './MoonlightSeasonCard'
 import { resolveShopPreviewBanner, resolveShopPreviewThumbnail } from './shopPreviewAssets'
+import { isFullSceneSkinItem } from '../../character/room/fullSceneState'
 
 const CATEGORY_LABEL: Record<ShopCategory, string> = {
   skin: '스킨',
@@ -148,7 +149,7 @@ export function AvatarShop() {
             onError={() => markImageFailed(previewBanner)}
           />
         )}
-        <CharacterView state="happy" gender={gender} appearance={previewAppearance} size={120} />
+        {!previewBanner && <CharacterView state="happy" gender={gender} appearance={previewAppearance} size={120} />}
         <span
           className="font-pixel text-sm"
           style={{ color: readableInkColor(previewAppearance.backgroundColor, 'var(--color-ink)') }}
@@ -210,7 +211,8 @@ export function AvatarShop() {
           // doesn't know about them at all (no CharacterAssetDefinition
           // exists for hair-color-black), so their support check is
           // separate and gender-specific: girl-only until boy art lands.
-          const isGenderSupported = !isWholeAvatarItem || isWholeAvatarItemSupportedForGender(item.id, gender)
+          const isGenderSupported =
+            !isWholeAvatarItem || isWholeAvatarItemSupportedForGender(item.id, gender) || isFullSceneSkinItem(item.id)
           const canPurchase = isPngSupported && isGenderSupported
           const canPreview = isPngSupported && isGenderSupported
           const isPreviewing = previewItemId === item.id

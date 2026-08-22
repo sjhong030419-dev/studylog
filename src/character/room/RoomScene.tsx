@@ -3,7 +3,7 @@ import { LegacySvgRoomRenderer } from './LegacySvgRoomRenderer'
 import { PixelRoomRenderer } from './PixelRoomRenderer'
 import { FullSceneRoomRenderer } from './FullSceneRoomRenderer'
 import { shouldUsePixelRoom } from './roomThemeSupport'
-import { resolveFullSceneTheme, shouldUseFullScene } from './fullSceneState'
+import { resolveEquippedFullSceneTheme, resolveFullSceneTheme, shouldUseFullScene } from './fullSceneState'
 import { resolveWholeAvatarVariant } from '../engine/wholeAvatarSupport'
 import { resolveAppearance } from '../presets/defaultPresets'
 import type { RoomThemeId } from './roomAssetManifest'
@@ -90,7 +90,8 @@ export function RoomScene(props: RoomSceneProps) {
   const gender = props.gender ?? 'boy'
   const resolvedAppearance = resolveAppearance(gender, props.appearance)
   const appearanceVariant = resolveWholeAvatarVariant(resolvedAppearance, gender)
-  const fullSceneTheme = resolveFullSceneTheme(appearanceVariant?.id)
+  const fullSceneTheme =
+    resolveEquippedFullSceneTheme(resolvedAppearance.equippedAssetIds ?? []) ?? resolveFullSceneTheme(appearanceVariant?.id)
   const hasRenderableAppearanceVariant = Boolean(appearanceVariant && !fullSceneTheme)
 
   const usesFullScene = shouldUseFullScene({

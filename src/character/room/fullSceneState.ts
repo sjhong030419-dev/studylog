@@ -7,6 +7,33 @@ export type FullSceneTheme =
   | 'sakura-uniform-ribbon'
   | 'moonlight-academy'
   | 'rainy-study-cafe'
+  | 'autumn-forest-bookshop-v1'
+  | 'ocean-glasshouse-library-v1'
+  | 'snowy-reading-cabin-v1'
+  | 'hanok-dawn-study-v1'
+  | 'neon-study-arcade-v1'
+  | 'celestial-observatory-academy-v1'
+
+const FULL_SCENE_SKIN_THEME = {
+  'skin-autumn-forest-bookshop-v1': 'autumn-forest-bookshop-v1',
+  'skin-ocean-glasshouse-library-v1': 'ocean-glasshouse-library-v1',
+  'skin-snowy-reading-cabin-v1': 'snowy-reading-cabin-v1',
+  'skin-hanok-dawn-study-v1': 'hanok-dawn-study-v1',
+  'skin-neon-study-arcade-v1': 'neon-study-arcade-v1',
+  'skin-celestial-observatory-academy-v1': 'celestial-observatory-academy-v1',
+} as const satisfies Readonly<Record<string, FullSceneTheme>>
+
+export function resolveEquippedFullSceneTheme(equippedAssetIds: readonly string[]): FullSceneTheme | undefined {
+  for (const itemId of [...equippedAssetIds].reverse()) {
+    const theme = FULL_SCENE_SKIN_THEME[itemId as keyof typeof FULL_SCENE_SKIN_THEME]
+    if (theme) return theme
+  }
+  return undefined
+}
+
+export function isFullSceneSkinItem(itemId: string): boolean {
+  return itemId in FULL_SCENE_SKIN_THEME
+}
 
 /** Maps a complete whole-avatar variant to a baked room skin. `undefined`
  * means the appearance still needs the live avatar renderer because no

@@ -20,6 +20,36 @@ export const SHOP_PREVIEW_ASSETS: Readonly<Record<string, ShopPreviewAssets>> = 
     banner: '/sprites/shop/rainy-study-cafe/banner.webp',
     icon: '/sprites/shop/rainy-study-cafe/icon.webp',
   },
+  'skin-autumn-forest-bookshop-v1': {
+    thumbnail: '/sprites/shop/autumn-forest-bookshop-v1/thumbnail.webp',
+    banner: '/sprites/shop/autumn-forest-bookshop-v1/banner.webp',
+    icon: '/sprites/shop/autumn-forest-bookshop-v1/icon.webp',
+  },
+  'skin-ocean-glasshouse-library-v1': {
+    thumbnail: '/sprites/shop/ocean-glasshouse-library-v1/thumbnail.webp',
+    banner: '/sprites/shop/ocean-glasshouse-library-v1/banner.webp',
+    icon: '/sprites/shop/ocean-glasshouse-library-v1/icon.webp',
+  },
+  'skin-snowy-reading-cabin-v1': {
+    thumbnail: '/sprites/shop/snowy-reading-cabin-v1/thumbnail.webp',
+    banner: '/sprites/shop/snowy-reading-cabin-v1/banner.webp',
+    icon: '/sprites/shop/snowy-reading-cabin-v1/icon.webp',
+  },
+  'skin-hanok-dawn-study-v1': {
+    thumbnail: '/sprites/shop/hanok-dawn-study-v1/thumbnail.webp',
+    banner: '/sprites/shop/hanok-dawn-study-v1/banner.webp',
+    icon: '/sprites/shop/hanok-dawn-study-v1/icon.webp',
+  },
+  'skin-neon-study-arcade-v1': {
+    thumbnail: '/sprites/shop/neon-study-arcade-v1/thumbnail.webp',
+    banner: '/sprites/shop/neon-study-arcade-v1/banner.webp',
+    icon: '/sprites/shop/neon-study-arcade-v1/icon.webp',
+  },
+  'skin-celestial-observatory-academy-v1': {
+    thumbnail: '/sprites/shop/celestial-observatory-academy-v1/thumbnail.webp',
+    banner: '/sprites/shop/celestial-observatory-academy-v1/banner.webp',
+    icon: '/sprites/shop/celestial-observatory-academy-v1/icon.webp',
+  },
 }
 
 /** The banner's fallback chain: banner image → thumbnail image → nothing
