@@ -19,6 +19,8 @@ export function DailyQuestCard() {
 
   return (
     <section
+      id="daily-quest-card"
+      tabIndex={-1}
       className="relative w-full overflow-hidden rounded-[28px] border border-white/80 px-4 py-4 shadow-[0_14px_32px_rgba(108,82,130,0.13)]"
       style={{ background: 'linear-gradient(145deg, #fff8e5 0%, #fff0e8 46%, #f2eaff 100%)' }}
       aria-labelledby="daily-quest-title"

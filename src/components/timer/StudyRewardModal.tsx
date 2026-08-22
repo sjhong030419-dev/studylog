@@ -1,10 +1,12 @@
 import { formatDuration } from '../../utils/time'
+import { deriveStudyRewardPresentation } from '../../utils/studyRewardPresentation'
 
 interface StudyRewardModalProps {
   durationSec: number
   earnedPoints: number
   balance: number
   onClose: () => void
+  onOpenQuests: () => void
   onOpenCapture: () => void
   onOpenShop: () => void
 }
@@ -14,9 +16,12 @@ export function StudyRewardModal({
   earnedPoints,
   balance,
   onClose,
+  onOpenQuests,
   onOpenCapture,
   onOpenShop,
 }: StudyRewardModalProps) {
+  const presentation = deriveStudyRewardPresentation(earnedPoints)
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/30 px-4 pb-5 pt-16 backdrop-blur-sm sm:items-center sm:pb-16">
       <section
@@ -41,8 +46,8 @@ export function StudyRewardModal({
             </>
           ) : (
             <>
-              <p className="font-cute text-sm text-ink">기록이 소중하게 저장됐어요.</p>
-              <p className="mt-1 font-cute text-xs text-ink-soft">10분마다 1P를 받을 수 있어요!</p>
+              <p className="font-cute text-sm text-ink">{presentation.zeroRewardTitle}</p>
+              <p className="mt-1 font-cute text-xs leading-relaxed text-ink-soft">{presentation.zeroRewardHint}</p>
             </>
           )}
           <p className="mt-2 font-cute text-[11px] text-ink-soft">현재 보유 {balance}P</p>
@@ -61,14 +66,14 @@ export function StudyRewardModal({
           onClick={onOpenShop}
           className="mt-2 w-full min-h-[44px] rounded-2xl border border-ink/10 bg-white/70 px-4 py-2.5 font-cute text-xs text-ink"
         >
-          받은 포인트로 상점 구경하기 🛍️
+          {presentation.shopCta}
         </button>
         <button
           type="button"
-          onClick={onClose}
+          onClick={earnedPoints > 0 ? onClose : onOpenQuests}
           className="mt-1 w-full min-h-[44px] rounded-2xl px-4 py-2.5 font-cute text-xs text-ink-soft"
         >
-          홈으로 돌아가기
+          {presentation.closeCta}
         </button>
       </section>
     </div>

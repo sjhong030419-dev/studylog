@@ -214,6 +214,14 @@ export function StudyTimer({ onOpenShop, onOpenCapture }: StudyTimerProps) {
           earnedPoints={studyReward.earnedPoints}
           balance={studyReward.balance}
           onClose={() => setStudyReward(null)}
+          onOpenQuests={() => {
+            setStudyReward(null)
+            window.requestAnimationFrame(() => {
+              const questCard = document.getElementById('daily-quest-card')
+              questCard?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              questCard?.focus({ preventScroll: true })
+            })
+          }}
           onOpenCapture={() => {
             setStudyReward(null)
             onOpenCapture()
