@@ -41,6 +41,33 @@ describe('whole-avatar MVP rendering policy', () => {
   })
 })
 
+describe('moonlight academy complete seasonal skin', () => {
+  const girlAppearance = { ...DEFAULT_PRESETS.girl, equippedAssetIds: ['skin-moonlight-academy'] }
+  const boyAppearance = { ...DEFAULT_PRESETS.boy, equippedAssetIds: ['skin-moonlight-academy'] }
+
+  it('is registered for both genders', () => {
+    const variant = WHOLE_AVATAR_VARIANTS.find((candidate) => candidate.id === 'skin-moonlight-academy')
+    expect(variant?.supportedGenders).toEqual(['girl', 'boy'])
+  })
+
+  it.each(ALL_STATES)('resolves every girl state through the moonlight academy family: %s', (state) => {
+    expect(resolveWholeAvatarPath('girl', state, 0, girlAppearance)).toMatch(
+      /^\/sprites\/avatar\/whole\/moonlight-academy\/girl_.+_01\.png$/,
+    )
+  })
+
+  it.each(ALL_STATES)('resolves every boy state through the moonlight academy family: %s', (state) => {
+    expect(resolveWholeAvatarPath('boy', state, 0, boyAppearance)).toMatch(
+      /^\/sprites\/avatar\/whole\/moonlight-academy\/boy_.+_01\.png$/,
+    )
+  })
+
+  it('reports the shop item as supported for both genders', () => {
+    expect(isWholeAvatarItemSupportedForGender('skin-moonlight-academy', 'girl')).toBe(true)
+    expect(isWholeAvatarItemSupportedForGender('skin-moonlight-academy', 'boy')).toBe(true)
+  })
+})
+
 describe('hair-color-black registration', () => {
   it('is registered as a whole-avatar variant', () => {
     expect(WHOLE_AVATAR_VARIANTS.some((v) => v.id === 'hair-color-black')).toBe(true)
