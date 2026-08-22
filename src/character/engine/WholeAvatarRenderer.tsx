@@ -70,6 +70,7 @@ export function WholeAvatarRenderer({
         width={SPRITE_CANVAS_SIZE}
         height={SPRITE_CANVAS_SIZE}
         draggable={false}
+        decoding="async"
         onError={handleError}
         style={{
           position: 'absolute',

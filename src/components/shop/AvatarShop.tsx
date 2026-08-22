@@ -11,7 +11,7 @@ import { buildPreviewEquipped, resolveAvatarAppearance } from '../../utils/avata
 import { useToastStore } from '../../store/toastStore'
 import type { ShopCategory, ShopItem } from '../../types'
 import { MoonlightSeasonCard } from './MoonlightSeasonCard'
-import { SHOP_PREVIEW_ASSETS } from './shopPreviewAssets'
+import { resolveShopPreviewBanner, resolveShopPreviewThumbnail } from './shopPreviewAssets'
 
 const CATEGORY_LABEL: Record<ShopCategory, string> = {
   skin: '스킨',
@@ -47,12 +47,21 @@ export function AvatarShop() {
   const [view, setView] = useState<ShopView>('shop')
   const [category, setCategory] = useState<CategoryFilter>('skin')
   const [previewItemId, setPreviewItemId] = useState<string | null>(null)
+  // Keyed by image URL (not by item/index) so switching preview items never
+  // needs an explicit reset effect — a different item's src is simply never
+  // in this set. A failed banner falls back to the thumbnail; if that also
+  // fails, the banner slot just doesn't render at all, leaving the
+  // CharacterView preview below it (already on screen either way) as the
+  // final fallback — never a broken-image icon.
+  const [failedImages, setFailedImages] = useState<Set<string>>(() => new Set())
+  const markImageFailed = (src: string) =>
+    setFailedImages((prev) => (prev.has(src) ? prev : new Set(prev).add(src)))
 
   const previewItem = items.find((item) => item.id === previewItemId)
   const previewAppearance = previewItem
     ? resolveAvatarAppearance(items, buildPreviewEquipped(equipped, previewItem))
     : appearance
-  const previewBanner = previewItem ? SHOP_PREVIEW_ASSETS[previewItem.id]?.banner : undefined
+  const previewBanner = previewItem ? resolveShopPreviewBanner(previewItem.id, failedImages) : undefined
 
   const visibleItems = items.filter((item) => {
     if (view === 'wardrobe' && !ownedItemIds.includes(item.id)) return false
@@ -135,6 +144,8 @@ export function AvatarShop() {
             alt={`${previewItem?.name ?? '스킨'} 남녀 캐릭터와 공부방 미리보기`}
             className="aspect-[2/1] w-full rounded-2xl object-cover shadow-md"
             draggable={false}
+            decoding="async"
+            onError={() => markImageFailed(previewBanner)}
           />
         )}
         <CharacterView state="happy" gender={gender} appearance={previewAppearance} size={120} />
@@ -203,7 +214,7 @@ export function AvatarShop() {
           const canPurchase = isPngSupported && isGenderSupported
           const canPreview = isPngSupported && isGenderSupported
           const isPreviewing = previewItemId === item.id
-          const previewImage = SHOP_PREVIEW_ASSETS[item.id]?.thumbnail
+          const previewImage = resolveShopPreviewThumbnail(item.id, failedImages)
           return (
             <div
               key={item.id}
@@ -217,6 +228,9 @@ export function AvatarShop() {
                   alt=""
                   className="mb-1 aspect-square w-full rounded-xl object-cover shadow-sm"
                   draggable={false}
+                  loading="lazy"
+                  decoding="async"
+                  onError={() => markImageFailed(previewImage)}
                 />
               ) : (
                 <span className="text-2xl">{item.emoji}</span>

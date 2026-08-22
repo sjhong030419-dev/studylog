@@ -157,6 +157,7 @@ export function FullSceneRoomRenderer({ state, gender, theme, onError }: FullSce
       aria-hidden="true"
       className="block w-full h-full object-cover object-center"
       draggable={false}
+      decoding="async"
       onLoad={() => loadedRef.current.add(displaySrc)}
       onError={onError}
     />
