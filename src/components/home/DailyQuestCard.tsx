@@ -1,6 +1,7 @@
 import { deriveDailyQuests } from '../../quests/dailyQuests'
 import { useDailyQuestStore } from '../../store/dailyQuestStore'
 import { useTimerStore } from '../../store/timerStore'
+import { useToastStore } from '../../store/toastStore'
 import { todayKey } from '../../utils/time'
 
 export function DailyQuestCard() {
@@ -8,6 +9,7 @@ export function DailyQuestCard() {
   const claimedDateKey = useDailyQuestStore((state) => state.claimedDateKey)
   const storedClaimedIds = useDailyQuestStore((state) => state.claimedQuestIds)
   const claimQuest = useDailyQuestStore((state) => state.claimQuest)
+  const pushToast = useToastStore((state) => state.pushToast)
   const key = todayKey()
   const claimedIds = claimedDateKey === key ? storedClaimedIds : []
   const quests = deriveDailyQuests(sessions, key)
@@ -57,7 +59,11 @@ export function DailyQuestCard() {
               <button
                 type="button"
                 disabled={!quest.complete || claimed}
-                onClick={() => claimQuest(quest.id)}
+                onClick={() => {
+                  if (claimQuest(quest.id)) {
+                    pushToast({ icon: quest.emoji, title: '퀘스트 완료!', subtitle: quest.title, points: quest.rewardPoints })
+                  }
+                }}
                 className={`min-h-[44px] min-w-[56px] shrink-0 rounded-2xl px-2 font-cute text-[10px] transition-transform active:scale-95 ${quest.complete && !claimed ? 'bg-ink text-white shadow-md' : claimed ? 'bg-[#ccebd7] text-[#39734e]' : 'bg-ink/5 text-ink-soft/55'}`}
               >
                 {claimed ? '받음' : quest.complete ? '받기' : '진행'}

@@ -181,6 +181,13 @@ textarea {
 .animate-confetti { animation: confetti-fall 1.3s ease-in infinite; }
 .animate-dim-pulse { animation: dim-pulse 2.6s ease-in-out infinite; }
 
+@keyframes toast-in {
+  0% { transform: translateY(-12px) scale(0.96); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.animate-toast-in { animation: toast-in 0.28s ease-out; }
+
 @media (prefers-reduced-motion: reduce) {
   .animate-avatar-bob,
   .animate-avatar-sway,
@@ -192,6 +199,7 @@ textarea {
   .animate-avatar-alert,
   .animate-alert-bounce,
   .animate-confetti,
+  .animate-toast-in,
   .animate-dim-pulse {
     animation: none !important;
   }

@@ -22,6 +22,12 @@ describe('deriveDailyQuests', () => {
     const focus = deriveDailyQuests([session('math', 7200)], key)[1]
     expect(focus).toMatchObject({ current: 30, percent: 100, complete: true })
   })
+
+  it('two sessions in the same subject do not complete the two-subjects quest', () => {
+    const quests = deriveDailyQuests([session('math', 600), session('math', 1200)], key)
+    const twoSubjects = quests.find((quest) => quest.id === 'two-subjects')
+    expect(twoSubjects).toMatchObject({ current: 1, complete: false })
+  })
 })
 
 describe('allDailyQuestsComplete', () => {

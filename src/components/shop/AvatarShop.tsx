@@ -8,7 +8,8 @@ import { usePointsStore } from '../../store/pointsStore'
 import { AD_BONUS_POINTS, AD_DAILY_LIMIT, useShopStore } from '../../store/shopStore'
 import { readableInkColor } from '../../utils/contrastColor'
 import { buildPreviewEquipped, resolveAvatarAppearance } from '../../utils/avatarAppearance'
-import type { ShopCategory } from '../../types'
+import { useToastStore } from '../../store/toastStore'
+import type { ShopCategory, ShopItem } from '../../types'
 import { MoonlightSeasonCard } from './MoonlightSeasonCard'
 
 const CATEGORY_LABEL: Record<ShopCategory, string> = {
@@ -40,6 +41,7 @@ export function AvatarShop() {
   const balance = usePointsStore((s) => s.balance())
   const gender = useProfileStore((s) => s.gender)
   const appearance = useMyAvatarAppearance()
+  const pushToast = useToastStore((s) => s.pushToast)
 
   const [view, setView] = useState<ShopView>('shop')
   const [category, setCategory] = useState<CategoryFilter>('skin')
@@ -66,12 +68,17 @@ export function AvatarShop() {
     setPreviewItemId(null)
   }
 
-  async function handleBuy(itemId: string, priceType: 'points' | 'cash') {
-    if (priceType === 'points') {
-      if (purchaseWithPoints(itemId)) setPreviewItemId(null)
-    } else {
-      if (await purchaseWithCash(itemId)) setPreviewItemId(null)
-    }
+  async function handleBuy(item: ShopItem) {
+    const ok = item.priceType === 'points' ? purchaseWithPoints(item.id) : await purchaseWithCash(item.id)
+    if (!ok) return
+    setPreviewItemId(null)
+    // A cash purchase can still resolve `true` while only having redirected
+    // to a checkout page (`window.location.href = data.url`, shopStore.ts) —
+    // showing "구매 완료" then would be premature, so only the mock-success
+    // path (same-tab, item already owned) gets a toast; a real redirect
+    // never sees the "buy" screen's toast host again before it leaves.
+    if (item.priceType === 'cash' && !useShopStore.getState().ownedItemIds.includes(item.id)) return
+    pushToast({ icon: item.emoji, title: '구매 완료!', subtitle: item.name })
   }
 
   return (
@@ -219,7 +226,7 @@ export function AvatarShop() {
                 onClick={() => setPreviewItemId(isPreviewing ? null : item.id)}
                 disabled={!canPreview}
                 aria-pressed={isPreviewing}
-                className={`font-cute text-[11px] px-3 py-1 rounded-full w-full border disabled:opacity-40 ${
+                className={`font-cute min-h-[44px] text-[11px] px-3 py-1 rounded-full w-full border disabled:opacity-40 ${
                   isPreviewing ? 'bg-pastel-yellow border-ink/20 text-ink' : 'bg-white border-ink/20 text-ink'
                 }`}
               >
@@ -236,22 +243,27 @@ export function AvatarShop() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (isEquipped) unequipCategory(item.category)
-                    else equipItem(item.id)
+                    if (isEquipped) {
+                      unequipCategory(item.category)
+                      pushToast({ icon: item.emoji, title: '착용 해제', subtitle: item.name })
+                    } else {
+                      equipItem(item.id)
+                      pushToast({ icon: item.emoji, title: '착용 완료!', subtitle: item.name })
+                    }
                     setPreviewItemId(null)
                   }}
-                  className={`font-cute text-[11px] px-3 py-1 rounded-full w-full ${
+                  className={`font-cute min-h-[44px] text-[11px] px-3 py-1 rounded-full w-full ${
                     isEquipped ? 'bg-ink text-white' : 'bg-white border border-ink/20 text-ink'
                   }`}
                 >
-                  {isEquipped ? '착용중' : '착용하기'}
+                  {isEquipped ? '✓ 착용중' : '착용하기'}
                 </button>
               ) : (
                 <button
                   type="button"
-                  onClick={() => handleBuy(item.id, item.priceType)}
+                  onClick={() => handleBuy(item)}
                   disabled={checkoutLoading || !canPurchase || (item.priceType === 'points' && balance < item.price)}
-                  className="font-cute text-[11px] px-3 py-1 rounded-full bg-pastel-lavender text-ink w-full disabled:opacity-50"
+                  className="font-cute min-h-[44px] text-[11px] px-3 py-1 rounded-full bg-pastel-lavender text-ink w-full disabled:opacity-50"
                 >
                   구매하기
                 </button>

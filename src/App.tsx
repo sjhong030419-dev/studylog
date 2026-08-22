@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { TimerPage } from './components/timer/TimerPage'
 import { NotificationBell } from './components/notifications/NotificationBell'
+import { RewardToastHost } from './components/feedback/RewardToastHost'
 import { BgmPlayer } from './components/audio/BgmPlayer'
 import { BottomNav, type Tab } from './components/layout/BottomNav'
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow'
@@ -117,6 +118,7 @@ function App() {
         👤
       </button>
       <NotificationBell onClick={() => setOverlay('notifications')} />
+      <RewardToastHost />
 
       <DeferredRoomConnection />
       <BgmPlayer />

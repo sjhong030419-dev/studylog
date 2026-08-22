@@ -1,12 +1,32 @@
 import { MOONLIGHT_REWARDS, canClaimMoonlightReward, moonlightSeasonProgress } from '../../season/moonlightSeason'
 import { usePointsStore } from '../../store/pointsStore'
 import { useSeasonStore } from '../../store/seasonStore'
+import { useShopStore } from '../../store/shopStore'
+import { useToastStore } from '../../store/toastStore'
 
 export function MoonlightSeasonCard() {
   const studyXp = usePointsStore((state) => state.studyXpTotal())
   const claimedRewardIds = useSeasonStore((state) => state.claimedRewardIds)
   const claimReward = useSeasonStore((state) => state.claimMoonlightReward)
+  const ownedItemIds = useShopStore((state) => state.ownedItemIds)
+  const pushToast = useToastStore((state) => state.pushToast)
   const progress = moonlightSeasonProgress(studyXp)
+
+  function handleClaim(reward: (typeof MOONLIGHT_REWARDS)[number]) {
+    // Decided BEFORE claiming — claimMoonlightReward's own fallback (grant
+    // fails silently and pays 80P instead) is invisible from its boolean
+    // return value, so whether the skin was already owned has to be read
+    // from the pre-claim shop state to word the toast honestly.
+    const alreadyOwnsSkin = reward.kind === 'cosmetic' && ownedItemIds.includes(reward.itemId)
+    if (!claimReward(reward.id)) return
+    if (reward.kind === 'cosmetic' && alreadyOwnsSkin) {
+      pushToast({ icon: '💰', title: '대체 보상 획득!', subtitle: '이미 보유한 스킨이라 80P로 지급했어요', points: 80 })
+    } else if (reward.kind === 'cosmetic') {
+      pushToast({ icon: reward.emoji, title: '시즌 스킨 획득!', subtitle: reward.label })
+    } else {
+      pushToast({ icon: reward.emoji, title: '시즌 보상 획득!', subtitle: reward.label, points: reward.amount })
+    }
+  }
 
   return (
     <section
@@ -43,18 +63,22 @@ export function MoonlightSeasonCard() {
           const claimed = claimedRewardIds.includes(reward.id)
           const claimable = canClaimMoonlightReward(reward, studyXp, claimedRewardIds)
           const reached = studyXp >= reward.requiredXp
+          const xpToGo = Math.max(0, reward.requiredXp - studyXp)
           return (
-            <div key={reward.id} className={`flex min-h-[116px] flex-col items-center rounded-2xl border px-2 py-3 text-center ${reached ? 'border-[#ffe2a3]/50 bg-white/12' : 'border-white/10 bg-black/10'}`}>
+            <div key={reward.id} className={`flex min-h-[128px] flex-col items-center rounded-2xl border px-2 py-3 text-center ${reached ? 'border-[#ffe2a3]/50 bg-white/12' : 'border-white/10 bg-black/10'}`}>
               <span className={`text-2xl ${reached ? '' : 'grayscale opacity-50'}`} aria-hidden="true">{claimed ? '✓' : reward.emoji}</span>
               <span className="mt-1 font-pixel text-[8px] text-[#ffe2a3]">{reward.requiredXp} XP</span>
               <span className="mt-1 flex-1 font-cute text-[9px] leading-snug text-[#fff8e8]">{reward.label}</span>
+              {!claimed && !claimable && (
+                <span className="mt-0.5 font-cute text-[8px] text-white/60">{xpToGo} XP 더 모으면 열려요</span>
+              )}
               <button
                 type="button"
                 disabled={!claimable}
-                onClick={() => claimReward(reward.id)}
-                className={`mt-2 min-h-[32px] w-full rounded-full px-2 font-cute text-[9px] ${claimable ? 'bg-[#ffe2a3] text-[#252b50] shadow' : 'bg-white/10 text-white/55'}`}
+                onClick={() => handleClaim(reward)}
+                className={`mt-2 min-h-[44px] w-full rounded-full px-2 font-cute text-[9px] ${claimable ? 'bg-[#ffe2a3] text-[#252b50] shadow' : 'bg-white/10 text-white/55'}`}
               >
-                {claimed ? '수령 완료' : claimable ? '받기' : '잠김'}
+                {claimed ? '✓ 수령 완료' : claimable ? '받기' : '잠김'}
               </button>
             </div>
           )
