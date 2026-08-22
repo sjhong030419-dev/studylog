@@ -71,7 +71,7 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
             }`}
           >
             {active === tab.value && <span className="absolute inset-x-2 top-0 h-1 rounded-full bg-(--color-home-accent-primary)" aria-hidden="true" />}
-            <span className={`text-lg ${tab.value === 'capture' ? 'grid h-9 w-9 -translate-y-2 place-items-center rounded-full bg-(--color-home-accent-primary) text-white shadow-lg' : ''}`}>{tab.icon}</span>
+            <span aria-hidden="true" className={`text-lg ${tab.value === 'capture' ? 'grid h-9 w-9 -translate-y-2 place-items-center rounded-full bg-(--color-home-accent-primary) text-white shadow-lg' : ''}`}>{tab.icon}</span>
             {tab.label}
           </button>
         ))}

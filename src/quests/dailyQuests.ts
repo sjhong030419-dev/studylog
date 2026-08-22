@@ -17,6 +17,16 @@ function progress(current: number, target: number) {
   return Math.min(100, Math.round((Math.max(0, current) / target) * 100))
 }
 
+/** True only when every real daily quest is actually complete for
+ * `dateKey` — the single source of truth for any "오늘의 퀘스트 완료" claim
+ * shown to the user (e.g. the capture/share card), so that claim can never
+ * drift from the quest board's own completion state
+ * (docs/Claude_3Hour_MVP_Quality_Sprint.md §1: never fabricate an
+ * achievement the user hasn't actually earned). */
+export function allDailyQuestsComplete(sessions: readonly StudySession[], dateKey: string): boolean {
+  return deriveDailyQuests(sessions, dateKey).every((quest) => quest.complete)
+}
+
 export function deriveDailyQuests(sessions: readonly StudySession[], dateKey: string): DailyQuestProgress[] {
   const today = sessions.filter((session) => session.dateKey === dateKey && session.durationSec > 0)
   const totalSec = today.reduce((sum, session) => sum + session.durationSec, 0)

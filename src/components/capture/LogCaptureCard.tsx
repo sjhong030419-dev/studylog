@@ -15,6 +15,7 @@ import { usePlannerStore } from '../../store/plannerStore'
 import { useAwayStore } from '../../store/awayStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useShopStore } from '../../store/shopStore'
+import { allDailyQuestsComplete } from '../../quests/dailyQuests'
 import { deriveExpLevel } from '../../character/engine/expLevel'
 import { computeDailyGoal } from '../../utils/dailyGoal'
 import { deriveLevelBeforeToday } from '../../utils/levelTransition'
@@ -98,6 +99,11 @@ export function LogCaptureCard() {
 
   const today = todaySessions(sessions)
   const todayTotalSec = today.reduce((sum, s) => sum + s.durationSec, 0)
+  // Only true once every real daily quest is actually done today — must
+  // never be derived from "studied at all" (todayTotalSec > 0), or the
+  // capture card would claim an achievement the user hasn't earned
+  // (docs/Claude_3Hour_MVP_Quality_Sprint.md §1/§4.4).
+  const questsComplete = allDailyQuestsComplete(sessions, todayKey())
 
   const yesterdayKey = dateKeyOffset(todayKey(), -1)
   const yesterdayTotalSec = sessions
@@ -318,7 +324,7 @@ export function LogCaptureCard() {
 
         <div className="relative z-10 flex items-center justify-center gap-1 font-cute text-[10px] text-ink shrink-0">
           <span aria-hidden="true">✨</span>
-          <span>{todayTotalSec > 0 ? '오늘의 퀘스트 완료!' : '오늘의 성장 기록'}</span>
+          <span>{questsComplete ? '오늘의 퀘스트 완료!' : '오늘의 성장 기록'}</span>
           <span aria-hidden="true">✨</span>
         </div>
 
