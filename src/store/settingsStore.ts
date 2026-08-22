@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 
 export type Theme = 'light' | 'dark'
 export type CaptureRatio = 'square' | 'story'
-export type CaptureTheme = 'lavender' | 'moonlight'
+export type CaptureTheme = 'lavender' | 'moonlight' | 'rainyCafe'
 export type MembershipPlan = 'free' | 'premium'
 
 interface QuietHours {

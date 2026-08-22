@@ -26,6 +26,14 @@ const CATEGORIES: ShopCategory[] = ['skin', 'hair', 'hairColor', 'outfit', 'acce
 type ShopView = 'shop' | 'wardrobe'
 type CategoryFilter = ShopCategory | 'all'
 
+const SHOP_PREVIEW_IMAGE: Partial<Record<string, string>> = {
+  'skin-rainy-study-cafe': '/sprites/shop/rainy-study-cafe/thumbnail.webp',
+}
+
+const SHOP_PREVIEW_BANNER: Partial<Record<string, string>> = {
+  'skin-rainy-study-cafe': '/sprites/shop/rainy-study-cafe/banner.webp',
+}
+
 export function AvatarShop() {
   const items = useShopStore((s) => s.items)
   const ownedItemIds = useShopStore((s) => s.ownedItemIds)
@@ -51,6 +59,7 @@ export function AvatarShop() {
   const previewAppearance = previewItem
     ? resolveAvatarAppearance(items, buildPreviewEquipped(equipped, previewItem))
     : appearance
+  const previewBanner = previewItem ? SHOP_PREVIEW_BANNER[previewItem.id] : undefined
 
   const visibleItems = items.filter((item) => {
     if (view === 'wardrobe' && !ownedItemIds.includes(item.id)) return false
@@ -127,6 +136,14 @@ export function AvatarShop() {
             </button>
           </div>
         )}
+        {previewBanner && (
+          <img
+            src={previewBanner}
+            alt={`${previewItem?.name ?? '스킨'} 남녀 캐릭터와 공부방 미리보기`}
+            className="aspect-[2/1] w-full rounded-2xl object-cover shadow-md"
+            draggable={false}
+          />
+        )}
         <CharacterView state="happy" gender={gender} appearance={previewAppearance} size={120} />
         <span
           className="font-pixel text-sm"
@@ -193,6 +210,7 @@ export function AvatarShop() {
           const canPurchase = isPngSupported && isGenderSupported
           const canPreview = isPngSupported && isGenderSupported
           const isPreviewing = previewItemId === item.id
+          const previewImage = SHOP_PREVIEW_IMAGE[item.id]
           return (
             <div
               key={item.id}
@@ -200,7 +218,16 @@ export function AvatarShop() {
                 isEquipped ? 'bg-pastel-yellow' : 'bg-white/70'
               }`}
             >
-              <span className="text-2xl">{item.emoji}</span>
+              {previewImage ? (
+                <img
+                  src={previewImage}
+                  alt=""
+                  className="mb-1 aspect-square w-full rounded-xl object-cover shadow-sm"
+                  draggable={false}
+                />
+              ) : (
+                <span className="text-2xl">{item.emoji}</span>
+              )}
               <span className="font-cute text-ink text-xs text-center">{item.name}</span>
               <span className="font-pixel text-[10px] text-ink-soft">
                 {item.priceType === 'points' ? `${item.price}P` : `₩${item.price.toLocaleString()}`}

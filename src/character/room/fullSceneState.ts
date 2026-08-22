@@ -1,13 +1,19 @@
 import type { CharacterState } from '../types'
 
 export type FullSceneName = 'idle' | 'study' | 'sleep' | 'happy'
-export type FullSceneTheme = 'default-night' | 'sakura-uniform' | 'sakura-uniform-ribbon' | 'moonlight-academy'
+export type FullSceneTheme =
+  | 'default-night'
+  | 'sakura-uniform'
+  | 'sakura-uniform-ribbon'
+  | 'moonlight-academy'
+  | 'rainy-study-cafe'
 
 /** Maps a complete whole-avatar variant to a baked room skin. `undefined`
  * means the appearance still needs the live avatar renderer because no
  * matching full-scene family has been delivered yet. */
 export function resolveFullSceneTheme(variantId?: string): FullSceneTheme | undefined {
   if (!variantId) return 'default-night'
+  if (variantId === 'skin-rainy-study-cafe') return 'rainy-study-cafe'
   if (variantId === 'skin-moonlight-academy') return 'moonlight-academy'
   if (variantId === 'skin-sakura-uniform-ribbon') return 'sakura-uniform-ribbon'
   if (variantId === 'skin-sakura-uniform-girl') return 'sakura-uniform'

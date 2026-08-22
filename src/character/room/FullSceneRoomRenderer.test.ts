@@ -55,6 +55,13 @@ describe('resolveFullSceneTheme', () => {
     )
   })
 
+  it('uses the Rainy Study Cafe room for both genders', () => {
+    expect(resolveFullSceneTheme('skin-rainy-study-cafe')).toBe('rainy-study-cafe')
+    expect(resolveFullScenePath('rainy-study-cafe', 'boy', 'study')).toBe(
+      '/sprites/room/rainy-study-cafe/scenes/boy/study.webp',
+    )
+  })
+
   it('keeps unsupported appearance variants on the live avatar renderer', () => {
     expect(resolveFullSceneTheme('hair-color-black')).toBeUndefined()
   })

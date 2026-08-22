@@ -5,6 +5,7 @@ import {
   buildBlackHairExpectedFiles,
   buildFullSceneExpectedFiles,
   buildMoonlightAcademyExpectedFiles,
+  buildRainyStudyCafeExpectedFiles,
   buildSakuraUniformExpectedFiles,
   checkFile,
   checkWebpFile,
@@ -125,14 +126,23 @@ describe('moonlight-academy whole-avatar assets', () => {
   })
 })
 
+describe('rainy-study-cafe whole-avatar assets', () => {
+  it('expects and validates all 208 girl and boy production files', () => {
+    const files = buildRainyStudyCafeExpectedFiles()
+    expect(files).toHaveLength(208)
+    expect(files.map(checkFile).filter((report) => report.status !== 'valid')).toEqual([])
+  })
+})
+
 describe('baked full-scene room assets', () => {
-  it('covers and validates 4 themes × 2 genders × 4 scenes', () => {
+  it('covers and validates 5 themes × 2 genders × 4 scenes', () => {
     const files = buildFullSceneExpectedFiles()
-    expect(files).toHaveLength(32)
+    expect(files).toHaveLength(40)
     expect(files.every((file) => checkWebpFile(file) === 'valid')).toBe(true)
     expect(files).toContain('sprites/room/default-night/scenes/boy/idle.webp')
     expect(files).toContain('sprites/room/moonlight-academy/scenes/girl/happy.webp')
     expect(files).toContain('sprites/room/sakura-uniform-ribbon/scenes/girl/study.webp')
+    expect(files).toContain('sprites/room/rainy-study-cafe/scenes/boy/sleep.webp')
   })
 
   it('reports a missing WebP without throwing', () => {

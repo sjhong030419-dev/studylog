@@ -23,6 +23,7 @@ import { deriveCaptureMessage } from '../../utils/captureMessage'
 import { deriveEarnedAchievements } from '../../utils/achievements'
 import { myOverallRank } from '../../utils/ranking'
 import { formatDuration, todayKey, dateKeyOffset } from '../../utils/time'
+import { isCaptureThemeLocked, resolveCaptureTheme } from '../../utils/captureTheme'
 
 type Ratio = 'square' | 'story'
 
@@ -38,6 +39,12 @@ const CAPTURE_THEME = {
     background: 'linear-gradient(165deg, #171b35 0%, #29274b 38%, #40335f 72%, #6a4f72 100%)',
     number: 'linear-gradient(90deg, #ffe2a3 0%, #d9c4ff 100%)',
     action: 'linear-gradient(135deg, #252b50 0%, #7b5d91 100%)',
+  },
+  rainyCafe: {
+    label: '비 오는 카페', emoji: '☔',
+    background: 'linear-gradient(165deg, #e9dfcd 0%, #d9c6a7 34%, #93aaa7 70%, #536b70 100%)',
+    number: 'linear-gradient(90deg, #405754 0%, #a95f43 55%, #d49b4b 100%)',
+    action: 'linear-gradient(135deg, #405754 0%, #7d5544 100%)',
   },
 } as const
 
@@ -82,8 +89,7 @@ export function LogCaptureCard() {
   // disrupting the current data model). Optional, never blocks sharing.
   const [note, setNote] = useState('')
   const compact = ratio === 'square'
-  const moonlightUnlocked = ownedItemIds.includes('skin-moonlight-academy')
-  const activeTheme = captureTheme === 'moonlight' && moonlightUnlocked ? 'moonlight' : 'lavender'
+  const activeTheme = resolveCaptureTheme(captureTheme, ownedItemIds)
   const theme = CAPTURE_THEME[activeTheme]
   const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState(false)
@@ -260,7 +266,7 @@ export function LogCaptureCard() {
 
       <div className="w-full max-w-[320px] flex items-center gap-2" aria-label="공유 카드 테마">
         {(Object.keys(CAPTURE_THEME) as Array<keyof typeof CAPTURE_THEME>).map((themeId) => {
-          const locked = themeId === 'moonlight' && !moonlightUnlocked
+          const locked = isCaptureThemeLocked(themeId, ownedItemIds)
           return (
             <button
               key={themeId}
@@ -272,7 +278,7 @@ export function LogCaptureCard() {
                 activeTheme === themeId ? 'border-ink bg-ink text-white' : 'border-ink/15 bg-white/75 text-ink'
               }`}
             >
-              {CAPTURE_THEME[themeId].emoji} {CAPTURE_THEME[themeId].label}{locked ? ' · 스킨 보상' : ''}
+              {CAPTURE_THEME[themeId].emoji} {CAPTURE_THEME[themeId].label}{locked ? ' · 스킨 필요' : ''}
             </button>
           )
         })}

@@ -52,6 +52,33 @@ describe('hair-color-black registration', () => {
   })
 })
 
+describe('rainy study cafe complete seasonal skin', () => {
+  const girlAppearance = { ...DEFAULT_PRESETS.girl, equippedAssetIds: ['skin-rainy-study-cafe'] }
+  const boyAppearance = { ...DEFAULT_PRESETS.boy, equippedAssetIds: ['skin-rainy-study-cafe'] }
+
+  it('is registered for both genders', () => {
+    const variant = WHOLE_AVATAR_VARIANTS.find((candidate) => candidate.id === 'skin-rainy-study-cafe')
+    expect(variant?.supportedGenders).toEqual(['girl', 'boy'])
+  })
+
+  it.each(ALL_STATES)('resolves every girl state through the rainy cafe family: %s', (state) => {
+    expect(resolveWholeAvatarPath('girl', state, 0, girlAppearance)).toMatch(
+      /^\/sprites\/avatar\/whole\/rainy-study-cafe\/girl_.+_01\.png$/,
+    )
+  })
+
+  it.each(ALL_STATES)('resolves every boy state through the rainy cafe family: %s', (state) => {
+    expect(resolveWholeAvatarPath('boy', state, 0, boyAppearance)).toMatch(
+      /^\/sprites\/avatar\/whole\/rainy-study-cafe\/boy_.+_01\.png$/,
+    )
+  })
+
+  it('reports the shop item as supported for both genders', () => {
+    expect(isWholeAvatarItemSupportedForGender('skin-rainy-study-cafe', 'girl')).toBe(true)
+    expect(isWholeAvatarItemSupportedForGender('skin-rainy-study-cafe', 'boy')).toBe(true)
+  })
+})
+
 describe('required test 3 — girl + hair-color-black resolves every state/frame to the black-hair whole-avatar path', () => {
   const appearance = { ...DEFAULT_PRESETS.girl, equippedAssetIds: ['hair-color-black'] }
 

@@ -50,6 +50,10 @@ function resolveMoonlightAcademyWholePath(gender: Gender, state: CharacterState,
   return `/sprites/avatar/whole/moonlight-academy/${gender}_${STATE_FILE_NAME[state]}_${pad(frameIndex)}.png`
 }
 
+function resolveRainyStudyCafeWholePath(gender: Gender, state: CharacterState, frameIndex: number): string {
+  return `/sprites/avatar/whole/rainy-study-cafe/${gender}_${STATE_FILE_NAME[state]}_${pad(frameIndex)}.png`
+}
+
 /**
  * Registered whole-avatar variants. Add a variant only when its complete
  * image family (every required gender × all 13 states × the state's full
@@ -60,6 +64,13 @@ function resolveMoonlightAcademyWholePath(gender: Gender, state: CharacterState,
  * Black hair and sakura uniform both have complete girl and boy families.
  */
 export const WHOLE_AVATAR_VARIANTS: readonly WholeAvatarVariant[] = [
+  {
+    id: 'skin-rainy-study-cafe',
+    priority: 4000,
+    equippedAssetIds: ['skin-rainy-study-cafe'],
+    supportedGenders: ['girl', 'boy'],
+    path: resolveRainyStudyCafeWholePath,
+  },
   {
     id: 'skin-moonlight-academy',
     priority: 3000,
