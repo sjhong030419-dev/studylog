@@ -21,7 +21,7 @@ export function DailyQuestCard() {
     <section
       id="daily-quest-card"
       tabIndex={-1}
-      className="relative w-full overflow-hidden rounded-[28px] border border-white/80 px-4 py-4 shadow-[0_14px_32px_rgba(108,82,130,0.13)]"
+      className="relative w-full overflow-hidden rounded-[28px] border-[3px] border-white/90 px-4 py-4 shadow-[0_7px_0_rgba(95,70,104,0.09),0_16px_32px_rgba(108,82,130,0.13)]"
       style={{ background: 'linear-gradient(145deg, #fff8e5 0%, #fff0e8 46%, #f2eaff 100%)' }}
       aria-labelledby="daily-quest-title"
     >
@@ -30,8 +30,8 @@ export function DailyQuestCard() {
         <div className="flex items-center gap-3">
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/80 text-2xl shadow-sm" aria-hidden="true">📜</span>
           <div>
-            <p className="font-cute text-[10px] tracking-[0.14em] text-ink-soft">DAILY QUEST</p>
-            <h2 id="daily-quest-title" className="font-cute text-xl leading-tight text-ink">오늘의 모험</h2>
+            <p className="font-cute text-[10px] tracking-[0.14em] text-ink-soft">ADVENTURE LOG</p>
+            <h2 id="daily-quest-title" className="font-cute text-xl leading-tight text-ink">오늘의 퀘스트</h2>
             <p className="mt-0.5 font-cute text-[10px] text-ink-soft">모두 완료하면 총 {totalReward}P</p>
           </div>
         </div>

@@ -9,7 +9,7 @@ export function HomeProgressHeader({ level, progressRatio, streakCount }: HomePr
 
   return (
     <section
-      className="relative w-full overflow-hidden rounded-[24px] border border-white/80 bg-(--color-home-card) px-4 py-3 shadow-[0_10px_30px_rgba(108,82,130,0.10)]"
+      className="relative w-full overflow-hidden rounded-[22px] border-2 border-white/90 bg-(--color-home-card) px-3 py-2.5 shadow-[0_10px_0_rgba(94,70,105,0.08),0_14px_30px_rgba(108,82,130,0.12)]"
       aria-label="캐릭터 성장 현황"
     >
       <div
@@ -17,18 +17,18 @@ export function HomeProgressHeader({ level, progressRatio, streakCount }: HomePr
         style={{ background: 'radial-gradient(circle, var(--color-home-soft-pink), transparent 70%)' }}
         aria-hidden="true"
       />
-      <div className="relative flex items-center gap-3">
+      <div className="relative flex items-center gap-2.5">
       <div
-        className="flex h-13 w-13 shrink-0 flex-col items-center justify-center rounded-[18px] border border-white/70 shadow-inner"
+        className="flex h-14 w-14 shrink-0 -rotate-2 flex-col items-center justify-center rounded-[18px] border-2 border-white shadow-[0_4px_0_rgba(73,54,83,0.13)]"
         style={{ background: 'linear-gradient(145deg, var(--color-home-soft-lavender), var(--color-home-soft-pink))' }}
       >
-        <span className="font-cute text-[9px] uppercase tracking-wider text-ink-soft">level</span>
-        <span className="font-pixel text-[11px] text-ink">{level}</span>
+        <span className="font-cute text-[8px] uppercase tracking-wider text-ink-soft">level</span>
+        <span className="font-pixel text-sm text-ink">{level}</span>
       </div>
 
       <div className="flex-1 flex flex-col gap-1 min-w-0">
         <div className="flex items-center justify-between">
-          <span className="font-cute text-sm text-ink">나의 성장</span>
+          <span className="font-cute text-[13px] text-ink">다음 레벨까지</span>
           <span className="font-cute text-xs text-ink-soft" aria-hidden="true">
             {percent}%
           </span>
@@ -43,7 +43,7 @@ export function HomeProgressHeader({ level, progressRatio, streakCount }: HomePr
           style={{ backgroundColor: 'rgba(74,68,88,0.08)' }}
         >
           <div
-            className="h-full rounded-full transition-[width] duration-700 ease-out motion-reduce:transition-none"
+            className="relative h-full rounded-full transition-[width] duration-700 ease-out after:absolute after:inset-x-1 after:top-[1px] after:h-[2px] after:rounded-full after:bg-white/65 motion-reduce:transition-none"
             style={{
               width: `${percent}%`,
               background: 'linear-gradient(90deg, var(--color-home-accent-lavender), var(--color-home-accent-primary))',
@@ -53,7 +53,7 @@ export function HomeProgressHeader({ level, progressRatio, streakCount }: HomePr
       </div>
 
       <div
-        className="flex shrink-0 items-center gap-1 rounded-full border border-white/70 px-2.5 py-1.5 shadow-sm"
+        className="flex shrink-0 items-center gap-1 rounded-[15px] border-2 border-white px-2.5 py-2 shadow-[0_3px_0_rgba(73,54,83,0.10)]"
         style={{ backgroundColor: 'var(--color-home-soft-peach)' }}
       >
         <span aria-hidden="true">🔥</span>

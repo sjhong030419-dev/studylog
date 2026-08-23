@@ -32,6 +32,8 @@ interface StudyReward {
   durationSec: number
   earnedPoints: number
   balance: number
+  studyXpBefore: number
+  studyXpAfter: number
 }
 
 export function StudyTimer({ onOpenShop, onOpenCapture }: StudyTimerProps) {
@@ -108,13 +110,17 @@ export function StudyTimer({ onOpenShop, onOpenCapture }: StudyTimerProps) {
     const hadProgress = elapsedSec > 0
     const completedDurationSec = elapsedSec
     const balanceBefore = usePointsStore.getState().balance()
+    const studyXpBefore = usePointsStore.getState().studyXpTotal()
     stop()
     if (hadProgress) {
       const balanceAfter = usePointsStore.getState().balance()
+      const studyXpAfter = usePointsStore.getState().studyXpTotal()
       setStudyReward({
         durationSec: completedDurationSec,
         earnedPoints: Math.max(0, balanceAfter - balanceBefore),
         balance: balanceAfter,
+        studyXpBefore,
+        studyXpAfter,
       })
       if (completionTimeoutRef.current !== undefined) window.clearTimeout(completionTimeoutRef.current)
       setJustCompleted(true)
@@ -163,6 +169,7 @@ export function StudyTimer({ onOpenShop, onOpenCapture }: StudyTimerProps) {
         appearance={appearance}
         level={level.level}
         speech={speech}
+        onOpenShop={onOpenShop}
       />
 
       {awayMessage && (
@@ -181,16 +188,6 @@ export function StudyTimer({ onOpenShop, onOpenCapture }: StudyTimerProps) {
         </div>
       )}
 
-      {!hasNoSubjects && (
-        <SubjectChips
-          subjects={activeSubjects}
-          selectedSubjectId={selectedSubjectId}
-          disabled={isRunning}
-          onSelect={selectSubject}
-          onAdd={addSubject}
-        />
-      )}
-
       <StudyTimeSummary
         elapsedSec={elapsedSec}
         todayTotalSec={todayTotalSec}
@@ -204,6 +201,19 @@ export function StudyTimer({ onOpenShop, onOpenCapture }: StudyTimerProps) {
         disabledReason={hasNoSubjects ? '과목을 먼저 추가해주세요.' : undefined}
       />
 
+      {!hasNoSubjects && (
+        <div className="-mt-2 w-full rounded-[22px] border border-white/80 bg-white/55 px-3 py-3 shadow-[0_8px_24px_rgba(88,64,98,0.08)] backdrop-blur">
+          <p className="mb-2 px-1 font-cute text-[10px] tracking-[0.12em] text-ink-soft">오늘의 모험 선택</p>
+          <SubjectChips
+            subjects={activeSubjects}
+            selectedSubjectId={selectedSubjectId}
+            disabled={isRunning}
+            onSelect={selectSubject}
+            onAdd={addSubject}
+          />
+        </div>
+      )}
+
       {hasNoSubjects && <SubjectEmptyState onAdd={addSubject} reason="시작 버튼을 활성화하려면 공부할 과목 하나만 만들어주세요." />}
 
       <SubjectBreakdownCard perSubject={perSubject} maxSec={maxSec} />
@@ -213,6 +223,10 @@ export function StudyTimer({ onOpenShop, onOpenCapture }: StudyTimerProps) {
           durationSec={studyReward.durationSec}
           earnedPoints={studyReward.earnedPoints}
           balance={studyReward.balance}
+          studyXpBefore={studyReward.studyXpBefore}
+          studyXpAfter={studyReward.studyXpAfter}
+          gender={gender}
+          appearance={appearance}
           onClose={() => setStudyReward(null)}
           onOpenQuests={() => {
             setStudyReward(null)

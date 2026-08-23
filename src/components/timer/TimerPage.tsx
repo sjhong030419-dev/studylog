@@ -30,30 +30,35 @@ export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
   const { rank, total } = myOverallRank(myTodaySec)
 
   return (
-    <main className="min-h-screen px-4 pb-10 pt-4">
-      <div className="mx-auto flex w-full flex-col items-center gap-3.5" style={{ maxWidth: 430 }}>
+    <main className="min-h-screen overflow-hidden px-3 pb-12 pt-3 sm:px-4">
+      <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
+        <div className="absolute left-1/2 top-0 h-[640px] w-[760px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,238,192,0.72)_0%,rgba(244,218,235,0.42)_42%,transparent_72%)]" />
+        <div className="absolute -left-24 top-44 h-72 w-72 rounded-full bg-pastel-lavender/25 blur-3xl" />
+        <div className="absolute -right-24 top-80 h-72 w-72 rounded-full bg-pastel-pink/25 blur-3xl" />
+      </div>
+      <div className="mx-auto flex w-full flex-col items-center gap-3" style={{ maxWidth: 430 }}>
         <HomeProgressHeader level={level.level} progressRatio={level.progressRatio} streakCount={streakCount} />
 
-        <div className="flex w-full items-center justify-between gap-3 px-0.5 max-[350px]:flex-col max-[350px]:items-stretch">
+        <div className="flex w-full items-center justify-between gap-3 px-1">
           <div>
-            <p className="font-cute text-[11px] tracking-wide text-ink-soft">CHARACTER STUDY RPG</p>
-            <h1 className="font-cute text-2xl text-ink">스터디로그 <span aria-hidden="true">📖</span></h1>
+            <p className="font-cute text-[9px] tracking-[0.18em] text-ink-soft">MY STUDY ADVENTURE</p>
+            <h1 className="font-cute text-[22px] leading-tight text-ink">StudyLog <span aria-hidden="true">✦</span></h1>
           </div>
-          <div className="flex gap-2 max-[350px]:grid max-[350px]:grid-cols-2">
+          <div className="flex rounded-2xl border border-white/90 bg-white/65 p-1 shadow-[0_8px_20px_rgba(77,55,90,0.09)] backdrop-blur">
             <button
               type="button"
               onClick={() => setMode('normal')}
-              className={`font-cute min-h-[44px] rounded-full border px-3 py-1.5 text-sm shadow-sm transition-transform active:scale-95 ${
-                mode === 'normal' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
+              className={`font-cute min-h-[38px] rounded-xl px-3 py-1 text-xs transition-all active:scale-95 ${
+                mode === 'normal' ? 'bg-ink text-white shadow-md' : 'text-ink-soft'
               }`}
             >
-              일반 타이머
+              ⏱ 집중
             </button>
             <button
               type="button"
               onClick={() => setMode('pomodoro')}
-              className={`font-cute min-h-[44px] rounded-full border px-3 py-1.5 text-sm shadow-sm transition-transform active:scale-95 ${
-                mode === 'pomodoro' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
+              className={`font-cute min-h-[38px] rounded-xl px-3 py-1 text-xs transition-all active:scale-95 ${
+                mode === 'pomodoro' ? 'bg-ink text-white shadow-md' : 'text-ink-soft'
               }`}
             >
               🍅 뽀모도로

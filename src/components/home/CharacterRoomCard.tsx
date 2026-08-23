@@ -7,6 +7,7 @@ interface CharacterRoomCardProps {
   appearance: Partial<CharacterAppearance>
   level: number
   speech: string | null
+  onOpenShop?: () => void
 }
 
 /** The Home screen's emotional center: a chibi student studying inside a
@@ -15,7 +16,7 @@ interface CharacterRoomCardProps {
  * can never cover the character's face, regardless of the character art's
  * size or position — including once placeholder SVG art is swapped for
  * final production assets. */
-export function CharacterRoomCard({ state, gender, appearance, level, speech }: CharacterRoomCardProps) {
+export function CharacterRoomCard({ state, gender, appearance, level, speech, onOpenShop }: CharacterRoomCardProps) {
   return (
     <section className="w-full flex flex-col items-center" aria-label="나의 공부방">
       {speech && (
@@ -26,8 +27,8 @@ export function CharacterRoomCard({ state, gender, appearance, level, speech }: 
       )}
 
       <div
-        className="relative w-full overflow-hidden rounded-[26px] border-[3px] border-white shadow-[0_16px_34px_rgba(82,57,75,0.18)]"
-        style={{ height: 'clamp(300px, 44dvh, 440px)' }}
+        className="relative w-full overflow-hidden rounded-[30px] border-[4px] border-white shadow-[0_8px_0_rgba(82,57,75,0.12),0_22px_42px_rgba(82,57,75,0.22)]"
+        style={{ height: 'clamp(340px, 51dvh, 500px)' }}
       >
         <RoomScene
           state={state}
@@ -37,6 +38,27 @@ export function CharacterRoomCard({ state, gender, appearance, level, speech }: 
           characterScale={1.3}
           preferFullScene
         />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(28,20,39,0.06)_0%,transparent_24%,transparent_68%,rgba(31,21,38,0.22)_100%)]" aria-hidden="true" />
+        <div className="absolute left-3 top-3 flex items-center gap-2 rounded-2xl border border-white/70 bg-ink/72 px-3 py-2 text-white shadow-lg backdrop-blur-md">
+          <span className="grid h-7 w-7 place-items-center rounded-xl bg-white/15 text-sm" aria-hidden="true">✦</span>
+          <div className="leading-none">
+            <span className="block font-cute text-[8px] tracking-[0.12em] text-white/70">MY STUDY ROOM</span>
+            <span className="mt-1 block font-pixel text-[9px]">LV.{level}</span>
+          </div>
+        </div>
+        {onOpenShop && (
+          <button
+            type="button"
+            onClick={onOpenShop}
+            className="absolute right-3 top-3 grid min-h-[44px] min-w-[44px] place-items-center rounded-2xl border-2 border-white bg-white/88 text-xl shadow-[0_4px_0_rgba(55,39,67,0.18)] backdrop-blur transition-transform active:translate-y-0.5 active:shadow-none"
+            aria-label="캐릭터 옷장과 상점 열기"
+          >
+            🎒
+          </button>
+        )}
+        <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-white/55 bg-ink/62 px-4 py-1.5 font-cute text-[10px] text-white/90 shadow-lg backdrop-blur" aria-hidden="true">
+          {state === 'study' || state === 'focused' ? '집중 모험 진행 중 ✏️' : state === 'sleep' ? '잠깐 쉬어가는 중 Zzz' : state === 'happy' || state === 'celebrate' ? '오늘의 모험 완료! ✨' : '오늘은 어떤 모험을 시작할까요?'}
+        </div>
       </div>
     </section>
   )
