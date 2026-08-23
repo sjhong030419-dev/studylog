@@ -37,7 +37,7 @@ export function StudyTimeSummary({
 }: StudyTimeSummaryProps) {
   if (compact) {
     return (
-      <section className="relative z-10 mt-2 w-[96%] overflow-hidden rounded-[22px] border-[3px] border-white bg-(--color-home-card) px-3 py-2 shadow-[0_5px_0_rgba(91,68,101,0.11),0_12px_24px_rgba(74,52,83,0.16)]">
+      <section className="relative z-10 mt-2 w-[96%] overflow-hidden rounded-t-[22px] border-[3px] border-b-0 border-white bg-(--color-home-card) px-3 pb-1.5 pt-2 shadow-[0_10px_24px_rgba(74,52,83,0.10)]">
         <div
           className="pointer-events-none absolute inset-x-8 top-0 h-12 opacity-45"
           style={{ background: 'radial-gradient(ellipse at top, var(--color-home-soft-yellow), transparent 72%)' }}

@@ -164,7 +164,7 @@ export function StudyTimer({ onOpenShop, onOpenCapture, onOpenQuests, compactHom
     : deriveSpeechBubble({ characterState, todayTotalSec, goal, streakCount })
 
   return (
-    <div className={compactHome ? 'grid h-full min-h-0 w-full grid-rows-[minmax(0,1fr)_auto_auto] place-items-center gap-0.5' : 'flex w-full flex-col items-center gap-5'}>
+    <div className={compactHome ? 'grid h-full min-h-0 w-full grid-rows-[minmax(0,1fr)_auto_auto] place-items-center gap-0' : 'flex w-full flex-col items-center gap-5'}>
       <CharacterRoomCard
         state={characterState}
         gender={gender}
@@ -206,7 +206,7 @@ export function StudyTimer({ onOpenShop, onOpenCapture, onOpenQuests, compactHom
       />
 
       {!hasNoSubjects && (
-        <div className={`${compactHome ? '-mt-1 px-2 py-1.5' : '-mt-2 px-3 py-3'} w-full rounded-[20px] border border-white/80 bg-white/55 shadow-[0_8px_24px_rgba(88,64,98,0.08)] backdrop-blur`}>
+        <div className={`${compactHome ? '-mt-px w-[96%] rounded-b-[22px] border-[3px] border-t border-white bg-(--color-home-card) px-2 pb-2 pt-1.5 shadow-[0_6px_0_rgba(91,68,101,0.10),0_14px_28px_rgba(74,52,83,0.16)]' : '-mt-2 w-full rounded-[20px] border border-white/80 bg-white/55 px-3 py-3 shadow-[0_8px_24px_rgba(88,64,98,0.08)] backdrop-blur'}`}>
           {!compactHome && <p className="mb-2 px-1 font-cute text-[10px] tracking-[0.12em] text-ink-soft">오늘의 모험 선택</p>}
           <SubjectChips
             subjects={activeSubjects}
