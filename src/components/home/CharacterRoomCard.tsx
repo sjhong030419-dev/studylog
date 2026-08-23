@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { RoomScene } from '../../character/room/RoomScene'
 import type { CharacterAppearance, CharacterState, Gender } from '../../character/types'
 
@@ -9,6 +10,7 @@ interface CharacterRoomCardProps {
   speech: string | null
   onOpenShop?: () => void
   fill?: boolean
+  onWidthChange?: (width: number) => void
 }
 
 /** The Home screen's emotional center: a chibi student studying inside a
@@ -17,7 +19,20 @@ interface CharacterRoomCardProps {
  * can never cover the character's face, regardless of the character art's
  * size or position — including once placeholder SVG art is swapped for
  * final production assets. */
-export function CharacterRoomCard({ state, gender, appearance, level, speech, onOpenShop, fill = false }: CharacterRoomCardProps) {
+export function CharacterRoomCard({ state, gender, appearance, level, speech, onOpenShop, fill = false, onWidthChange }: CharacterRoomCardProps) {
+  const roomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const room = roomRef.current
+    if (!room || !onWidthChange || typeof ResizeObserver === 'undefined') return
+
+    const reportWidth = () => onWidthChange(Math.round(room.getBoundingClientRect().width))
+    reportWidth()
+    const observer = new ResizeObserver(reportWidth)
+    observer.observe(room)
+    return () => observer.disconnect()
+  }, [onWidthChange])
+
   return (
     <section className={`relative flex w-full max-w-full min-h-0 min-w-0 flex-col items-center ${fill ? 'h-full' : ''}`} aria-label="나의 공부방">
       {speech && (
@@ -28,6 +43,7 @@ export function CharacterRoomCard({ state, gender, appearance, level, speech, on
       )}
 
       <div
+        ref={roomRef}
         className={`relative box-border min-h-0 justify-self-center overflow-hidden rounded-[28px] border-[4px] border-white shadow-[0_7px_0_rgba(82,57,75,0.12),0_18px_36px_rgba(82,57,75,0.20)] ${fill ? 'aspect-[4/5] h-full max-h-full w-auto max-w-full' : 'aspect-[4/5] w-full'}`}
         style={fill ? undefined : { maxHeight: 'clamp(340px, 51dvh, 500px)' }}
       >

@@ -60,6 +60,7 @@ function DeferredRoomConnection() {
 function App() {
   const [tab, setTab] = useState<Tab>('timer')
   const [overlay, setOverlay] = useState<Overlay>(null)
+  const [focusContentWidth, setFocusContentWidth] = useState<number | null>(null)
   const theme = useSettingsStore((s) => s.theme)
   const onboardingCompleted = useProfileStore((s) => s.onboardingCompleted)
 
@@ -87,7 +88,7 @@ function App() {
   return (
     <div className={`app-shell min-h-svh pt-[72px] ${tab === 'timer' && !overlay ? 'pb-0' : 'pb-28'}`}>
       <Suspense fallback={<ScreenLoading />}>
-      {tab === 'timer' && <TimerPage onOpenShop={() => setTab('shop')} onOpenCapture={() => setTab('capture')} />}
+      {tab === 'timer' && <TimerPage onOpenShop={() => setTab('shop')} onOpenCapture={() => setTab('capture')} onContentWidthChange={setFocusContentWidth} />}
       {tab === 'room' && <RoomPage />}
       {tab === 'capture' && <LogCaptureCard />}
       {tab === 'stats' && <StatsHubPage />}
@@ -110,7 +111,10 @@ function App() {
       </Suspense>
 
       <div className="pointer-events-none fixed inset-x-0 top-0 z-30 flex justify-center px-3 pt-[max(10px,env(safe-area-inset-top))]">
-        <div className="pointer-events-auto flex w-full max-w-[430px] items-center justify-between rounded-[22px] border-2 border-white/90 bg-white/72 px-2.5 py-2 shadow-[0_6px_0_rgba(79,58,89,0.08),0_14px_30px_rgba(73,53,84,0.12)] backdrop-blur-xl dark:bg-[#2d2842]/82">
+        <div
+          className="pointer-events-auto flex w-full max-w-[430px] items-center justify-between rounded-[22px] border-2 border-white/90 bg-white/72 px-2.5 py-2 shadow-[0_6px_0_rgba(79,58,89,0.08),0_14px_30px_rgba(73,53,84,0.12)] backdrop-blur-xl dark:bg-[#2d2842]/82"
+          style={tab === 'timer' && focusContentWidth ? { width: `${focusContentWidth}px` } : undefined}
+        >
           <div className="flex items-center gap-2 px-1">
             <span className="grid h-9 w-9 place-items-center rounded-[14px] bg-[linear-gradient(145deg,var(--color-home-soft-yellow),var(--color-home-soft-pink))] text-lg shadow-inner" aria-hidden="true">📖</span>
             <div className="leading-none">
@@ -135,7 +139,7 @@ function App() {
 
       <DeferredRoomConnection />
       <BgmPlayer />
-      <BottomNav active={tab} onChange={(next) => { setOverlay(null); setTab(next) }} />
+      <BottomNav active={tab} focusWidth={tab === 'timer' ? focusContentWidth : null} onChange={(next) => { setOverlay(null); setTab(next) }} />
     </div>
   )
 }

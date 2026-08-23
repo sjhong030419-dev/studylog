@@ -28,6 +28,7 @@ interface StudyTimerProps {
   onOpenCapture: () => void
   onOpenQuests?: () => void
   compactHome?: boolean
+  onRoomWidthChange?: (width: number) => void
 }
 
 interface StudyReward {
@@ -38,7 +39,7 @@ interface StudyReward {
   studyXpAfter: number
 }
 
-export function StudyTimer({ onOpenShop, onOpenCapture, onOpenQuests, compactHome = false }: StudyTimerProps) {
+export function StudyTimer({ onOpenShop, onOpenCapture, onOpenQuests, compactHome = false, onRoomWidthChange }: StudyTimerProps) {
   const subjects = useTimerStore((s) => s.subjects)
   const selectedSubjectId = useTimerStore((s) => s.selectedSubjectId)
   const isRunning = useTimerStore((s) => s.isRunning)
@@ -173,6 +174,7 @@ export function StudyTimer({ onOpenShop, onOpenCapture, onOpenQuests, compactHom
         speech={speech}
         onOpenShop={onOpenShop}
         fill={compactHome}
+        onWidthChange={onRoomWidthChange}
       />
 
       {awayMessage && (

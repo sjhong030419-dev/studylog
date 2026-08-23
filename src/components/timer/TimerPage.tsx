@@ -15,11 +15,13 @@ type Mode = 'normal' | 'pomodoro'
 interface TimerPageProps {
   onOpenShop: () => void
   onOpenCapture: () => void
+  onContentWidthChange?: (width: number) => void
 }
 
-export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
+export function TimerPage({ onOpenShop, onOpenCapture, onContentWidthChange }: TimerPageProps) {
   const [mode, setMode] = useState<Mode>('normal')
   const [detailPanel, setDetailPanel] = useState<'quests' | 'growth' | null>(null)
+  const [contentWidth, setContentWidth] = useState<number | null>(null)
 
   const sessions = useTimerStore((s) => s.sessions)
   const streakCount = usePointsStore((s) => s.streakCount)
@@ -40,7 +42,10 @@ export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
         <div className="absolute -left-24 top-44 h-72 w-72 rounded-full bg-pastel-lavender/25 blur-3xl" />
         <div className="absolute -right-24 top-80 h-72 w-72 rounded-full bg-pastel-pink/25 blur-3xl" />
       </div>
-      <div className="mx-auto grid h-full w-full max-w-[430px] min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] gap-2">
+      <div
+        className="mx-auto grid h-full max-w-full min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] gap-2"
+        style={{ width: contentWidth ? `${contentWidth}px` : '100%' }}
+      >
         <div className="flex min-w-0 w-full items-center justify-between gap-2">
           <div className="flex rounded-[16px] border border-white/90 bg-white/65 p-1 shadow-[0_8px_20px_rgba(77,55,90,0.09)] backdrop-blur">
             <button
@@ -86,6 +91,10 @@ export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
               onOpenShop={onOpenShop}
               onOpenCapture={onOpenCapture}
               onOpenQuests={() => setDetailPanel('quests')}
+              onRoomWidthChange={(width) => {
+                setContentWidth(width)
+                onContentWidthChange?.(width)
+              }}
               compactHome
             />
           ) : (
