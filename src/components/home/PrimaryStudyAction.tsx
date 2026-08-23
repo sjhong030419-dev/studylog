@@ -8,6 +8,7 @@ interface PrimaryStudyActionProps {
   /** When set, the start button is disabled and this reason is shown
    * instead of silently doing nothing (e.g. "과목을 먼저 추가해주세요"). */
   disabledReason?: string
+  compact?: boolean
 }
 
 /** Preserves the exact existing start/pause/resume/stop handlers and states. */
@@ -19,6 +20,7 @@ export function PrimaryStudyAction({
   onResume,
   onStop,
   disabledReason,
+  compact = false,
 }: PrimaryStudyActionProps) {
   return (
     <div className="flex flex-col items-center gap-2">
@@ -28,7 +30,7 @@ export function PrimaryStudyAction({
             type="button"
             onClick={onStart}
             disabled={Boolean(disabledReason)}
-            className="min-h-[52px] w-full rounded-[18px] border-2 border-white bg-[linear-gradient(135deg,#ffc763,#f58ba8)] px-8 py-3 font-cute text-lg text-white shadow-[0_6px_0_rgba(126,70,87,0.22),0_10px_22px_rgba(126,70,87,0.16)] transition-transform active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50"
+            className={`${compact ? 'min-h-[42px] rounded-[15px] py-2 text-sm' : 'min-h-[52px] rounded-[18px] py-3 text-lg'} w-full border-2 border-white bg-[linear-gradient(135deg,#ffc763,#f58ba8)] px-8 font-cute text-white shadow-[0_6px_0_rgba(126,70,87,0.22),0_10px_22px_rgba(126,70,87,0.16)] transition-transform active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50`}
           >
             집중 모험 시작 ⚔️
           </button>
@@ -37,7 +39,7 @@ export function PrimaryStudyAction({
           <button
             type="button"
             onClick={onPause}
-            className="min-h-[52px] flex-1 rounded-[18px] border-2 border-white bg-pastel-lavender px-5 py-3 font-cute text-base text-ink shadow-[0_5px_0_rgba(91,69,112,0.16)] transition-transform active:translate-y-0.5 active:shadow-none"
+            className={`${compact ? 'min-h-[42px] rounded-[15px] py-2 text-sm' : 'min-h-[52px] rounded-[18px] py-3 text-base'} flex-1 border-2 border-white bg-pastel-lavender px-5 font-cute text-ink shadow-[0_5px_0_rgba(91,69,112,0.16)] transition-transform active:translate-y-0.5 active:shadow-none`}
           >
             일시정지
           </button>
@@ -46,7 +48,7 @@ export function PrimaryStudyAction({
           <button
             type="button"
             onClick={onResume}
-            className="min-h-[52px] flex-1 rounded-[18px] border-2 border-white bg-pastel-mint px-5 py-3 font-cute text-base text-ink shadow-[0_5px_0_rgba(64,111,91,0.16)] transition-transform active:translate-y-0.5 active:shadow-none"
+            className={`${compact ? 'min-h-[42px] rounded-[15px] py-2 text-sm' : 'min-h-[52px] rounded-[18px] py-3 text-base'} flex-1 border-2 border-white bg-pastel-mint px-5 font-cute text-ink shadow-[0_5px_0_rgba(64,111,91,0.16)] transition-transform active:translate-y-0.5 active:shadow-none`}
           >
             재개
           </button>
@@ -55,7 +57,7 @@ export function PrimaryStudyAction({
           <button
             type="button"
             onClick={onStop}
-            className="min-h-[52px] flex-1 rounded-[18px] border-2 border-white bg-pastel-pink px-5 py-3 font-cute text-base text-ink shadow-[0_5px_0_rgba(122,70,88,0.13)] transition-transform active:translate-y-0.5 active:shadow-none"
+            className={`${compact ? 'min-h-[42px] rounded-[15px] py-2 text-sm' : 'min-h-[52px] rounded-[18px] py-3 text-base'} flex-1 border-2 border-white bg-pastel-pink px-5 font-cute text-ink shadow-[0_5px_0_rgba(122,70,88,0.13)] transition-transform active:translate-y-0.5 active:shadow-none`}
           >
             종료
           </button>

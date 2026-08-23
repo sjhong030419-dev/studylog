@@ -7,10 +7,11 @@ interface SubjectChipsProps {
   disabled: boolean
   onSelect: (id: string) => void
   onAdd: (name: string) => { ok: true } | { ok: false; error: string }
+  compact?: boolean
 }
 
 /** Preserves the exact existing subject selection and add-subject flow. */
-export function SubjectChips({ subjects, selectedSubjectId, disabled, onSelect, onAdd }: SubjectChipsProps) {
+export function SubjectChips({ subjects, selectedSubjectId, disabled, onSelect, onAdd, compact = false }: SubjectChipsProps) {
   const [addingSubject, setAddingSubject] = useState(false)
   const [newSubjectName, setNewSubjectName] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -27,15 +28,15 @@ export function SubjectChips({ subjects, selectedSubjectId, disabled, onSelect, 
   }
 
   return (
-    <div className="flex flex-col items-center gap-1.5 max-w-sm">
-      <div className="flex flex-wrap justify-center gap-2">
+    <div className={`flex max-w-full flex-col items-center gap-1.5 ${compact ? 'w-full' : 'max-w-sm'}`}>
+      <div className={`flex max-w-full gap-2 ${compact ? 'w-full flex-nowrap justify-start overflow-x-auto overscroll-contain pb-1' : 'flex-wrap justify-center'}`}>
         {subjects.map((subject) => (
           <button
             key={subject.id}
             type="button"
             disabled={disabled}
             onClick={() => onSelect(subject.id)}
-            className={`font-cute px-3 py-1.5 rounded-full border text-sm transition disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] ${
+            className={`shrink-0 rounded-full border font-cute transition disabled:cursor-not-allowed disabled:opacity-50 ${compact ? 'min-h-[34px] px-3 py-1 text-xs' : 'min-h-[44px] px-3 py-1.5 text-sm'} ${
               selectedSubjectId === subject.id
                 ? 'border-ink text-ink'
                 : 'border-ink/15 text-ink-soft hover:border-ink/40'
@@ -53,7 +54,7 @@ export function SubjectChips({ subjects, selectedSubjectId, disabled, onSelect, 
             type="button"
             disabled={disabled}
             onClick={() => setAddingSubject(true)}
-            className="font-cute px-3 py-1.5 rounded-full border border-dashed border-ink/30 text-sm text-ink-soft disabled:opacity-50 min-h-[44px]"
+            className={`shrink-0 rounded-full border border-dashed border-ink/30 font-cute text-ink-soft disabled:opacity-50 ${compact ? 'min-h-[34px] px-3 py-1 text-xs' : 'min-h-[44px] px-3 py-1.5 text-sm'}`}
           >
             + 과목 추가
           </button>

@@ -26,6 +26,8 @@ const CELEBRATION_MS = 2600
 interface StudyTimerProps {
   onOpenShop: () => void
   onOpenCapture: () => void
+  onOpenQuests?: () => void
+  compactHome?: boolean
 }
 
 interface StudyReward {
@@ -36,7 +38,7 @@ interface StudyReward {
   studyXpAfter: number
 }
 
-export function StudyTimer({ onOpenShop, onOpenCapture }: StudyTimerProps) {
+export function StudyTimer({ onOpenShop, onOpenCapture, onOpenQuests, compactHome = false }: StudyTimerProps) {
   const subjects = useTimerStore((s) => s.subjects)
   const selectedSubjectId = useTimerStore((s) => s.selectedSubjectId)
   const isRunning = useTimerStore((s) => s.isRunning)
@@ -162,7 +164,7 @@ export function StudyTimer({ onOpenShop, onOpenCapture }: StudyTimerProps) {
     : deriveSpeechBubble({ characterState, todayTotalSec, goal, streakCount })
 
   return (
-    <div className="flex flex-col items-center gap-5 w-full">
+    <div className={compactHome ? 'grid h-full min-h-0 w-full grid-rows-[minmax(0,1fr)_auto_auto] place-items-center gap-0' : 'flex w-full flex-col items-center gap-5'}>
       <CharacterRoomCard
         state={characterState}
         gender={gender}
@@ -170,6 +172,7 @@ export function StudyTimer({ onOpenShop, onOpenCapture }: StudyTimerProps) {
         level={level.level}
         speech={speech}
         onOpenShop={onOpenShop}
+        fill={compactHome}
       />
 
       {awayMessage && (
@@ -199,24 +202,26 @@ export function StudyTimer({ onOpenShop, onOpenCapture }: StudyTimerProps) {
         onResume={resume}
         onStop={handleStop}
         disabledReason={hasNoSubjects ? '과목을 먼저 추가해주세요.' : undefined}
+        compact={compactHome}
       />
 
       {!hasNoSubjects && (
-        <div className="-mt-2 w-full rounded-[22px] border border-white/80 bg-white/55 px-3 py-3 shadow-[0_8px_24px_rgba(88,64,98,0.08)] backdrop-blur">
-          <p className="mb-2 px-1 font-cute text-[10px] tracking-[0.12em] text-ink-soft">오늘의 모험 선택</p>
+        <div className={`${compactHome ? '-mt-1 px-2 py-1.5' : '-mt-2 px-3 py-3'} w-full rounded-[20px] border border-white/80 bg-white/55 shadow-[0_8px_24px_rgba(88,64,98,0.08)] backdrop-blur`}>
+          {!compactHome && <p className="mb-2 px-1 font-cute text-[10px] tracking-[0.12em] text-ink-soft">오늘의 모험 선택</p>}
           <SubjectChips
             subjects={activeSubjects}
             selectedSubjectId={selectedSubjectId}
             disabled={isRunning}
             onSelect={selectSubject}
             onAdd={addSubject}
+            compact={compactHome}
           />
         </div>
       )}
 
       {hasNoSubjects && <SubjectEmptyState onAdd={addSubject} reason="시작 버튼을 활성화하려면 공부할 과목 하나만 만들어주세요." />}
 
-      <SubjectBreakdownCard perSubject={perSubject} maxSec={maxSec} />
+      {!compactHome && <SubjectBreakdownCard perSubject={perSubject} maxSec={maxSec} />}
 
       {studyReward && (
         <StudyRewardModal
@@ -230,11 +235,12 @@ export function StudyTimer({ onOpenShop, onOpenCapture }: StudyTimerProps) {
           onClose={() => setStudyReward(null)}
           onOpenQuests={() => {
             setStudyReward(null)
-            window.requestAnimationFrame(() => {
-              const questCard = document.getElementById('daily-quest-card')
-              questCard?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-              questCard?.focus({ preventScroll: true })
-            })
+            if (onOpenQuests) onOpenQuests()
+            else window.requestAnimationFrame(() => {
+                const questCard = document.getElementById('daily-quest-card')
+                questCard?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                questCard?.focus({ preventScroll: true })
+              })
           }}
           onOpenCapture={() => {
             setStudyReward(null)

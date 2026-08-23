@@ -85,7 +85,7 @@ function App() {
   }
 
   return (
-    <div className="app-shell min-h-svh pb-28 pt-[72px]">
+    <div className={`app-shell min-h-svh pt-[72px] ${tab === 'timer' && !overlay ? 'pb-0' : 'pb-28'}`}>
       <Suspense fallback={<ScreenLoading />}>
       {tab === 'timer' && <TimerPage onOpenShop={() => setTab('shop')} onOpenCapture={() => setTab('capture')} />}
       {tab === 'room' && <RoomPage />}

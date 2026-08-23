@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { StudyTimer } from './StudyTimer'
 import { PomodoroTimer } from './PomodoroTimer'
-import { HomeProgressHeader } from '../home/HomeProgressHeader'
 import { GrowthSummaryGrid } from '../home/GrowthSummaryGrid'
 import { todaySessions, useTimerStore } from '../../store/timerStore'
 import { usePointsStore } from '../../store/pointsStore'
 import { deriveExpLevel } from '../../character/engine/expLevel'
 import { myOverallRank } from '../../utils/ranking'
 import { DailyQuestCard } from '../home/DailyQuestCard'
+import { deriveDailyQuests } from '../../quests/dailyQuests'
+import { todayKey } from '../../utils/time'
 
 type Mode = 'normal' | 'pomodoro'
 
@@ -18,6 +19,7 @@ interface TimerPageProps {
 
 export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
   const [mode, setMode] = useState<Mode>('normal')
+  const [detailPanel, setDetailPanel] = useState<'quests' | 'growth' | null>(null)
 
   const sessions = useTimerStore((s) => s.sessions)
   const streakCount = usePointsStore((s) => s.streakCount)
@@ -28,27 +30,24 @@ export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
   const level = deriveExpLevel(studyXpTotal)
   const myTodaySec = todaySessions(sessions).reduce((sum, s) => sum + s.durationSec, 0)
   const { rank, total } = myOverallRank(myTodaySec)
+  const quests = deriveDailyQuests(sessions, todayKey())
+  const completedQuests = quests.filter((quest) => quest.complete).length
 
   return (
-    <main className="min-h-screen overflow-hidden px-3 pb-12 pt-3 sm:px-4">
+    <main className="h-[calc(100svh-166px)] min-h-0 overflow-hidden px-3 py-2 sm:px-4">
       <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
         <div className="absolute left-1/2 top-0 h-[640px] w-[760px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,238,192,0.72)_0%,rgba(244,218,235,0.42)_42%,transparent_72%)]" />
         <div className="absolute -left-24 top-44 h-72 w-72 rounded-full bg-pastel-lavender/25 blur-3xl" />
         <div className="absolute -right-24 top-80 h-72 w-72 rounded-full bg-pastel-pink/25 blur-3xl" />
       </div>
-      <div className="mx-auto flex w-full flex-col items-center gap-3" style={{ maxWidth: 430 }}>
-        <HomeProgressHeader level={level.level} progressRatio={level.progressRatio} streakCount={streakCount} />
-
+      <div className="mx-auto grid h-full w-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-2" style={{ maxWidth: 430 }}>
         <div className="flex w-full items-center justify-between gap-3 px-1">
-          <div>
-            <p className="font-cute text-[9px] tracking-[0.18em] text-ink-soft">MY STUDY ADVENTURE</p>
-            <h1 className="font-cute text-[22px] leading-tight text-ink">StudyLog <span aria-hidden="true">✦</span></h1>
-          </div>
+          <span className="font-cute text-[9px] tracking-[0.16em] text-ink-soft">FOCUS MODE</span>
           <div className="flex rounded-2xl border border-white/90 bg-white/65 p-1 shadow-[0_8px_20px_rgba(77,55,90,0.09)] backdrop-blur">
             <button
               type="button"
               onClick={() => setMode('normal')}
-              className={`font-cute min-h-[38px] rounded-xl px-3 py-1 text-xs transition-all active:scale-95 ${
+              className={`font-cute min-h-[34px] rounded-xl px-3 py-1 text-[11px] transition-all active:scale-95 ${
                 mode === 'normal' ? 'bg-ink text-white shadow-md' : 'text-ink-soft'
               }`}
             >
@@ -57,7 +56,7 @@ export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
             <button
               type="button"
               onClick={() => setMode('pomodoro')}
-              className={`font-cute min-h-[38px] rounded-xl px-3 py-1 text-xs transition-all active:scale-95 ${
+              className={`font-cute min-h-[34px] rounded-xl px-3 py-1 text-[11px] transition-all active:scale-95 ${
                 mode === 'pomodoro' ? 'bg-ink text-white shadow-md' : 'text-ink-soft'
               }`}
             >
@@ -66,18 +65,57 @@ export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
           </div>
         </div>
 
-        {mode === 'normal' ? <StudyTimer onOpenShop={onOpenShop} onOpenCapture={onOpenCapture} /> : <PomodoroTimer />}
+        <div className="min-h-0">
+          {mode === 'normal' ? (
+            <StudyTimer
+              onOpenShop={onOpenShop}
+              onOpenCapture={onOpenCapture}
+              onOpenQuests={() => setDetailPanel('quests')}
+              compactHome
+            />
+          ) : (
+            <div className="h-full overflow-y-auto overscroll-contain rounded-[26px] pr-1"><PomodoroTimer /></div>
+          )}
+        </div>
 
-        <DailyQuestCard />
-
-        <GrowthSummaryGrid
-          streakCount={streakCount}
-          totalStudySec={totalStudySec}
-          rank={rank}
-          rankTotal={total}
-          points={points}
-        />
+        <div className="grid grid-cols-4 gap-1.5 rounded-[20px] border-2 border-white/90 bg-white/72 p-1.5 shadow-[0_4px_0_rgba(74,53,84,0.08)] backdrop-blur">
+          <QuickHudButton icon="⭐" label={`LV.${level.level}`} value={`${Math.round(level.progressRatio * 100)}%`} onClick={() => setDetailPanel('growth')} />
+          <QuickHudButton icon="📜" label="퀘스트" value={`${completedQuests}/${quests.length}`} onClick={() => setDetailPanel('quests')} />
+          <QuickHudButton icon="🔥" label="연속" value={`${streakCount}일`} onClick={() => setDetailPanel('growth')} />
+          <QuickHudButton icon="🪙" label="포인트" value={`${points}P`} onClick={onOpenShop} />
+        </div>
       </div>
+
+      {detailPanel && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/35 px-3 pb-[max(92px,env(safe-area-inset-bottom))] pt-16 backdrop-blur-sm" onClick={() => setDetailPanel(null)}>
+          <section className="max-h-[72svh] w-full max-w-[430px] overflow-y-auto overscroll-contain rounded-[30px] border-[3px] border-white/90 bg-[#fffaf3] p-3 shadow-[0_8px_0_rgba(55,39,67,0.16),0_24px_60px_rgba(55,39,67,0.28)]" onClick={(event) => event.stopPropagation()} aria-label={detailPanel === 'quests' ? '오늘의 퀘스트 상세' : '성장 기록 상세'}>
+            <div className="mb-2 flex items-center justify-between px-2 py-1">
+              <div>
+                <p className="font-cute text-[9px] tracking-[0.14em] text-ink-soft">ADVENTURE PANEL</p>
+                <h2 className="font-cute text-lg text-ink">{detailPanel === 'quests' ? '오늘의 퀘스트' : '나의 성장 기록'}</h2>
+              </div>
+              <button type="button" onClick={() => setDetailPanel(null)} className="grid h-10 w-10 place-items-center rounded-2xl bg-ink/5 font-cute text-ink" aria-label="상세 패널 닫기">×</button>
+            </div>
+            {detailPanel === 'quests' ? (
+              <DailyQuestCard />
+            ) : (
+              <GrowthSummaryGrid streakCount={streakCount} totalStudySec={totalStudySec} rank={rank} rankTotal={total} points={points} />
+            )}
+          </section>
+        </div>
+      )}
     </main>
+  )
+}
+
+function QuickHudButton({ icon, label, value, onClick }: { icon: string; label: string; value: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={(event) => { event.stopPropagation(); onClick() }} className="flex min-h-[48px] min-w-0 items-center justify-center gap-1 rounded-[15px] border border-white bg-white/62 px-1 shadow-[0_2px_0_rgba(75,54,86,0.08)] transition-transform active:translate-y-0.5 active:shadow-none">
+      <span className="text-sm" aria-hidden="true">{icon}</span>
+      <span className="min-w-0 text-left leading-none">
+        <span className="block truncate font-cute text-[8px] text-ink-soft">{label}</span>
+        <span className="mt-1 block truncate font-pixel text-[8px] text-ink">{value}</span>
+      </span>
+    </button>
   )
 }
