@@ -6,6 +6,10 @@ import type { CharacterAppearance, Gender } from '../../character/types'
 
 interface StudyRewardModalProps {
   durationSec: number
+  subjectName: string
+  todayTotalSec: number
+  streakCount: number
+  goalPercent: number | null
   earnedPoints: number
   balance: number
   studyXpBefore: number
@@ -20,6 +24,10 @@ interface StudyRewardModalProps {
 
 export function StudyRewardModal({
   durationSec,
+  subjectName,
+  todayTotalSec,
+  streakCount,
+  goalPercent,
   earnedPoints,
   balance,
   studyXpBefore,
@@ -39,10 +47,10 @@ export function StudyRewardModal({
   const progressPercent = Math.round(afterLevel.progressRatio * 100)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-[#241c31]/72 px-3 pb-3 pt-10 backdrop-blur-md sm:items-center sm:pb-8">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-[radial-gradient(circle_at_50%_8%,#fff0bd_0%,#f3ddeb_34%,#2b2038_100%)] px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-[max(12px,env(safe-area-inset-top))]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        <span className="absolute left-[12%] top-[12%] animate-bounce text-2xl [animation-delay:120ms]">✦</span>
-        <span className="absolute right-[13%] top-[18%] animate-bounce text-xl text-pastel-yellow [animation-delay:420ms]">★</span>
+        <span className="absolute left-[10%] top-[10%] animate-bounce text-2xl text-white [animation-delay:120ms] motion-reduce:animate-none">✦</span>
+        <span className="absolute right-[11%] top-[16%] animate-bounce text-xl text-pastel-yellow [animation-delay:420ms] motion-reduce:animate-none">★</span>
         <span className="absolute left-[18%] top-[45%] animate-pulse text-xl text-pastel-pink">◆</span>
         <span className="absolute right-[17%] top-[52%] animate-pulse text-2xl text-pastel-lavender">✦</span>
       </div>
@@ -50,41 +58,40 @@ export function StudyRewardModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="study-reward-title"
-        className="relative w-full max-w-sm overflow-hidden rounded-[32px] border-[4px] border-white bg-[#fffaf2] text-center shadow-[0_10px_0_rgba(38,27,48,0.28),0_30px_70px_rgba(18,10,27,0.45)]"
+        className="relative mx-auto grid h-full w-full max-w-[430px] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-2 text-center"
       >
-        <div className="relative h-[210px] overflow-hidden border-b-[4px] border-white bg-pastel-lavender">
-          <RoomScene
-            state="happy"
-            gender={gender}
-            appearance={appearance}
-            level={afterLevel.level}
-            animated={false}
-            preferFullScene
-          />
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(22,14,31,0.06),transparent_42%,rgba(27,17,38,0.5))]" aria-hidden="true" />
-          <div className="absolute left-1/2 top-3 -translate-x-1/2 rounded-full border-2 border-white/80 bg-ink/78 px-4 py-2 font-cute text-[10px] tracking-[0.16em] text-white shadow-lg backdrop-blur">
-            ADVENTURE CLEAR!
+        <header className="flex min-h-[54px] items-center justify-between rounded-[22px] border-2 border-white/90 bg-white/76 px-3 py-2 shadow-[0_5px_0_rgba(59,43,70,0.10)] backdrop-blur-xl">
+          <div className="text-left leading-none">
+            <p className="font-pixel text-[8px] tracking-[0.16em] text-ink-soft">ADVENTURE CLEAR!</p>
+            <h2 id="study-reward-title" className="mt-1.5 font-cute text-xl text-ink">오늘의 모험 완료!</h2>
           </div>
-          {leveledUp && (
-            <div className="absolute bottom-3 left-1/2 w-[82%] -translate-x-1/2 rounded-2xl border-2 border-[#fff4ac] bg-[linear-gradient(135deg,#6751a5,#d56893)] px-4 py-2 text-white shadow-xl">
-              <p className="font-pixel text-[10px] text-[#fff4ac]">LEVEL UP!</p>
-              <p className="mt-1 font-cute text-base">LV.{beforeLevel.level} → LV.{afterLevel.level}</p>
+          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-[14px] bg-ink/5 font-cute text-lg text-ink" aria-label="결과 화면 닫기">×</button>
+        </header>
+
+        <div className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-2">
+          <div className="relative mx-auto aspect-[4/5] h-full max-h-full max-w-full overflow-hidden rounded-[28px] border-[4px] border-white shadow-[0_8px_0_rgba(55,39,67,0.16),0_20px_48px_rgba(55,39,67,0.28)]">
+            <RoomScene state="happy" gender={gender} appearance={appearance} level={afterLevel.level} animated={false} preferFullScene />
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(22,14,31,0.04),transparent_55%,rgba(27,17,38,0.44))]" aria-hidden="true" />
+            <div className="absolute left-3 top-3 rounded-[14px] border-2 border-white/75 bg-ink/76 px-3 py-2 text-left text-white shadow-lg backdrop-blur">
+              <p className="font-cute text-[8px] tracking-[0.12em] text-white/70">CLEAR SUBJECT</p>
+              <p className="mt-1 font-cute text-xs">{subjectName}</p>
             </div>
-          )}
-        </div>
-        <div className="px-4 pb-5 pt-4">
-          <p className="font-cute text-[10px] tracking-[0.12em] text-ink-soft">오늘의 집중 모험 완료</p>
-          <h2 id="study-reward-title" className="mt-1 font-cute text-2xl text-ink">
-            멋진 집중이었어요!
-          </h2>
-
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <ResultStat icon="⏱" label="집중 시간" value={formatDuration(durationSec)} />
-            <ResultStat icon="✨" label="Study XP" value={`+${xpGained}`} accent />
-            <ResultStat icon="🪙" label="획득 포인트" value={`+${earnedPoints}P`} />
+            {leveledUp && (
+              <div className="absolute bottom-3 left-1/2 w-[82%] -translate-x-1/2 rounded-[18px] border-2 border-[#fff4ac] bg-[linear-gradient(135deg,#6751a5,#d56893)] px-4 py-2 text-white shadow-xl">
+                <p className="font-pixel text-[9px] text-[#fff4ac]">LEVEL UP!</p>
+                <p className="mt-1 font-cute text-sm">LV.{beforeLevel.level} → LV.{afterLevel.level}</p>
+              </div>
+            )}
           </div>
 
-          <div className="mt-3 rounded-[20px] border border-ink/5 bg-white/75 px-3 py-3 shadow-inner">
+          <div className="rounded-[24px] border-[3px] border-white bg-[#fffaf2]/95 px-3 py-3 shadow-[0_6px_0_rgba(55,39,67,0.12),0_14px_30px_rgba(55,39,67,0.18)] backdrop-blur">
+            <p className="font-cute text-[10px] text-ink-soft">{subjectName} 집중 완료</p>
+            <p className="mt-1 font-pixel text-[clamp(1.8rem,9vw,2.6rem)] tracking-[0.06em] text-ink">{formatDuration(durationSec)}</p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <ResultStat icon="✨" label="STUDY XP" value={`+${xpGained}`} accent />
+              <ResultStat icon="🪙" label="포인트" value={`+${earnedPoints}P`} />
+            </div>
+            <div className="mt-2 rounded-[16px] border border-ink/5 bg-white/70 px-3 py-2 shadow-inner">
             <div className="flex items-center justify-between gap-2">
               <span className="font-cute text-xs text-ink">LV.{afterLevel.level} 성장</span>
               <span className="font-pixel text-[8px] text-ink-soft">{afterLevel.expIntoLevel}/{afterLevel.expForNextLevel} XP</span>
@@ -95,39 +102,40 @@ export function StudyRewardModal({
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            {earnedPoints === 0 && (
-              <p className="mt-2 font-cute text-[10px] leading-relaxed text-ink-soft">{presentation.zeroRewardHint}</p>
-            )}
+            </div>
+            <div className="mt-2 flex items-center justify-center gap-2 font-cute text-[9px] text-ink-soft">
+              <span>오늘 {formatDuration(todayTotalSec)}</span><span>•</span><span>🔥 {streakCount}일</span>
+              {goalPercent !== null && <><span>•</span><span>목표 {Math.min(100, goalPercent)}%</span></>}
+            </div>
           </div>
+        </div>
 
-          <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
+        <footer className="rounded-[24px] border-2 border-white/90 bg-white/78 p-2.5 shadow-[0_5px_0_rgba(55,39,67,0.12)] backdrop-blur-xl">
+          <div className="grid grid-cols-[1.25fr_0.75fr] gap-2">
             <button
               type="button"
               onClick={onOpenCapture}
-              className="min-h-[50px] rounded-2xl bg-[linear-gradient(135deg,var(--color-home-accent-lavender),var(--color-home-accent-primary))] px-4 py-3 font-cute text-sm text-white shadow-[0_5px_0_rgba(91,57,105,0.22)] transition-transform active:translate-y-0.5 active:shadow-none"
+              className="min-h-[48px] rounded-[16px] bg-[linear-gradient(135deg,var(--color-home-accent-lavender),var(--color-home-accent-primary))] px-3 py-2 font-cute text-sm text-white shadow-[0_5px_0_rgba(91,57,105,0.22)] transition-transform active:translate-y-0.5 active:shadow-none"
             >
-              결과 카드 만들기 📸
+              결과 공유하기 📸
             </button>
             <button
               type="button"
-              onClick={onOpenShop}
-              className="grid min-h-[50px] min-w-[54px] place-items-center rounded-2xl border-2 border-white bg-pastel-yellow text-xl shadow-[0_5px_0_rgba(91,57,105,0.12)] transition-transform active:translate-y-0.5 active:shadow-none"
-              aria-label={presentation.shopCta}
+              onClick={onClose}
+              className="min-h-[48px] rounded-[16px] border-2 border-white bg-pastel-yellow px-3 py-2 font-cute text-xs text-ink shadow-[0_5px_0_rgba(91,57,105,0.12)] transition-transform active:translate-y-0.5 active:shadow-none"
             >
-              🎁
+              다시 집중 ⚔️
             </button>
           </div>
-          <div className="mt-2 flex items-center justify-between px-1">
+          <div className="mt-1.5 flex items-center justify-between px-1">
             <span className="font-cute text-[10px] text-ink-soft">보유 포인트 {balance}P</span>
-            <button
-              type="button"
-              onClick={earnedPoints > 0 ? onClose : onOpenQuests}
-              className="min-h-[40px] rounded-xl px-3 font-cute text-[11px] text-ink-soft"
-            >
-              {presentation.closeCta} →
-            </button>
+            <div className="flex items-center gap-1">
+              {earnedPoints === 0 && <button type="button" onClick={onOpenQuests} className="min-h-[34px] rounded-xl px-2 font-cute text-[10px] text-ink-soft">퀘스트 보기</button>}
+              <button type="button" onClick={onOpenShop} className="min-h-[34px] rounded-xl px-2 font-cute text-[10px] text-ink-soft">{presentation.shopCta} 🎁</button>
+            </div>
           </div>
-        </div>
+          {earnedPoints === 0 && <p className="mt-1 font-cute text-[9px] text-ink-soft">{presentation.zeroRewardHint}</p>}
+        </footer>
       </section>
     </div>
   )
@@ -135,10 +143,9 @@ export function StudyRewardModal({
 
 function ResultStat({ icon, label, value, accent = false }: { icon: string; label: string; value: string; accent?: boolean }) {
   return (
-    <div className={`rounded-[18px] border-2 border-white px-2 py-3 shadow-[0_4px_0_rgba(84,62,94,0.08)] ${accent ? 'bg-pastel-lavender' : 'bg-white/80'}`}>
-      <span className="text-lg" aria-hidden="true">{icon}</span>
-      <span className="mt-1 block font-cute text-[9px] text-ink-soft">{label}</span>
-      <span className="mt-1 block font-pixel text-[9px] text-ink">{value}</span>
+    <div className={`flex items-center justify-center gap-2 rounded-[16px] border-2 border-white px-2 py-2 shadow-[0_3px_0_rgba(84,62,94,0.08)] ${accent ? 'bg-pastel-lavender' : 'bg-white/80'}`}>
+      <span className="text-base" aria-hidden="true">{icon}</span>
+      <span className="text-left leading-none"><span className="block font-cute text-[8px] text-ink-soft">{label}</span><span className="mt-1 block font-pixel text-[9px] text-ink">{value}</span></span>
     </div>
   )
 }

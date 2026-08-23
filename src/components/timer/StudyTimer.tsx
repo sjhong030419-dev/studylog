@@ -33,6 +33,7 @@ interface StudyTimerProps {
 
 interface StudyReward {
   durationSec: number
+  subjectName: string
   earnedPoints: number
   balance: number
   studyXpBefore: number
@@ -114,12 +115,14 @@ export function StudyTimer({ onOpenShop, onOpenCapture, onOpenQuests, compactHom
     const completedDurationSec = elapsedSec
     const balanceBefore = usePointsStore.getState().balance()
     const studyXpBefore = usePointsStore.getState().studyXpTotal()
+    const subjectName = subjects.find((subject) => subject.id === selectedSubjectId)?.name ?? '집중 모험'
     stop()
     if (hadProgress) {
       const balanceAfter = usePointsStore.getState().balance()
       const studyXpAfter = usePointsStore.getState().studyXpTotal()
       setStudyReward({
         durationSec: completedDurationSec,
+        subjectName,
         earnedPoints: Math.max(0, balanceAfter - balanceBefore),
         balance: balanceAfter,
         studyXpBefore,
@@ -228,6 +231,10 @@ export function StudyTimer({ onOpenShop, onOpenCapture, onOpenQuests, compactHom
       {studyReward && (
         <StudyRewardModal
           durationSec={studyReward.durationSec}
+          subjectName={studyReward.subjectName}
+          todayTotalSec={todayTotalSec}
+          streakCount={streakCount}
+          goalPercent={goal.configured ? goal.percent : null}
           earnedPoints={studyReward.earnedPoints}
           balance={studyReward.balance}
           studyXpBefore={studyReward.studyXpBefore}
