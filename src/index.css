@@ -71,10 +71,23 @@ html.dark {
   min-height: 100svh;
 }
 
-@media (max-width: 520px) {
-  .app-shell {
-    padding-top: 3.75rem;
-  }
+.app-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.app-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 16px 16px, rgba(255,255,255,0.55) 1px, transparent 1.5px),
+    linear-gradient(90deg, rgba(148,111,163,0.025) 1px, transparent 1px),
+    linear-gradient(rgba(148,111,163,0.025) 1px, transparent 1px);
+  background-size: 32px 32px, 64px 64px, 64px 64px;
+  mask-image: linear-gradient(to bottom, black, transparent 72%);
 }
 
 button,

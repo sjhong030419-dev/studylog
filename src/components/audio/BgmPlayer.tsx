@@ -13,8 +13,8 @@ export function BgmPlayer() {
   const playingCount = tracks.filter((t) => t.playing).length
 
   return (
-    <div className="pointer-events-none fixed bottom-[76px] left-0 right-0 z-20 flex justify-center px-3">
-      <div className="relative w-full max-w-sm pointer-events-auto">
+    <div className="pointer-events-none fixed bottom-[94px] left-0 right-0 z-20 flex justify-center px-3">
+      <div className="relative w-full max-w-[430px] pointer-events-auto">
         {expanded && (
           <div className="mb-2 rounded-[24px] border border-white/80 bg-white/95 px-4 py-3 shadow-[0_18px_45px_rgba(56,42,68,0.2)] backdrop-blur-xl dark:bg-[#2d2842]/95 flex flex-col gap-3">
             {tracks.map((t) => (
@@ -66,8 +66,8 @@ export function BgmPlayer() {
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className={`ml-auto flex items-center bg-white/95 backdrop-blur-xl border border-white/80 shadow-[0_8px_24px_rgba(56,42,68,0.16)] transition-all dark:bg-[#2d2842]/95 ${
-            expanded ? 'w-full gap-2 rounded-full px-4 py-2.5' : 'h-11 w-11 justify-center rounded-full'
+          className={`ml-auto flex items-center border-2 border-white/90 bg-white/92 backdrop-blur-xl shadow-[0_4px_0_rgba(56,42,68,0.10),0_9px_24px_rgba(56,42,68,0.16)] transition-all dark:bg-[#2d2842]/95 ${
+            expanded ? 'w-full gap-2 rounded-[20px] px-4 py-2.5' : 'h-11 w-11 justify-center rounded-[16px]'
           }`}
           aria-label={expanded ? 'ASMR 플레이어 접기' : playingCount > 0 ? `ASMR ${playingCount}개 재생 중` : 'ASMR 플레이어 열기'}
         >

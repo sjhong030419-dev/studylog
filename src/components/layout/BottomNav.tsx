@@ -8,10 +8,10 @@ interface BottomNavProps {
 }
 
 const PRIMARY_TABS: { value: Tab; label: string; icon: string }[] = [
-  { value: 'timer', label: '타이머', icon: '⏱️' },
-  { value: 'room', label: '스터디룸', icon: '🪑' },
-  { value: 'capture', label: '캡처', icon: '📸' },
-  { value: 'stats', label: '통계', icon: '📊' },
+  { value: 'room', label: '공부방', icon: '🏡' },
+  { value: 'stats', label: '기록', icon: '📜' },
+  { value: 'timer', label: '집중', icon: '⚔️' },
+  { value: 'capture', label: '공유', icon: '📸' },
 ]
 
 const MORE_TABS: { value: Tab; label: string; icon: string; description: string }[] = [
@@ -34,11 +34,11 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
       {moreOpen && (
         <div className="fixed inset-0 z-30 bg-ink/10 backdrop-blur-[2px]" onClick={() => setMoreOpen(false)}>
           <div
-            className="absolute bottom-[84px] left-1/2 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-[26px] border border-white/80 bg-white/95 p-3 shadow-[0_18px_50px_rgba(56,42,68,0.2)] dark:bg-[#2d2842]/95"
+            className="absolute bottom-[98px] left-1/2 w-[calc(100%-2rem)] max-w-[410px] -translate-x-1/2 rounded-[28px] border-[3px] border-white/90 bg-white/95 p-3 shadow-[0_8px_0_rgba(56,42,68,0.12),0_22px_50px_rgba(56,42,68,0.24)] dark:bg-[#2d2842]/95"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-2 flex items-center justify-between px-2">
-              <span className="font-cute text-sm text-ink">더 둘러보기</span>
+              <span className="font-cute text-sm text-ink">모험 메뉴</span>
               <button type="button" onClick={() => setMoreOpen(false)} className="grid h-8 w-8 place-items-center rounded-full bg-ink/5 text-ink" aria-label="더보기 닫기">×</button>
             </div>
             <div className="grid grid-cols-3 gap-2">
@@ -47,7 +47,7 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
                   key={tab.value}
                   type="button"
                   onClick={() => choose(tab.value)}
-                  className={`flex min-h-[92px] flex-col items-center justify-center gap-1 rounded-2xl px-2 py-3 ${active === tab.value ? 'bg-(--color-home-soft-lavender)' : 'bg-ink/5'}`}
+                  className={`flex min-h-[96px] flex-col items-center justify-center gap-1 rounded-[20px] border-2 px-2 py-3 shadow-[0_3px_0_rgba(78,57,89,0.08)] transition-transform active:translate-y-0.5 active:shadow-none ${active === tab.value ? 'border-white bg-(--color-home-soft-lavender)' : 'border-white/70 bg-ink/5'}`}
                 >
                   <span className="text-2xl" aria-hidden="true">{tab.icon}</span>
                   <span className="font-cute text-xs text-ink">{tab.label}</span>
@@ -59,19 +59,19 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
         </div>
       )}
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 flex justify-center border-t border-white/80 bg-white/92 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_30px_rgba(83,63,96,0.08)] backdrop-blur-xl dark:bg-[#2d2842]/92" aria-label="주요 메뉴">
-      <div className="grid w-full max-w-sm grid-cols-5 px-2 pt-1.5">
+      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-[max(8px,env(safe-area-inset-bottom))]" aria-label="주요 메뉴">
+      <div className="pointer-events-auto grid w-full max-w-[430px] grid-cols-5 items-end rounded-[26px] border-[3px] border-white/90 bg-white/90 px-2 pb-1 pt-1.5 shadow-[0_7px_0_rgba(71,52,82,0.11),0_-8px_34px_rgba(83,63,96,0.12)] backdrop-blur-xl dark:bg-[#2d2842]/92">
         {PRIMARY_TABS.map((tab) => (
           <button
             key={tab.value}
             type="button"
             onClick={() => choose(tab.value)}
-            className={`relative flex min-h-[54px] flex-col items-center justify-center gap-0.5 rounded-2xl py-1 font-cute text-[10px] transition-colors ${
+            className={`relative flex min-h-[58px] flex-col items-center justify-center gap-0.5 rounded-2xl py-1 font-cute text-[10px] transition-all ${
               active === tab.value ? 'text-ink' : 'text-ink-soft'
             }`}
           >
-            {active === tab.value && <span className="absolute inset-x-2 top-0 h-1 rounded-full bg-(--color-home-accent-primary)" aria-hidden="true" />}
-            <span aria-hidden="true" className={`text-lg ${tab.value === 'capture' ? 'grid h-9 w-9 -translate-y-2 place-items-center rounded-full bg-(--color-home-accent-primary) text-white shadow-lg' : ''}`}>{tab.icon}</span>
+            {active === tab.value && tab.value !== 'timer' && <span className="absolute inset-x-3 top-0 h-1 rounded-full bg-(--color-home-accent-primary)" aria-hidden="true" />}
+            <span aria-hidden="true" className={`text-lg ${tab.value === 'timer' ? 'grid h-14 w-14 -translate-y-3 place-items-center rounded-[20px] border-[3px] border-white bg-[linear-gradient(145deg,#f6b058,#ef789f)] text-2xl text-white shadow-[0_6px_0_rgba(117,62,83,0.25),0_10px_22px_rgba(117,62,83,0.22)]' : active === tab.value ? 'scale-110' : ''}`}>{tab.icon}</span>
             {tab.label}
           </button>
         ))}
@@ -79,7 +79,7 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
           type="button"
           onClick={() => setMoreOpen((open) => !open)}
           aria-expanded={moreOpen}
-          className={`relative flex min-h-[54px] flex-col items-center justify-center gap-0.5 rounded-2xl py-1 font-cute text-[10px] ${moreActive || moreOpen ? 'text-ink' : 'text-ink-soft'}`}
+          className={`relative flex min-h-[58px] flex-col items-center justify-center gap-0.5 rounded-2xl py-1 font-cute text-[10px] ${moreActive || moreOpen ? 'text-ink' : 'text-ink-soft'}`}
         >
           {(moreActive || moreOpen) && <span className="absolute inset-x-2 top-0 h-1 rounded-full bg-(--color-home-accent-primary)" aria-hidden="true" />}
           <span className="text-lg" aria-hidden="true">•••</span>

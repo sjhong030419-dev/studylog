@@ -85,7 +85,7 @@ function App() {
   }
 
   return (
-    <div className="app-shell pb-24">
+    <div className="app-shell min-h-svh pb-28 pt-[72px]">
       <Suspense fallback={<ScreenLoading />}>
       {tab === 'timer' && <TimerPage onOpenShop={() => setTab('shop')} onOpenCapture={() => setTab('capture')} />}
       {tab === 'room' && <RoomPage />}
@@ -109,15 +109,28 @@ function App() {
       )}
       </Suspense>
 
-      <button
-        type="button"
-        onClick={() => setOverlay(overlay ? null : 'profile')}
-        className="fixed top-3 right-16 z-30 w-11 h-11 rounded-full bg-white/90 backdrop-blur shadow-md flex items-center justify-center text-lg"
-        aria-label={overlay ? '프로필 화면 닫기' : '내 프로필 열기'}
-      >
-        👤
-      </button>
-      <NotificationBell onClick={() => setOverlay('notifications')} />
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-30 flex justify-center px-3 pt-[max(10px,env(safe-area-inset-top))]">
+        <div className="pointer-events-auto flex w-full max-w-[430px] items-center justify-between rounded-[22px] border-2 border-white/90 bg-white/72 px-2.5 py-2 shadow-[0_6px_0_rgba(79,58,89,0.08),0_14px_30px_rgba(73,53,84,0.12)] backdrop-blur-xl dark:bg-[#2d2842]/82">
+          <div className="flex items-center gap-2 px-1">
+            <span className="grid h-9 w-9 place-items-center rounded-[14px] bg-[linear-gradient(145deg,var(--color-home-soft-yellow),var(--color-home-soft-pink))] text-lg shadow-inner" aria-hidden="true">📖</span>
+            <div className="leading-none">
+              <span className="block font-pixel text-[8px] tracking-[0.1em] text-ink">STUDYLOG</span>
+              <span className="mt-1 block font-cute text-[9px] text-ink-soft">나의 공부 모험</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setOverlay(overlay ? null : 'profile')}
+              className="grid h-10 w-10 place-items-center rounded-[15px] border border-white bg-(--color-home-soft-lavender) text-base shadow-[0_3px_0_rgba(74,53,84,0.11)] transition-transform active:translate-y-0.5 active:shadow-none"
+              aria-label={overlay ? '프로필 화면 닫기' : '내 프로필 열기'}
+            >
+              👤
+            </button>
+            <NotificationBell onClick={() => setOverlay('notifications')} />
+          </div>
+        </div>
+      </div>
       <RewardToastHost />
 
       <DeferredRoomConnection />

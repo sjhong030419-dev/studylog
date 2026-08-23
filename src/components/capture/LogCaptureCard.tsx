@@ -23,7 +23,7 @@ import { deriveCaptureMessage } from '../../utils/captureMessage'
 import { deriveEarnedAchievements } from '../../utils/achievements'
 import { myOverallRank } from '../../utils/ranking'
 import { formatDuration, todayKey, dateKeyOffset } from '../../utils/time'
-import { isCaptureThemeLocked, resolveCaptureTheme } from '../../utils/captureTheme'
+import { resolveCaptureTheme, resolveEquippedCaptureTheme } from '../../utils/captureTheme'
 
 type Ratio = 'square' | 'story'
 
@@ -46,7 +46,51 @@ const CAPTURE_THEME = {
     number: 'linear-gradient(90deg, #405754 0%, #a95f43 55%, #d49b4b 100%)',
     action: 'linear-gradient(135deg, #405754 0%, #7d5544 100%)',
   },
+  sakura: {
+    label: '벚꽃 교복', emoji: '🌸',
+    background: 'linear-gradient(165deg, #fff4f6 0%, #f9dbe4 38%, #efd9ee 72%, #fff1d8 100%)',
+    number: 'linear-gradient(90deg, #c97886 0%, #a56fb0 100%)',
+    action: 'linear-gradient(135deg, #b96f82 0%, #9b70b7 100%)',
+  },
+  autumnBookshop: {
+    label: '가을 숲속 서점', emoji: '🍂',
+    background: 'linear-gradient(165deg, #fff4d9 0%, #e9c58f 38%, #b76f45 72%, #6e4738 100%)',
+    number: 'linear-gradient(90deg, #7f3e2c 0%, #d08a3f 100%)',
+    action: 'linear-gradient(135deg, #7a402f 0%, #bd7440 100%)',
+  },
+  oceanGlasshouse: {
+    label: '여름 바다 유리온실', emoji: '🐚',
+    background: 'linear-gradient(165deg, #f8fbef 0%, #d5f1e6 34%, #9fddd9 68%, #63b9cf 100%)',
+    number: 'linear-gradient(90deg, #238b9e 0%, #ef967b 100%)',
+    action: 'linear-gradient(135deg, #2d9eaa 0%, #69c6b0 100%)',
+  },
+  snowyCabin: {
+    label: '설산 독서 오두막', emoji: '❄️',
+    background: 'linear-gradient(165deg, #f8f4ea 0%, #e7e6dc 32%, #b7cedc 68%, #84695c 100%)',
+    number: 'linear-gradient(90deg, #6f4a3d 0%, #7396ac 100%)',
+    action: 'linear-gradient(135deg, #755044 0%, #7897aa 100%)',
+  },
+  hanokDawn: {
+    label: '한옥 새벽 서재', emoji: '🏡',
+    background: 'linear-gradient(165deg, #fff3df 0%, #efd8bd 34%, #aec8b8 68%, #6f857d 100%)',
+    number: 'linear-gradient(90deg, #76503c 0%, #668b80 100%)',
+    action: 'linear-gradient(135deg, #76513e 0%, #64877d 100%)',
+  },
+  neonArcade: {
+    label: '네온 스터디 아케이드', emoji: '🕹️',
+    background: 'linear-gradient(165deg, #16172f 0%, #29265b 36%, #71397f 70%, #d65a9b 100%)',
+    number: 'linear-gradient(90deg, #63f3ff 0%, #ff72cf 100%)',
+    action: 'linear-gradient(135deg, #315bd8 0%, #d54ba2 100%)',
+  },
+  celestialAcademy: {
+    label: '별빛 천문 마법학교', emoji: '🔭',
+    background: 'linear-gradient(165deg, #12152d 0%, #25244a 36%, #4e396b 72%, #8d654f 100%)',
+    number: 'linear-gradient(90deg, #ffe094 0%, #c5adff 100%)',
+    action: 'linear-gradient(135deg, #22284f 0%, #76558f 100%)',
+  },
 } as const
+
+type CaptureVisualTheme = keyof typeof CAPTURE_THEME
 
 /** Kept short intentionally — a caption for the card, not a journal entry
  * (PRD §17 "short length limit"). */
@@ -71,8 +115,8 @@ export function LogCaptureCard() {
   const plannerTasks = usePlannerStore((s) => s.tasks)
   const captureDefaultRatio = useSettingsStore((s) => s.captureDefaultRatio)
   const captureTheme = useSettingsStore((s) => s.captureTheme)
-  const setCaptureTheme = useSettingsStore((s) => s.setCaptureTheme)
   const ownedItemIds = useShopStore((s) => s.ownedItemIds)
+  const equippedSkin = useShopStore((s) => s.equipped.skin)
 
   const streakCount = usePointsStore((s) => s.streakCount)
   const studyXpTotal = usePointsStore((s) => s.studyXpTotal())
@@ -89,7 +133,8 @@ export function LogCaptureCard() {
   // disrupting the current data model). Optional, never blocks sharing.
   const [note, setNote] = useState('')
   const compact = ratio === 'square'
-  const activeTheme = resolveCaptureTheme(captureTheme, ownedItemIds)
+  const equippedCaptureTheme = resolveEquippedCaptureTheme(equippedSkin)
+  const activeTheme: CaptureVisualTheme = equippedCaptureTheme ?? resolveCaptureTheme(captureTheme, ownedItemIds)
   const theme = CAPTURE_THEME[activeTheme]
   const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState(false)
@@ -151,6 +196,19 @@ export function LogCaptureCard() {
 
   async function generateImage(): Promise<string | null> {
     if (!cardRef.current) return null
+    const images = Array.from(cardRef.current.querySelectorAll('img'))
+    await Promise.all(
+      images.map((image) => {
+        if (image.complete && image.naturalWidth > 0) return Promise.resolve()
+        return new Promise<void>((resolve) => {
+          const finish = () => resolve()
+          image.addEventListener('load', finish, { once: true })
+          image.addEventListener('error', finish, { once: true })
+          window.setTimeout(finish, 5000)
+        })
+      }),
+    )
+    if (document.fonts?.ready) await document.fonts.ready
     let timeoutId: number | undefined
     // 20s, not 10s: html-to-image has to fetch and base64-embed every
     // @font-face source it finds (including the ~148KB legacy .woff
@@ -264,24 +322,15 @@ export function LogCaptureCard() {
         <CaptureControls onShare={handleShare} onSave={handleSave} busy={downloading} />
       </div>
 
-      <div className="w-full max-w-[320px] flex items-center gap-2" aria-label="공유 카드 테마">
-        {(Object.keys(CAPTURE_THEME) as Array<keyof typeof CAPTURE_THEME>).map((themeId) => {
-          const locked = isCaptureThemeLocked(themeId, ownedItemIds)
-          return (
-            <button
-              key={themeId}
-              type="button"
-              disabled={locked}
-              onClick={() => setCaptureTheme(themeId)}
-              aria-pressed={activeTheme === themeId}
-              className={`min-h-[44px] flex-1 rounded-2xl border px-3 font-cute text-xs transition-colors disabled:opacity-45 ${
-                activeTheme === themeId ? 'border-ink bg-ink text-white' : 'border-ink/15 bg-white/75 text-ink'
-              }`}
-            >
-              {CAPTURE_THEME[themeId].emoji} {CAPTURE_THEME[themeId].label}{locked ? ' · 스킨 필요' : ''}
-            </button>
-          )
-        })}
+      <div className="flex min-h-[44px] w-full max-w-[320px] items-center justify-between gap-3 rounded-2xl border-2 border-white/90 bg-white/70 px-3 py-2 shadow-sm backdrop-blur" aria-label="자동 적용된 공유 카드 스킨">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-pastel-lavender/60 text-lg" aria-hidden="true">{theme.emoji}</span>
+          <div className="min-w-0">
+            <span className="block font-cute text-[9px] tracking-[0.1em] text-ink-soft">EQUIPPED SKIN</span>
+            <span className="block truncate font-cute text-xs text-ink">{theme.label}</span>
+          </div>
+        </div>
+        <span className="shrink-0 rounded-full bg-pastel-mint px-2.5 py-1 font-cute text-[9px] text-ink">자동 적용 ✓</span>
       </div>
 
       {/* The input itself is a control, so — same rule as CaptureControls —

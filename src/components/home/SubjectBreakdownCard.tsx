@@ -9,8 +9,11 @@ interface SubjectBreakdownCardProps {
 /** Preserves the existing per-subject today breakdown, unchanged data. */
 export function SubjectBreakdownCard({ perSubject, maxSec }: SubjectBreakdownCardProps) {
   return (
-    <div className="w-full bg-white/70 backdrop-blur rounded-2xl shadow px-5 py-4">
-      <span className="font-cute text-ink text-sm">과목별 오늘 공부시간</span>
+    <div className="w-full rounded-[24px] border-2 border-white/85 bg-white/60 px-4 py-4 shadow-[0_5px_0_rgba(84,62,94,0.07),0_12px_26px_rgba(84,62,94,0.08)] backdrop-blur">
+      <div className="flex items-center justify-between">
+        <span className="font-cute text-ink text-sm">📚 모험별 경험치 기록</span>
+        <span className="rounded-full bg-pastel-mint px-2 py-1 font-cute text-[9px] text-ink-soft">TODAY</span>
+      </div>
 
       {perSubject.length === 0 && (
         <p className="text-ink-soft text-sm text-center py-2">아직 기록이 없어요. 타이머를 시작해보세요!</p>

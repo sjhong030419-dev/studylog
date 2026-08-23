@@ -22,22 +22,22 @@ export function PrimaryStudyAction({
 }: PrimaryStudyActionProps) {
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="flex gap-3 justify-center">
+      <div className="flex w-full gap-2.5 justify-center">
         {!isRunning && (
           <button
             type="button"
             onClick={onStart}
             disabled={Boolean(disabledReason)}
-            className="font-cute px-8 py-3 rounded-full bg-pastel-yellow text-ink shadow-md text-lg min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="min-h-[52px] w-full rounded-[18px] border-2 border-white bg-[linear-gradient(135deg,#ffc763,#f58ba8)] px-8 py-3 font-cute text-lg text-white shadow-[0_6px_0_rgba(126,70,87,0.22),0_10px_22px_rgba(126,70,87,0.16)] transition-transform active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50"
           >
-            시작
+            집중 모험 시작 ⚔️
           </button>
         )}
         {isRunning && !isPaused && (
           <button
             type="button"
             onClick={onPause}
-            className="font-cute px-8 py-3 rounded-full bg-pastel-lavender text-ink shadow-md text-lg min-h-[44px]"
+            className="min-h-[52px] flex-1 rounded-[18px] border-2 border-white bg-pastel-lavender px-5 py-3 font-cute text-base text-ink shadow-[0_5px_0_rgba(91,69,112,0.16)] transition-transform active:translate-y-0.5 active:shadow-none"
           >
             일시정지
           </button>
@@ -46,7 +46,7 @@ export function PrimaryStudyAction({
           <button
             type="button"
             onClick={onResume}
-            className="font-cute px-8 py-3 rounded-full bg-pastel-mint text-ink shadow-md text-lg min-h-[44px]"
+            className="min-h-[52px] flex-1 rounded-[18px] border-2 border-white bg-pastel-mint px-5 py-3 font-cute text-base text-ink shadow-[0_5px_0_rgba(64,111,91,0.16)] transition-transform active:translate-y-0.5 active:shadow-none"
           >
             재개
           </button>
@@ -55,7 +55,7 @@ export function PrimaryStudyAction({
           <button
             type="button"
             onClick={onStop}
-            className="font-cute px-8 py-3 rounded-full bg-white border border-ink/20 text-ink shadow-md text-lg min-h-[44px]"
+            className="min-h-[52px] flex-1 rounded-[18px] border-2 border-white bg-pastel-pink px-5 py-3 font-cute text-base text-ink shadow-[0_5px_0_rgba(122,70,88,0.13)] transition-transform active:translate-y-0.5 active:shadow-none"
           >
             종료
           </button>
