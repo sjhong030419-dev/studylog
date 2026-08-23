@@ -26,7 +26,7 @@ export function CaptureStatsRow({
   ]
 
   return (
-    <div className="w-full grid grid-cols-4 gap-1.5 shrink-0">
+    <div className={`grid w-full shrink-0 ${compact ? 'grid-cols-2 gap-1' : 'grid-cols-4 gap-1.5'}`}>
       {cards.map((c) => (
         <div
           key={c.label}

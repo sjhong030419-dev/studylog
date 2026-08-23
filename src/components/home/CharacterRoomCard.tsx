@@ -21,15 +21,15 @@ export function CharacterRoomCard({ state, gender, appearance, level, speech, on
   return (
     <section className={`relative flex w-full min-h-0 flex-col items-center ${fill ? 'h-full' : ''}`} aria-label="나의 공부방">
       {speech && (
-        <div className={`${fill ? 'absolute left-1/2 top-2 z-20 -translate-x-1/2 whitespace-nowrap' : 'relative z-10 -mb-2'} max-w-[88%] rounded-2xl border border-white/80 bg-(--color-home-card) px-4 py-2 shadow-[0_8px_22px_rgba(71,54,82,0.14)]`}>
+        <div className={`${fill ? 'absolute left-1/2 top-2 z-20 -translate-x-1/2 whitespace-nowrap max-[700px]:hidden' : 'relative z-10 -mb-2'} max-w-[88%] rounded-2xl border border-white/80 bg-(--color-home-card) px-4 py-2 shadow-[0_8px_22px_rgba(71,54,82,0.14)]`}>
           <span className="font-cute text-ink text-sm">{speech}</span>
           <div className="absolute left-8 -bottom-1.5 w-3 h-3 bg-(--color-home-card) rotate-45" aria-hidden="true" />
         </div>
       )}
 
       <div
-        className={`relative w-full min-h-0 overflow-hidden rounded-[28px] border-[4px] border-white shadow-[0_7px_0_rgba(82,57,75,0.12),0_18px_36px_rgba(82,57,75,0.20)] ${fill ? 'h-full' : ''}`}
-        style={fill ? undefined : { height: 'clamp(340px, 51dvh, 500px)' }}
+        className={`relative min-h-0 overflow-hidden rounded-[28px] border-[4px] border-white shadow-[0_7px_0_rgba(82,57,75,0.12),0_18px_36px_rgba(82,57,75,0.20)] ${fill ? 'aspect-[4/5] h-full max-h-full w-auto max-w-full' : 'aspect-[4/5] w-full'}`}
+        style={fill ? undefined : { maxHeight: 'clamp(340px, 51dvh, 500px)' }}
       >
         <RoomScene
           state={state}
@@ -57,7 +57,7 @@ export function CharacterRoomCard({ state, gender, appearance, level, speech, on
             🎒
           </button>
         )}
-        <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-white/55 bg-ink/62 px-4 py-1.5 font-cute text-[10px] text-white/90 shadow-lg backdrop-blur" aria-hidden="true">
+        <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-white/55 bg-ink/62 px-4 py-1.5 font-cute text-[10px] text-white/90 shadow-lg backdrop-blur max-[700px]:hidden" aria-hidden="true">
           {state === 'study' || state === 'focused' ? '집중 모험 진행 중 ✏️' : state === 'sleep' ? '잠깐 쉬어가는 중 Zzz' : state === 'happy' || state === 'celebrate' ? '오늘의 모험 완료! ✨' : '오늘은 어떤 모험을 시작할까요?'}
         </div>
       </div>

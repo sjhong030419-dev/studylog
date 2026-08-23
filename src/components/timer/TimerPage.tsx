@@ -40,9 +40,24 @@ export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
         <div className="absolute -left-24 top-44 h-72 w-72 rounded-full bg-pastel-lavender/25 blur-3xl" />
         <div className="absolute -right-24 top-80 h-72 w-72 rounded-full bg-pastel-pink/25 blur-3xl" />
       </div>
-      <div className="mx-auto grid h-full w-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-2" style={{ maxWidth: 430 }}>
+      <div className="mx-auto grid h-full w-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-2" style={{ maxWidth: 430 }}>
         <div className="flex w-full items-center justify-between gap-3 px-1">
-          <span className="font-cute text-[9px] tracking-[0.16em] text-ink-soft">FOCUS MODE</span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setDetailPanel('growth')}
+              className="min-h-[34px] rounded-xl border border-white/90 bg-white/65 px-2.5 font-cute text-[9px] text-ink shadow-[0_3px_0_rgba(74,53,84,0.08)] backdrop-blur transition-transform active:translate-y-0.5"
+            >
+              ⭐ LV.{level.level}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDetailPanel('quests')}
+              className="min-h-[34px] rounded-xl border border-white/90 bg-white/65 px-2.5 font-cute text-[9px] text-ink shadow-[0_3px_0_rgba(74,53,84,0.08)] backdrop-blur transition-transform active:translate-y-0.5"
+            >
+              📜 {completedQuests}/{quests.length}
+            </button>
+          </div>
           <div className="flex rounded-2xl border border-white/90 bg-white/65 p-1 shadow-[0_8px_20px_rgba(77,55,90,0.09)] backdrop-blur">
             <button
               type="button"
@@ -78,12 +93,6 @@ export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
           )}
         </div>
 
-        <div className="grid grid-cols-4 gap-1.5 rounded-[20px] border-2 border-white/90 bg-white/72 p-1.5 shadow-[0_4px_0_rgba(74,53,84,0.08)] backdrop-blur">
-          <QuickHudButton icon="⭐" label={`LV.${level.level}`} value={`${Math.round(level.progressRatio * 100)}%`} onClick={() => setDetailPanel('growth')} />
-          <QuickHudButton icon="📜" label="퀘스트" value={`${completedQuests}/${quests.length}`} onClick={() => setDetailPanel('quests')} />
-          <QuickHudButton icon="🔥" label="연속" value={`${streakCount}일`} onClick={() => setDetailPanel('growth')} />
-          <QuickHudButton icon="🪙" label="포인트" value={`${points}P`} onClick={onOpenShop} />
-        </div>
       </div>
 
       {detailPanel && (
@@ -105,17 +114,5 @@ export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
         </div>
       )}
     </main>
-  )
-}
-
-function QuickHudButton({ icon, label, value, onClick }: { icon: string; label: string; value: string; onClick: () => void }) {
-  return (
-    <button type="button" onClick={(event) => { event.stopPropagation(); onClick() }} className="flex min-h-[48px] min-w-0 items-center justify-center gap-1 rounded-[15px] border border-white bg-white/62 px-1 shadow-[0_2px_0_rgba(75,54,86,0.08)] transition-transform active:translate-y-0.5 active:shadow-none">
-      <span className="text-sm" aria-hidden="true">{icon}</span>
-      <span className="min-w-0 text-left leading-none">
-        <span className="block truncate font-cute text-[8px] text-ink-soft">{label}</span>
-        <span className="mt-1 block truncate font-pixel text-[8px] text-ink">{value}</span>
-      </span>
-    </button>
   )
 }

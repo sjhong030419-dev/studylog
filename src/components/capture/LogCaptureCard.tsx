@@ -97,7 +97,7 @@ type CaptureVisualTheme = keyof typeof CAPTURE_THEME
 const NOTE_MAX_LENGTH = 30
 
 const RATIO_CLASS: Record<Ratio, string> = {
-  square: 'aspect-square',
+  square: 'aspect-[4/5]',
   story: 'aspect-[9/16]',
 }
 
@@ -305,7 +305,7 @@ export function LogCaptureCard() {
               ratio === 'square' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
             }`}
           >
-            정사각형 (피드)
+            4:5 (피드)
           </button>
           <button
             type="button"
@@ -347,7 +347,7 @@ export function LogCaptureCard() {
         />
         {compact && note.trim() && (
           <p className="font-cute text-ink-soft text-[11px] px-3">
-            정사각형 카드는 공간이 좁아 메모가 표시되지 않아요. 9:16 카드에서 보여요.
+            4:5 피드 카드는 기록을 선명하게 보여주기 위해 메모를 생략해요. 9:16 카드에서 보여요.
           </p>
         )}
       </div>
@@ -357,8 +357,10 @@ export function LogCaptureCard() {
           -> 5. 과목별 -> 6. 배지(9:16만) -> 7. 한 줄 메모 -> 8. 큰 공유 버튼(카드 밖) */}
       <div
         ref={cardRef}
-        className={`w-full max-w-[320px] ${RATIO_CLASS[ratio]} rounded-3xl overflow-hidden flex flex-col relative ${
-          compact ? 'px-3 py-2 gap-0.5' : 'px-4 py-3 gap-1.5'
+        className={`relative w-full max-w-[320px] ${RATIO_CLASS[ratio]} overflow-hidden rounded-3xl ${
+          compact
+            ? 'grid grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] grid-rows-[auto_auto_auto_auto_auto_minmax(0,1fr)] gap-1.5 px-3 py-2'
+            : 'flex flex-col gap-1.5 px-4 py-3'
         }`}
         data-capture-theme={activeTheme}
         style={{ background: theme.background }}
@@ -375,22 +377,23 @@ export function LogCaptureCard() {
           style={{ background: 'radial-gradient(circle, rgba(155,134,217,0.35) 0%, transparent 70%)' }}
         />
 
-        <CaptureCardVisualHeader dateLabel={formatDate()} />
+        <div className={compact ? 'col-span-2' : ''}>
+          <CaptureCardVisualHeader dateLabel={formatDate()} />
+        </div>
 
-        <div className="relative z-10 flex items-center justify-center gap-1 font-cute text-[10px] text-ink shrink-0">
+        <div className={`relative z-10 flex shrink-0 items-center justify-center gap-1 font-cute text-[10px] text-ink ${compact ? 'col-span-2' : ''}`}>
           <span aria-hidden="true">✨</span>
           <span>{questsComplete ? '오늘의 퀘스트 완료!' : '오늘의 성장 기록'}</span>
           <span aria-hidden="true">✨</span>
         </div>
 
-        {/* 2. 캐릭터 씬 — 가장 중요한 영역이지만, 레벨 배지가 더는 씬 위에 겹쳐
-            그려지지 않고 아래 별도 flow 요소로 빠지면서 카드 전체 높이 예산에
-            새로 편입됐다. 정사각형 비율은 여유가 거의 없어(§14 필수 항목인
-            과목별 막대가 밀려 사라지는 회귀를 실측으로 확인) 압축 비율을 살짝
-            더 준다 — 9:16은 원래도 여유가 있어 42%를 그대로 유지. */}
+        {/* 2. 캐릭터 씬 — 원화와 동일한 4:5 프레임을 유지한다. 피드 카드도
+            4:5로 맞춰 일러스트가 지나치게 작아지거나 잘리는 문제를 피한다. */}
         <div
-          className="relative w-full rounded-2xl overflow-hidden shrink-0 shadow-md"
-          style={{ height: compact ? '36%' : '42%', border: '1px solid rgba(255,255,255,0.6)' }}
+          className={`relative mx-auto aspect-[4/5] max-w-full overflow-hidden rounded-2xl shadow-md ${
+            compact ? 'col-start-1 row-span-3 row-start-3 w-full self-center' : ''
+          }`}
+          style={{ height: compact ? undefined : '42%', border: '1px solid rgba(255,255,255,0.6)' }}
         >
           {/* Static frame — animating a DOM that html-to-image is actively
               cloning/serializing makes capture unreliable (and a moving
@@ -408,7 +411,7 @@ export function LogCaptureCard() {
         {/* Capture metadata */}
         {/* Keep metadata outside the artwork so the character remains fully
             visible. Empty-state copy is omitted because 00:00 is sufficient. */}
-        <div className="flex items-center gap-2 min-w-0 shrink-0 px-0.5">
+        <div className={`flex min-w-0 shrink-0 items-center gap-2 px-0.5 ${compact ? 'col-start-2 row-start-3 flex-col items-stretch' : ''}`}>
           <CaptureExpBadge
             level={level.level}
             progressRatio={level.progressRatio}
@@ -426,7 +429,7 @@ export function LogCaptureCard() {
         </div>
 
         {/* 3. 오늘 공부시간 */}
-        <div className="flex flex-col items-center gap-0.5 shrink-0">
+        <div className={`flex shrink-0 flex-col items-center gap-0.5 ${compact ? 'col-start-2 row-start-4 self-center' : ''}`}>
           <span className="font-cute text-ink-soft text-[10px]">오늘 총 공부 시간</span>
           <span
             className={`font-pixel tracking-widest ${compact ? 'text-lg' : 'text-2xl'}`}
@@ -447,17 +450,19 @@ export function LogCaptureCard() {
         </div>
 
         {/* 4. 하이라이트 카드 4개 */}
-        <CaptureStatsRow
-          streakCount={streakCount}
-          totalStudySec={totalStudySec}
-          rank={rank}
-          rankTotal={rankTotal}
-          focusPercent={focusPercent}
-          compact={compact}
-        />
+        <div className={compact ? 'col-start-2 row-start-5 self-end' : ''}>
+          <CaptureStatsRow
+            streakCount={streakCount}
+            totalStudySec={totalStudySec}
+            rank={rank}
+            rankTotal={rankTotal}
+            focusPercent={focusPercent}
+            compact={compact}
+          />
+        </div>
 
         {/* 5. 과목별 공부시간 */}
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className={`min-h-0 flex-1 overflow-hidden ${compact ? 'col-span-2 row-start-6' : ''}`}>
           <CaptureSubjectBars
             perSubject={perSubject}
             maxSec={maxSec}
@@ -466,15 +471,15 @@ export function LogCaptureCard() {
           />
         </div>
 
-        {/* 6. 획득 배지 — 정사각형 비율에서는 메모/해시태그와 같은 이유로
+        {/* 6. 획득 배지 — 4:5 피드 비율에서는 메모/해시태그와 같은 이유로
             생략한다: 레벨 배지 행이 더는 씬 위에 겹쳐 그려지지 않고 실제
             높이를 차지하게 되면서, 배지까지 함께 표시하면 §14 필수 항목인
             과목별 막대(flex-1)가 완전히 밀려 사라지는 걸 실측으로 확인했다. */}
         {!compact && <CaptureBadges achievements={achievements} compact={compact} />}
 
-        {/* 7. 한 줄 메모 — compact(정사각형) 카드는 이미 고정 높이 예산이 빠듯해서,
+        {/* 7. 한 줄 메모 — compact(4:5 피드) 카드는 이미 고정 높이 예산이 빠듯해서,
             메모까지 넣으면 flex-1인 과목별 막대(§14 필수 항목)가 밀려 사라진다.
-            메모는 선택 항목이라 우선순위가 낮으므로 정사각형에서는 생략한다
+            메모는 선택 항목이라 우선순위가 낮으므로 4:5 피드에서는 생략한다
             (하단 해시태그와 동일한 판단 — 아래 !compact 처리 참고). */}
         {!compact && note.trim() && (
           <p className="font-cute text-ink text-[10px] text-center shrink-0 line-clamp-1 px-2">
