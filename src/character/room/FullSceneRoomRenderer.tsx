@@ -151,15 +151,25 @@ export function FullSceneRoomRenderer({ state, gender, theme, onError }: FullSce
   }, [gender, scene, theme])
 
   return (
-    <img
-      src={displaySrc}
-      alt=""
-      aria-hidden="true"
-      className="block w-full h-full object-cover object-center"
-      draggable={false}
-      decoding="async"
-      onLoad={() => loadedRef.current.add(displaySrc)}
-      onError={onError}
-    />
+    <div className="relative h-full w-full overflow-hidden bg-[#251f35]">
+      <img
+        src={displaySrc}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full scale-110 object-cover object-center opacity-35 blur-xl"
+        draggable={false}
+        decoding="async"
+      />
+      <img
+        src={displaySrc}
+        alt=""
+        aria-hidden="true"
+        className="relative block h-full w-full object-contain object-center"
+        draggable={false}
+        decoding="async"
+        onLoad={() => loadedRef.current.add(displaySrc)}
+        onError={onError}
+      />
+    </div>
   )
 }

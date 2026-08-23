@@ -164,7 +164,7 @@ export function StudyTimer({ onOpenShop, onOpenCapture, onOpenQuests, compactHom
     : deriveSpeechBubble({ characterState, todayTotalSec, goal, streakCount })
 
   return (
-    <div className={compactHome ? 'grid h-full min-h-0 w-full grid-rows-[minmax(0,1fr)_auto_auto] place-items-center gap-0' : 'flex w-full flex-col items-center gap-5'}>
+    <div className={compactHome ? 'grid h-full min-h-0 w-full grid-rows-[minmax(0,1fr)_auto_auto] place-items-center gap-0.5' : 'flex w-full flex-col items-center gap-5'}>
       <CharacterRoomCard
         state={characterState}
         gender={gender}
