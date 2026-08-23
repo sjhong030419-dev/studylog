@@ -19,7 +19,7 @@ interface CharacterRoomCardProps {
  * final production assets. */
 export function CharacterRoomCard({ state, gender, appearance, level, speech, onOpenShop, fill = false }: CharacterRoomCardProps) {
   return (
-    <section className={`relative flex w-full min-h-0 flex-col items-center ${fill ? 'h-full' : ''}`} aria-label="나의 공부방">
+    <section className={`relative flex w-full max-w-full min-h-0 min-w-0 flex-col items-center ${fill ? 'h-full' : ''}`} aria-label="나의 공부방">
       {speech && (
         <div className={`${fill ? 'absolute left-1/2 top-2 z-20 -translate-x-1/2 whitespace-nowrap max-[700px]:hidden' : 'relative z-10 -mb-2'} max-w-[88%] rounded-2xl border border-white/80 bg-(--color-home-card) px-4 py-2 shadow-[0_8px_22px_rgba(71,54,82,0.14)]`}>
           <span className="font-cute text-ink text-sm">{speech}</span>
@@ -28,7 +28,7 @@ export function CharacterRoomCard({ state, gender, appearance, level, speech, on
       )}
 
       <div
-        className={`relative min-h-0 overflow-hidden rounded-[28px] border-[4px] border-white shadow-[0_7px_0_rgba(82,57,75,0.12),0_18px_36px_rgba(82,57,75,0.20)] ${fill ? 'aspect-[4/5] h-full max-h-full w-auto max-w-full' : 'aspect-[4/5] w-full'}`}
+        className={`relative box-border min-h-0 justify-self-center overflow-hidden rounded-[28px] border-[4px] border-white shadow-[0_7px_0_rgba(82,57,75,0.12),0_18px_36px_rgba(82,57,75,0.20)] ${fill ? 'aspect-[4/5] h-full max-h-full w-auto max-w-full' : 'aspect-[4/5] w-full'}`}
         style={fill ? undefined : { maxHeight: 'clamp(340px, 51dvh, 500px)' }}
       >
         <RoomScene

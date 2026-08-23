@@ -34,35 +34,35 @@ export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
   const completedQuests = quests.filter((quest) => quest.complete).length
 
   return (
-    <main className="h-[calc(100svh-166px)] min-h-0 overflow-hidden px-3 py-2 sm:px-4">
+    <main className="h-[calc(100svh-166px)] min-h-0 overflow-hidden px-3 py-2">
       <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
         <div className="absolute left-1/2 top-0 h-[640px] w-[760px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,238,192,0.72)_0%,rgba(244,218,235,0.42)_42%,transparent_72%)]" />
         <div className="absolute -left-24 top-44 h-72 w-72 rounded-full bg-pastel-lavender/25 blur-3xl" />
         <div className="absolute -right-24 top-80 h-72 w-72 rounded-full bg-pastel-pink/25 blur-3xl" />
       </div>
-      <div className="mx-auto grid h-full w-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-2" style={{ maxWidth: 430 }}>
-        <div className="flex w-full items-center justify-between gap-3 px-1">
-          <div className="flex items-center gap-1.5">
+      <div className="mx-auto grid h-full w-full max-w-[430px] min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] gap-2">
+        <div className="flex min-w-0 w-full items-center justify-between gap-2">
+          <div className="flex rounded-[16px] border border-white/90 bg-white/65 p-1 shadow-[0_8px_20px_rgba(77,55,90,0.09)] backdrop-blur">
             <button
               type="button"
               onClick={() => setDetailPanel('growth')}
-              className="min-h-[34px] rounded-xl border border-white/90 bg-white/65 px-2.5 font-cute text-[9px] text-ink shadow-[0_3px_0_rgba(74,53,84,0.08)] backdrop-blur transition-transform active:translate-y-0.5"
+              className="min-h-[36px] min-w-[66px] rounded-[12px] px-2 font-cute text-[9px] text-ink transition-colors hover:bg-white/55 active:bg-white/80"
             >
               ⭐ LV.{level.level}
             </button>
             <button
               type="button"
               onClick={() => setDetailPanel('quests')}
-              className="min-h-[34px] rounded-xl border border-white/90 bg-white/65 px-2.5 font-cute text-[9px] text-ink shadow-[0_3px_0_rgba(74,53,84,0.08)] backdrop-blur transition-transform active:translate-y-0.5"
+              className="min-h-[36px] min-w-[66px] rounded-[12px] px-2 font-cute text-[9px] text-ink transition-colors hover:bg-white/55 active:bg-white/80"
             >
               📜 {completedQuests}/{quests.length}
             </button>
           </div>
-          <div className="flex rounded-2xl border border-white/90 bg-white/65 p-1 shadow-[0_8px_20px_rgba(77,55,90,0.09)] backdrop-blur">
+          <div className="flex rounded-[16px] border border-white/90 bg-white/65 p-1 shadow-[0_8px_20px_rgba(77,55,90,0.09)] backdrop-blur">
             <button
               type="button"
               onClick={() => setMode('normal')}
-              className={`font-cute min-h-[34px] rounded-xl px-3 py-1 text-[11px] transition-all active:scale-95 ${
+              className={`min-h-[36px] min-w-[66px] rounded-[12px] px-2 py-1 font-cute text-[10px] transition-all active:scale-95 ${
                 mode === 'normal' ? 'bg-ink text-white shadow-md' : 'text-ink-soft'
               }`}
             >
@@ -71,7 +71,7 @@ export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
             <button
               type="button"
               onClick={() => setMode('pomodoro')}
-              className={`font-cute min-h-[34px] rounded-xl px-3 py-1 text-[11px] transition-all active:scale-95 ${
+              className={`min-h-[36px] min-w-[66px] rounded-[12px] px-2 py-1 font-cute text-[10px] transition-all active:scale-95 ${
                 mode === 'pomodoro' ? 'bg-ink text-white shadow-md' : 'text-ink-soft'
               }`}
             >
@@ -80,7 +80,7 @@ export function TimerPage({ onOpenShop, onOpenCapture }: TimerPageProps) {
           </div>
         </div>
 
-        <div className="min-h-0">
+        <div className="min-h-0 min-w-0">
           {mode === 'normal' ? (
             <StudyTimer
               onOpenShop={onOpenShop}

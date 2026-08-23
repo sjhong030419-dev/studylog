@@ -59,8 +59,8 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
         </div>
       )}
 
-      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-[max(8px,env(safe-area-inset-bottom))]" aria-label="주요 메뉴">
-      <div className="pointer-events-auto grid w-full max-w-[430px] grid-cols-5 items-end rounded-[26px] border-[3px] border-white/90 bg-white/90 px-2 pb-1 pt-1.5 shadow-[0_7px_0_rgba(71,52,82,0.11),0_-8px_34px_rgba(83,63,96,0.12)] backdrop-blur-xl dark:bg-[#2d2842]/92">
+      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-1.5 pb-[max(8px,env(safe-area-inset-bottom))]" aria-label="주요 메뉴">
+      <div className="pointer-events-auto grid w-full max-w-[440px] grid-cols-5 items-end rounded-[26px] border-[3px] border-white/90 bg-white/90 px-2 pb-1 pt-1.5 shadow-[0_7px_0_rgba(71,52,82,0.11),0_-8px_34px_rgba(83,63,96,0.12)] backdrop-blur-xl dark:bg-[#2d2842]/92">
         {PRIMARY_TABS.map((tab) => (
           <button
             key={tab.value}
