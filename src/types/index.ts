@@ -60,3 +60,20 @@ export interface AppNotification {
   createdAt: number
   linkTarget?: NavTarget
 }
+
+/** Ephemeral handoff from the completion screen to Capture/Share. It is
+ * deliberately kept in App state rather than persisted: opening Share from
+ * navigation still means "today", while opening it from a completed session
+ * means "this adventure". */
+export interface CaptureSessionSnapshot {
+  subjectId: string | null
+  subjectName: string
+  durationSec: number
+  earnedPoints: number
+  studyXpBefore: number
+  studyXpAfter: number
+  gender: Gender
+  appearance: Partial<CharacterAppearance>
+  completedAt: number
+}
+import type { CharacterAppearance, Gender } from '../character/types'

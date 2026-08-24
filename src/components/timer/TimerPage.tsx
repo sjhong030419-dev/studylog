@@ -9,12 +9,13 @@ import { myOverallRank } from '../../utils/ranking'
 import { DailyQuestCard } from '../home/DailyQuestCard'
 import { deriveDailyQuests } from '../../quests/dailyQuests'
 import { todayKey } from '../../utils/time'
+import type { CaptureSessionSnapshot } from '../../types'
 
 type Mode = 'normal' | 'pomodoro'
 
 interface TimerPageProps {
   onOpenShop: () => void
-  onOpenCapture: () => void
+  onOpenCapture: (snapshot: CaptureSessionSnapshot) => void
   onContentWidthChange?: (width: number) => void
 }
 

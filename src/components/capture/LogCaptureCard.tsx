@@ -24,6 +24,7 @@ import { deriveEarnedAchievements } from '../../utils/achievements'
 import { myOverallRank } from '../../utils/ranking'
 import { formatDuration, todayKey, dateKeyOffset } from '../../utils/time'
 import { resolveCaptureTheme, resolveEquippedCaptureTheme } from '../../utils/captureTheme'
+import type { CaptureSessionSnapshot } from '../../types'
 
 type Ratio = 'square' | 'story'
 
@@ -109,7 +110,11 @@ function formatDate(date = new Date()): string {
   return `${m}월 ${d}일 (${day})`
 }
 
-export function LogCaptureCard() {
+interface LogCaptureCardProps {
+  sessionSnapshot?: CaptureSessionSnapshot | null
+}
+
+export function LogCaptureCard({ sessionSnapshot = null }: LogCaptureCardProps) {
   const subjects = useTimerStore((s) => s.subjects)
   const sessions = useTimerStore((s) => s.sessions)
   const plannerTasks = usePlannerStore((s) => s.tasks)
@@ -163,7 +168,7 @@ export function LogCaptureCard() {
 
   const totalStudySec = sessions.reduce((sum, s) => sum + s.durationSec, 0)
 
-  const perSubject = subjects
+  const todayPerSubject = subjects
     .map((subject) => ({
       subject,
       sec: today.filter((s) => s.subjectId === subject.id).reduce((sum, s) => sum + s.durationSec, 0),
@@ -171,21 +176,39 @@ export function LogCaptureCard() {
     .filter((row) => row.sec > 0)
     .sort((a, b) => b.sec - a.sec)
 
+  const snapshotSubject = sessionSnapshot
+    ? subjects.find((subject) => subject.id === sessionSnapshot.subjectId)
+    : undefined
+  const perSubject = sessionSnapshot
+    ? [{
+        subject: snapshotSubject ?? { id: sessionSnapshot.subjectId ?? 'completed-session', name: sessionSnapshot.subjectName, color: '#f3a2b9' },
+        sec: sessionSnapshot.durationSec,
+      }]
+    : todayPerSubject
+
   const maxSec = Math.max(1, ...perSubject.map((r) => r.sec))
 
   const goal = computeDailyGoal(plannerTasks, sessions, todayKey())
-  const level = deriveExpLevel(studyXpTotal)
+  const level = deriveExpLevel(sessionSnapshot?.studyXpAfter ?? studyXpTotal)
   // Only shown when today itself actually earned Study XP AND that XP
   // crossed a real level boundary — never derived from `sessions.length`
   // (a past day's session must not be attributed to today's card), and
   // never shown as a same-level "Lv.1 -> Lv.1" transition (PRD §14).
-  const levelBeforeLastSession = deriveLevelBeforeToday(studyXpTotal, studyXpBeforeTodaysLastSession)
+  const snapshotLevelBefore = sessionSnapshot ? deriveExpLevel(sessionSnapshot.studyXpBefore).level : undefined
+  const levelBeforeLastSession = sessionSnapshot
+    ? snapshotLevelBefore !== level.level ? snapshotLevelBefore : undefined
+    : deriveLevelBeforeToday(studyXpTotal, studyXpBeforeTodaysLastSession)
   const { rank, total: rankTotal } = myOverallRank(todayTotalSec)
 
   const focusPercent =
     todayTotalSec + todayAwaySec > 0 ? Math.round((todayTotalSec / (todayTotalSec + todayAwaySec)) * 100) : null
 
-  const message = deriveCaptureMessage({ todayTotalSec, yesterdayTotalSec, goal, streakCount })
+  const message = sessionSnapshot
+    ? `+${Math.max(0, sessionSnapshot.studyXpAfter - sessionSnapshot.studyXpBefore)} XP · +${sessionSnapshot.earnedPoints}P`
+    : deriveCaptureMessage({ todayTotalSec, yesterdayTotalSec, goal, streakCount })
+  const displayedDurationSec = sessionSnapshot?.durationSec ?? todayTotalSec
+  const displayedGender = sessionSnapshot?.gender ?? gender
+  const displayedAppearance = sessionSnapshot?.appearance ?? appearance
 
   const achievements = deriveEarnedAchievements({
     hasAnySession: sessions.length > 0,
@@ -292,8 +315,10 @@ export function LogCaptureCard() {
       <div className="mx-auto flex w-full max-w-[430px] flex-col items-center gap-5">
       <div className="w-full text-left">
         <p className="font-cute text-[11px] tracking-wide text-ink-soft">SHARE YOUR ADVENTURE</p>
-        <h1 className="font-cute text-3xl text-ink">오늘의 기록 <span aria-hidden="true">📸</span></h1>
-        <p className="mt-1 font-cute text-xs text-ink-soft">공부로 성장한 캐릭터와 오늘의 결과를 바로 공유해보세요.</p>
+        <h1 className="font-cute text-3xl text-ink">{sessionSnapshot ? '방금 완료한 모험' : '오늘의 기록'} <span aria-hidden="true">📸</span></h1>
+        <p className="mt-1 font-cute text-xs text-ink-soft">
+          {sessionSnapshot ? `${sessionSnapshot.subjectName} 집중 결과가 자동으로 적용됐어요.` : '공부로 성장한 캐릭터와 오늘의 결과를 바로 공유해보세요.'}
+        </p>
       </div>
 
       <div className="w-full max-w-[320px] flex flex-wrap items-center justify-between gap-2">
@@ -383,7 +408,7 @@ export function LogCaptureCard() {
 
         <div className={`relative z-10 flex shrink-0 items-center justify-center gap-1 font-cute text-[10px] text-ink ${compact ? 'col-span-2' : ''}`}>
           <span aria-hidden="true">✨</span>
-          <span>{questsComplete ? '오늘의 퀘스트 완료!' : '오늘의 성장 기록'}</span>
+          <span>{sessionSnapshot ? `${sessionSnapshot.subjectName} 모험 완료!` : questsComplete ? '오늘의 퀘스트 완료!' : '오늘의 성장 기록'}</span>
           <span aria-hidden="true">✨</span>
         </div>
 
@@ -400,8 +425,8 @@ export function LogCaptureCard() {
               character makes no sense in a still shareable image anyway). */}
           <RoomScene
             state="happy"
-            gender={gender}
-            appearance={appearance}
+            gender={displayedGender}
+            appearance={displayedAppearance}
             level={level.level}
             animated={false}
             preferFullScene
@@ -430,7 +455,7 @@ export function LogCaptureCard() {
 
         {/* 3. 오늘 공부시간 */}
         <div className={`flex shrink-0 flex-col items-center gap-0.5 ${compact ? 'col-start-2 row-start-4 self-center' : ''}`}>
-          <span className="font-cute text-ink-soft text-[10px]">오늘 총 공부 시간</span>
+          <span className="font-cute text-ink-soft text-[10px]">{sessionSnapshot ? '이번 집중 시간' : '오늘 총 공부 시간'}</span>
           <span
             className={`font-pixel tracking-widest ${compact ? 'text-lg' : 'text-2xl'}`}
             style={{
@@ -440,7 +465,7 @@ export function LogCaptureCard() {
               color: 'transparent',
             }}
           >
-            {formatDuration(todayTotalSec)}
+            {formatDuration(displayedDurationSec)}
           </span>
           {goal.configured && (
             <span className="font-cute text-ink-soft text-[10px]">

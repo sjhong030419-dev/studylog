@@ -17,6 +17,7 @@ import { deriveExpLevel } from '../../character/engine/expLevel'
 import { todayKey } from '../../utils/time'
 import { activeSubjectsOf } from '../../store/subjectMath'
 import { StudyRewardModal } from './StudyRewardModal'
+import type { CaptureSessionSnapshot } from '../../types'
 
 /** Continuous focus beyond this length shows the sleepy pose — a deterministic
  * read of real elapsed session time, not a fabricated or random cue. */
@@ -25,7 +26,7 @@ const CELEBRATION_MS = 2600
 
 interface StudyTimerProps {
   onOpenShop: () => void
-  onOpenCapture: () => void
+  onOpenCapture: (snapshot: CaptureSessionSnapshot) => void
   onOpenQuests?: () => void
   compactHome?: boolean
   onRoomWidthChange?: (width: number) => void
@@ -253,7 +254,17 @@ export function StudyTimer({ onOpenShop, onOpenCapture, onOpenQuests, compactHom
           }}
           onOpenCapture={() => {
             setStudyReward(null)
-            onOpenCapture()
+            onOpenCapture({
+              subjectId: selectedSubjectId,
+              subjectName: studyReward.subjectName,
+              durationSec: studyReward.durationSec,
+              earnedPoints: studyReward.earnedPoints,
+              studyXpBefore: studyReward.studyXpBefore,
+              studyXpAfter: studyReward.studyXpAfter,
+              gender,
+              appearance,
+              completedAt: Date.now(),
+            })
           }}
           onOpenShop={() => {
             setStudyReward(null)

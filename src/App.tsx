@@ -7,7 +7,7 @@ import { BottomNav, type Tab } from './components/layout/BottomNav'
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow'
 import { useSettingsStore } from './store/settingsStore'
 import { useProfileStore } from './store/profileStore'
-import type { NavTarget } from './types'
+import type { CaptureSessionSnapshot, NavTarget } from './types'
 
 type Overlay = 'profile' | 'settings' | 'notifications' | 'subjects' | null
 
@@ -61,6 +61,7 @@ function App() {
   const [tab, setTab] = useState<Tab>('timer')
   const [overlay, setOverlay] = useState<Overlay>(null)
   const [focusContentWidth, setFocusContentWidth] = useState<number | null>(null)
+  const [captureSnapshot, setCaptureSnapshot] = useState<CaptureSessionSnapshot | null>(null)
   const theme = useSettingsStore((s) => s.theme)
   const onboardingCompleted = useProfileStore((s) => s.onboardingCompleted)
 
@@ -73,6 +74,7 @@ function App() {
       setOverlay('profile')
     } else {
       setOverlay(null)
+      if (target === 'capture') setCaptureSnapshot(null)
       setTab(target)
     }
   }
@@ -88,9 +90,9 @@ function App() {
   return (
     <div className={`app-shell min-h-svh pt-[72px] ${tab === 'timer' && !overlay ? 'pb-0' : 'pb-28'}`}>
       <Suspense fallback={<ScreenLoading />}>
-      {tab === 'timer' && <TimerPage onOpenShop={() => setTab('shop')} onOpenCapture={() => setTab('capture')} onContentWidthChange={setFocusContentWidth} />}
+      {tab === 'timer' && <TimerPage onOpenShop={() => setTab('shop')} onOpenCapture={(snapshot) => { setCaptureSnapshot(snapshot); setTab('capture') }} onContentWidthChange={setFocusContentWidth} />}
       {tab === 'room' && <RoomPage />}
-      {tab === 'capture' && <LogCaptureCard />}
+      {tab === 'capture' && <LogCaptureCard sessionSnapshot={captureSnapshot} />}
       {tab === 'stats' && <StatsHubPage />}
       {tab === 'ranking' && <RankingBoard />}
       {tab === 'tutor' && <AiTutorChat />}
@@ -139,7 +141,7 @@ function App() {
 
       <DeferredRoomConnection />
       <BgmPlayer />
-      <BottomNav active={tab} focusWidth={tab === 'timer' ? focusContentWidth : null} onChange={(next) => { setOverlay(null); setTab(next) }} />
+      <BottomNav active={tab} focusWidth={tab === 'timer' ? focusContentWidth : null} onChange={(next) => { setOverlay(null); if (next === 'capture') setCaptureSnapshot(null); setTab(next) }} />
     </div>
   )
 }
