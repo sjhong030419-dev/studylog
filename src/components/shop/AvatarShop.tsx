@@ -99,12 +99,12 @@ export function AvatarShop() {
       <div className="mx-auto flex w-full max-w-[430px] flex-col items-center gap-3">
       <div className="flex w-full items-end justify-between gap-3 text-left">
         <div className="min-w-0">
-          <p className="font-cute text-[10px] tracking-wide text-ink-soft">MAKE IT YOUR CHARACTER</p>
-          <h1 className="font-cute text-[28px] leading-tight text-ink">{view === 'shop' ? '아바타 상점 🛍️' : '내 옷장 👗'}</h1>
+          <p className="font-cute text-xs tracking-wide text-ink-soft">MAKE IT YOUR CHARACTER</p>
+          <h1 className="font-cute text-[30px] leading-tight text-ink">{view === 'shop' ? '아바타 상점 🛍️' : '내 옷장 👗'}</h1>
         </div>
         <div className="shrink-0 rounded-2xl border border-white/80 bg-white/75 px-3 py-2 text-right shadow-sm">
-          <p className="font-cute text-[9px] text-ink-soft">내 포인트</p>
-          <p className="font-pixel text-sm text-ink">🪙 {balance}P</p>
+          <p className="font-cute text-[11px] text-ink-soft">내 포인트</p>
+          <p className="font-pixel text-base text-ink">🪙 {balance}P</p>
         </div>
       </div>
 
@@ -134,7 +134,7 @@ export function AvatarShop() {
       </div>
 
       <div
-        className="flex w-full flex-col items-center gap-2 rounded-[24px] border border-white/80 px-3 py-3 shadow-[0_12px_30px_rgba(108,82,130,0.11)] backdrop-blur"
+        className="flex w-full flex-col items-center gap-3 rounded-[24px] border border-white/80 px-4 py-4 shadow-[0_12px_30px_rgba(108,82,130,0.11)] backdrop-blur"
         style={{ backgroundColor: previewAppearance.backgroundColor ?? 'rgba(255,255,255,0.7)' }}
       >
         {previewItem && (
@@ -155,9 +155,9 @@ export function AvatarShop() {
             onError={() => markImageFailed(previewBanner)}
           />
         )}
-        {!previewBanner && <CharacterView state="happy" gender={gender} appearance={previewAppearance} size={96} />}
+        {!previewBanner && <CharacterView state="happy" gender={gender} appearance={previewAppearance} size={140} />}
         <div
-          className="flex w-full items-center justify-center gap-4 font-cute text-[10px]"
+          className="flex w-full items-center justify-center gap-4 font-cute text-xs"
           style={{ color: readableInkColor(previewAppearance.backgroundColor, 'var(--color-ink)') }}
         >
           <span>보유 아이템 {ownedItemIds.length}</span>
@@ -171,7 +171,7 @@ export function AvatarShop() {
           type="button"
           onClick={watchAdForBonus}
           disabled={adWatchesToday >= AD_DAILY_LIMIT || checkoutLoading}
-          className="min-h-[40px] w-full rounded-2xl bg-pastel-mint px-4 py-2 font-cute text-[11px] text-ink shadow-sm disabled:opacity-50"
+          className="min-h-[48px] w-full rounded-2xl bg-pastel-mint px-4 py-2 font-cute text-sm text-ink shadow-sm disabled:opacity-50"
         >
           {checkoutLoading
             ? '광고 재생 중...'
@@ -184,7 +184,7 @@ export function AvatarShop() {
           <button
             type="button"
             onClick={() => changeCategory('all')}
-            className={`shrink-0 snap-start rounded-full border px-3 py-1.5 font-cute text-xs min-h-[38px] ${
+            className={`min-h-[44px] shrink-0 snap-start rounded-full border px-4 py-2 font-cute text-sm ${
               category === 'all' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
             }`}
           >
@@ -196,7 +196,7 @@ export function AvatarShop() {
             key={c}
             type="button"
             onClick={() => changeCategory(c)}
-            className={`shrink-0 snap-start rounded-full border px-3 py-1.5 font-cute text-xs min-h-[38px] ${
+            className={`min-h-[44px] shrink-0 snap-start rounded-full border px-4 py-2 font-cute text-sm ${
               category === c ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
             }`}
           >
@@ -205,7 +205,7 @@ export function AvatarShop() {
         ))}
       </div>
 
-      <div className="grid w-full grid-cols-2 gap-2.5">
+      <div className="grid w-full grid-cols-2 gap-3">
         {visibleItems.map((item) => {
           const owned = ownedItemIds.includes(item.id)
           const isEquipped = equipped[item.category] === item.id
@@ -228,12 +228,12 @@ export function AvatarShop() {
           return (
             <div
               key={item.id}
-              className={`relative flex min-w-0 flex-col items-center gap-1.5 rounded-[20px] border px-2.5 py-2.5 shadow-sm ${
+              className={`relative flex min-w-0 flex-col items-center gap-2 rounded-[22px] border px-3 py-3 shadow-sm ${
                 isEquipped ? 'border-amber-200 bg-pastel-yellow' : 'border-white/80 bg-white/70'
               }`}
             >
               {(isEquipped || owned) && (
-                <span className={`absolute right-1.5 top-1.5 z-10 rounded-full px-2 py-1 font-cute text-[8px] shadow-sm ${isEquipped ? 'bg-ink text-white' : 'bg-white/90 text-ink'}`}>
+                <span className={`absolute right-2 top-2 z-10 rounded-full px-2.5 py-1.5 font-cute text-[10px] shadow-sm ${isEquipped ? 'bg-ink text-white' : 'bg-white/90 text-ink'}`}>
                   {isEquipped ? '착용중' : '보유'}
                 </span>
               )}
@@ -241,31 +241,31 @@ export function AvatarShop() {
                 <img
                   src={previewImage}
                   alt=""
-                  className="mb-0.5 aspect-square w-full rounded-[14px] object-cover shadow-sm"
+                  className="mb-1 aspect-square w-full rounded-[16px] object-cover shadow-md"
                   draggable={false}
                   loading="lazy"
                   decoding="async"
                   onError={() => markImageFailed(previewImage)}
                 />
               ) : (
-                <span className="text-2xl">{item.emoji}</span>
+                <span className="grid aspect-square w-full place-items-center rounded-[16px] bg-white/55 text-6xl shadow-inner">{item.emoji}</span>
               )}
-              <span className="line-clamp-1 w-full text-center font-cute text-xs text-ink">{item.name}</span>
-              <span className="font-pixel text-[10px] text-ink-soft">
+              <span className="line-clamp-2 min-h-[40px] w-full text-center font-cute text-sm leading-5 text-ink">{item.name}</span>
+              <span className="font-pixel text-xs text-ink-soft">
                 {item.priceType === 'points' ? `${item.price}P` : `₩${item.price.toLocaleString()}`}
               </span>
               {isWholeAvatarItem && (
-                <span className="font-cute text-[9px] px-2 py-0.5 rounded-full bg-ink/10 text-ink-soft text-center">
+                <span className="rounded-full bg-ink/10 px-2 py-1 text-center font-cute text-[10px] text-ink-soft">
                   남녀 캐릭터 지원
                 </span>
               )}
               {isWholeAvatarItem && !isGenderSupported && (
-                <span className="font-cute text-[9px] px-2 py-0.5 rounded-full bg-pastel-pink text-ink text-center">
+                <span className="rounded-full bg-pastel-pink px-2 py-1 text-center font-cute text-[10px] text-ink">
                   지금은 남자 캐릭터라 적용되지 않아요
                 </span>
               )}
               {!isWholeAvatarItem && !isPngSupported && (
-                <span className="font-cute text-[9px] px-2 py-0.5 rounded-full bg-ink/10 text-ink-soft text-center">
+                <span className="rounded-full bg-ink/10 px-2 py-1 text-center font-cute text-[10px] text-ink-soft">
                   새 캐릭터 대응 준비 중
                 </span>
               )}
@@ -276,7 +276,7 @@ export function AvatarShop() {
                   onClick={() => setPreviewItemId(isPreviewing ? null : item.id)}
                   disabled={!canPreview}
                   aria-pressed={isPreviewing}
-                  className={`min-h-[38px] rounded-xl border px-1.5 py-1 font-cute text-[10px] disabled:opacity-40 ${
+                  className={`min-h-[46px] rounded-xl border px-1.5 py-1 font-cute text-xs disabled:opacity-40 ${
                     isPreviewing ? 'border-ink/20 bg-pastel-yellow text-ink' : 'border-ink/15 bg-white text-ink'
                   }`}
                 >
@@ -302,7 +302,7 @@ export function AvatarShop() {
                     }
                     setPreviewItemId(null)
                   }}
-                  className={`min-h-[38px] rounded-xl px-1.5 py-1 font-cute text-[10px] ${
+                  className={`min-h-[46px] rounded-xl px-1.5 py-1 font-cute text-xs ${
                     isEquipped ? 'bg-ink text-white' : 'bg-white border border-ink/20 text-ink'
                   }`}
                 >
@@ -313,7 +313,7 @@ export function AvatarShop() {
                   type="button"
                   onClick={() => handleBuy(item)}
                   disabled={checkoutLoading || !canPurchase || (item.priceType === 'points' && balance < item.price)}
-                  className="min-h-[38px] rounded-xl bg-pastel-lavender px-1.5 py-1 font-cute text-[10px] text-ink disabled:opacity-50"
+                  className="min-h-[46px] rounded-xl bg-pastel-lavender px-1.5 py-1 font-cute text-xs text-ink disabled:opacity-50"
                 >
                   구매하기
                 </button>
@@ -340,7 +340,7 @@ export function AvatarShop() {
       )}
 
       {view === 'shop' && (
-        <p className="w-full text-center font-cute text-[10px] text-ink-soft">
+        <p className="w-full text-center font-cute text-xs text-ink-soft">
           캐시 아이템은 Stripe 테스트 모드 구조로 연결돼 있어요. 실제 결제는 발생하지 않습니다.
         </p>
       )}
