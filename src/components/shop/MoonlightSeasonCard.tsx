@@ -30,22 +30,22 @@ export function MoonlightSeasonCard() {
 
   return (
     <section
-      className="w-full max-w-sm overflow-hidden rounded-[28px] border border-white/20 px-5 py-5 text-[#fff8e8] shadow-[0_18px_40px_rgba(27,25,58,0.24)]"
+      className="w-full overflow-hidden rounded-[24px] border border-white/20 px-4 py-4 text-[#fff8e8] shadow-[0_14px_32px_rgba(27,25,58,0.22)]"
       style={{ background: 'linear-gradient(145deg, #171b35 0%, #29274b 52%, #6a4f72 100%)' }}
       aria-labelledby="moonlight-season-title"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-cute text-[10px] tracking-[0.18em] text-[#d9c4ff]">SEASON 1</p>
-          <h2 id="moonlight-season-title" className="mt-0.5 font-cute text-xl">달빛 도서관의 초대 🌙</h2>
+          <h2 id="moonlight-season-title" className="mt-0.5 font-cute text-lg">달빛 도서관의 초대 🌙</h2>
           <p className="mt-1 font-cute text-[10px] leading-relaxed text-[#eee5ff]">
             공부 XP를 모아 별빛 보상과 한정 스킨을 받아보세요.
           </p>
         </div>
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/10 text-2xl shadow-inner" aria-hidden="true">🏰</span>
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white/10 text-xl shadow-inner" aria-hidden="true">🏰</span>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-3">
         <div className="flex items-center justify-between font-pixel text-[9px] text-[#ffe2a3]">
           <span>{progress.currentXp} XP</span>
           <span>{progress.targetXp} XP</span>
@@ -58,25 +58,25 @@ export function MoonlightSeasonCard() {
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div className="mt-3 grid grid-cols-3 gap-1.5">
         {MOONLIGHT_REWARDS.map((reward) => {
           const claimed = claimedRewardIds.includes(reward.id)
           const claimable = canClaimMoonlightReward(reward, studyXp, claimedRewardIds)
           const reached = studyXp >= reward.requiredXp
           const xpToGo = Math.max(0, reward.requiredXp - studyXp)
           return (
-            <div key={reward.id} className={`flex min-h-[128px] flex-col items-center rounded-2xl border px-2 py-3 text-center ${reached ? 'border-[#ffe2a3]/50 bg-white/12' : 'border-white/10 bg-black/10'}`}>
-              <span className={`text-2xl ${reached ? '' : 'grayscale opacity-50'}`} aria-hidden="true">{claimed ? '✓' : reward.emoji}</span>
+            <div key={reward.id} className={`flex min-h-[108px] flex-col items-center rounded-2xl border px-1.5 py-2 text-center ${reached ? 'border-[#ffe2a3]/50 bg-white/12' : 'border-white/10 bg-black/10'}`}>
+              <span className={`text-xl ${reached ? '' : 'grayscale opacity-50'}`} aria-hidden="true">{claimed ? '✓' : reward.emoji}</span>
               <span className="mt-1 font-pixel text-[8px] text-[#ffe2a3]">{reward.requiredXp} XP</span>
               <span className="mt-1 flex-1 font-cute text-[9px] leading-snug text-[#fff8e8]">{reward.label}</span>
               {!claimed && !claimable && (
-                <span className="mt-0.5 font-cute text-[8px] text-white/60">{xpToGo} XP 더 모으면 열려요</span>
+                <span className="mt-0.5 font-cute text-[8px] text-white/60">{xpToGo} XP 남음</span>
               )}
               <button
                 type="button"
                 disabled={!claimable}
                 onClick={() => handleClaim(reward)}
-                className={`mt-2 min-h-[44px] w-full rounded-full px-2 font-cute text-[9px] ${claimable ? 'bg-[#ffe2a3] text-[#252b50] shadow' : 'bg-white/10 text-white/55'}`}
+                className={`mt-1.5 min-h-[36px] w-full rounded-xl px-1 font-cute text-[9px] ${claimable ? 'bg-[#ffe2a3] text-[#252b50] shadow' : 'bg-white/10 text-white/55'}`}
               >
                 {claimed ? '✓ 수령 완료' : claimable ? '받기' : '잠김'}
               </button>

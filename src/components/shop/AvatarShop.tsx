@@ -68,6 +68,7 @@ export function AvatarShop() {
     if (view === 'wardrobe' && !ownedItemIds.includes(item.id)) return false
     return category === 'all' || item.category === category
   })
+  const equippedCount = Object.values(equipped).filter(Boolean).length
 
   function changeView(nextView: ShopView) {
     setView(nextView)
@@ -94,17 +95,22 @@ export function AvatarShop() {
   }
 
   return (
-    <main className="min-h-screen px-4 pb-32 pt-6">
-      <div className="mx-auto flex w-full max-w-[430px] flex-col items-center gap-4">
-      <div className="w-full text-left">
-        <p className="font-cute text-[11px] tracking-wide text-ink-soft">MAKE IT YOUR CHARACTER</p>
-        <h1 className="font-cute text-3xl text-ink">{view === 'shop' ? '아바타 상점 🛍️' : '내 옷장 👗'}</h1>
-        <p className="mt-1 font-cute text-xs text-ink-soft">미리 입어보고, 모으고, 모든 공부 화면에 같은 모습으로 적용해요.</p>
+    <main className="min-h-screen px-3 pb-32 pt-4 sm:px-4">
+      <div className="mx-auto flex w-full max-w-[430px] flex-col items-center gap-3">
+      <div className="flex w-full items-end justify-between gap-3 text-left">
+        <div className="min-w-0">
+          <p className="font-cute text-[10px] tracking-wide text-ink-soft">MAKE IT YOUR CHARACTER</p>
+          <h1 className="font-cute text-[28px] leading-tight text-ink">{view === 'shop' ? '아바타 상점 🛍️' : '내 옷장 👗'}</h1>
+        </div>
+        <div className="shrink-0 rounded-2xl border border-white/80 bg-white/75 px-3 py-2 text-right shadow-sm">
+          <p className="font-cute text-[9px] text-ink-soft">내 포인트</p>
+          <p className="font-pixel text-sm text-ink">🪙 {balance}P</p>
+        </div>
       </div>
 
       {view === 'shop' && <MoonlightSeasonCard />}
 
-      <div className="flex w-full max-w-sm rounded-2xl bg-white/70 p-1 shadow-sm" aria-label="아바타 메뉴">
+      <div className="flex w-full rounded-2xl bg-white/70 p-1 shadow-sm" aria-label="아바타 메뉴">
         <button
           type="button"
           onClick={() => changeView('shop')}
@@ -123,12 +129,12 @@ export function AvatarShop() {
             view === 'wardrobe' ? 'bg-ink text-white shadow-sm' : 'text-ink-soft'
           }`}
         >
-          내 옷장 ({ownedItemIds.length})
+          내 옷장 · {ownedItemIds.length}
         </button>
       </div>
 
       <div
-        className="w-full backdrop-blur rounded-[26px] border border-white/80 shadow-[0_14px_35px_rgba(108,82,130,0.12)] px-8 py-6 flex flex-col items-center gap-2"
+        className="flex w-full flex-col items-center gap-2 rounded-[24px] border border-white/80 px-3 py-3 shadow-[0_12px_30px_rgba(108,82,130,0.11)] backdrop-blur"
         style={{ backgroundColor: previewAppearance.backgroundColor ?? 'rgba(255,255,255,0.7)' }}
       >
         {previewItem && (
@@ -149,13 +155,15 @@ export function AvatarShop() {
             onError={() => markImageFailed(previewBanner)}
           />
         )}
-        {!previewBanner && <CharacterView state="happy" gender={gender} appearance={previewAppearance} size={120} />}
-        <span
-          className="font-pixel text-sm"
+        {!previewBanner && <CharacterView state="happy" gender={gender} appearance={previewAppearance} size={96} />}
+        <div
+          className="flex w-full items-center justify-center gap-4 font-cute text-[10px]"
           style={{ color: readableInkColor(previewAppearance.backgroundColor, 'var(--color-ink)') }}
         >
-          보유 {balance}P
-        </span>
+          <span>보유 아이템 {ownedItemIds.length}</span>
+          <span aria-hidden="true">·</span>
+          <span>착용 중 {equippedCount}</span>
+        </div>
       </div>
 
       {view === 'shop' && (
@@ -163,7 +171,7 @@ export function AvatarShop() {
           type="button"
           onClick={watchAdForBonus}
           disabled={adWatchesToday >= AD_DAILY_LIMIT || checkoutLoading}
-          className="font-cute min-h-[44px] text-xs px-4 py-2 rounded-full bg-pastel-mint text-ink shadow disabled:opacity-50"
+          className="min-h-[40px] w-full rounded-2xl bg-pastel-mint px-4 py-2 font-cute text-[11px] text-ink shadow-sm disabled:opacity-50"
         >
           {checkoutLoading
             ? '광고 재생 중...'
@@ -171,12 +179,12 @@ export function AvatarShop() {
         </button>
       )}
 
-      <div className="flex flex-wrap justify-center gap-2">
+      <div className="flex w-full snap-x gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {view === 'wardrobe' && (
           <button
             type="button"
             onClick={() => changeCategory('all')}
-            className={`font-cute min-h-[44px] px-3 py-1.5 rounded-full border text-sm ${
+            className={`shrink-0 snap-start rounded-full border px-3 py-1.5 font-cute text-xs min-h-[38px] ${
               category === 'all' ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
             }`}
           >
@@ -188,7 +196,7 @@ export function AvatarShop() {
             key={c}
             type="button"
             onClick={() => changeCategory(c)}
-            className={`font-cute min-h-[44px] px-3 py-1.5 rounded-full border text-sm ${
+            className={`shrink-0 snap-start rounded-full border px-3 py-1.5 font-cute text-xs min-h-[38px] ${
               category === c ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-ink/20'
             }`}
           >
@@ -197,7 +205,7 @@ export function AvatarShop() {
         ))}
       </div>
 
-      <div className="w-full max-w-sm grid grid-cols-2 gap-3">
+      <div className="grid w-full grid-cols-2 gap-2.5">
         {visibleItems.map((item) => {
           const owned = ownedItemIds.includes(item.id)
           const isEquipped = equipped[item.category] === item.id
@@ -220,15 +228,20 @@ export function AvatarShop() {
           return (
             <div
               key={item.id}
-              className={`rounded-2xl px-3 py-3 shadow-sm flex flex-col items-center gap-1.5 ${
-                isEquipped ? 'bg-pastel-yellow' : 'bg-white/70'
+              className={`relative flex min-w-0 flex-col items-center gap-1.5 rounded-[20px] border px-2.5 py-2.5 shadow-sm ${
+                isEquipped ? 'border-amber-200 bg-pastel-yellow' : 'border-white/80 bg-white/70'
               }`}
             >
+              {(isEquipped || owned) && (
+                <span className={`absolute right-1.5 top-1.5 z-10 rounded-full px-2 py-1 font-cute text-[8px] shadow-sm ${isEquipped ? 'bg-ink text-white' : 'bg-white/90 text-ink'}`}>
+                  {isEquipped ? '착용중' : '보유'}
+                </span>
+              )}
               {previewImage ? (
                 <img
                   src={previewImage}
                   alt=""
-                  className="mb-1 aspect-square w-full rounded-xl object-cover shadow-sm"
+                  className="mb-0.5 aspect-square w-full rounded-[14px] object-cover shadow-sm"
                   draggable={false}
                   loading="lazy"
                   decoding="async"
@@ -237,7 +250,7 @@ export function AvatarShop() {
               ) : (
                 <span className="text-2xl">{item.emoji}</span>
               )}
-              <span className="font-cute text-ink text-xs text-center">{item.name}</span>
+              <span className="line-clamp-1 w-full text-center font-cute text-xs text-ink">{item.name}</span>
               <span className="font-pixel text-[10px] text-ink-soft">
                 {item.priceType === 'points' ? `${item.price}P` : `₩${item.price.toLocaleString()}`}
               </span>
@@ -257,19 +270,20 @@ export function AvatarShop() {
                 </span>
               )}
 
-              <button
-                type="button"
-                onClick={() => setPreviewItemId(isPreviewing ? null : item.id)}
-                disabled={!canPreview}
-                aria-pressed={isPreviewing}
-                className={`font-cute min-h-[44px] text-[11px] px-3 py-1 rounded-full w-full border disabled:opacity-40 ${
-                  isPreviewing ? 'bg-pastel-yellow border-ink/20 text-ink' : 'bg-white border-ink/20 text-ink'
-                }`}
-              >
-                {isPreviewing ? '미리보기 중' : '미리보기'}
-              </button>
+              <div className="mt-auto grid w-full grid-cols-2 gap-1.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setPreviewItemId(isPreviewing ? null : item.id)}
+                  disabled={!canPreview}
+                  aria-pressed={isPreviewing}
+                  className={`min-h-[38px] rounded-xl border px-1.5 py-1 font-cute text-[10px] disabled:opacity-40 ${
+                    isPreviewing ? 'border-ink/20 bg-pastel-yellow text-ink' : 'border-ink/15 bg-white text-ink'
+                  }`}
+                >
+                  {isPreviewing ? '보는 중' : '미리보기'}
+                </button>
 
-              {owned ? (
+                {owned ? (
                 // Already-owned items stay fully equippable/unequippable
                 // regardless of PNG/gender support — nothing about owned
                 // purchase or equip data is ever blocked, only NEW
@@ -288,7 +302,7 @@ export function AvatarShop() {
                     }
                     setPreviewItemId(null)
                   }}
-                  className={`font-cute min-h-[44px] text-[11px] px-3 py-1 rounded-full w-full ${
+                  className={`min-h-[38px] rounded-xl px-1.5 py-1 font-cute text-[10px] ${
                     isEquipped ? 'bg-ink text-white' : 'bg-white border border-ink/20 text-ink'
                   }`}
                 >
@@ -299,18 +313,19 @@ export function AvatarShop() {
                   type="button"
                   onClick={() => handleBuy(item)}
                   disabled={checkoutLoading || !canPurchase || (item.priceType === 'points' && balance < item.price)}
-                  className="font-cute min-h-[44px] text-[11px] px-3 py-1 rounded-full bg-pastel-lavender text-ink w-full disabled:opacity-50"
+                  className="min-h-[38px] rounded-xl bg-pastel-lavender px-1.5 py-1 font-cute text-[10px] text-ink disabled:opacity-50"
                 >
                   구매하기
                 </button>
-              )}
+                )}
+              </div>
             </div>
           )
         })}
       </div>
 
       {view === 'wardrobe' && visibleItems.length === 0 && (
-        <div className="w-full max-w-sm rounded-3xl bg-white/70 px-6 py-10 text-center shadow-sm">
+        <div className="w-full rounded-3xl bg-white/70 px-6 py-10 text-center shadow-sm">
           <div className="mb-3 text-4xl" aria-hidden="true">🧺</div>
           <p className="font-cute text-sm text-ink">아직 보유한 아이템이 없어요.</p>
           <p className="mt-1 font-cute text-xs text-ink-soft">상점에서 마음에 드는 아이템을 모아보세요!</p>
@@ -325,7 +340,7 @@ export function AvatarShop() {
       )}
 
       {view === 'shop' && (
-        <p className="text-ink-soft text-xs font-cute text-center max-w-sm">
+        <p className="w-full text-center font-cute text-[10px] text-ink-soft">
           캐시 아이템은 Stripe 테스트 모드 구조로 연결돼 있어요. 실제 결제는 발생하지 않습니다.
         </p>
       )}
