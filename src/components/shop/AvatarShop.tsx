@@ -95,12 +95,12 @@ export function AvatarShop() {
   }
 
   return (
-    <main className="min-h-screen px-3 pb-32 pt-4 sm:px-4">
-      <div className="mx-auto flex w-full max-w-[430px] flex-col items-center gap-3">
+    <main className="min-h-screen px-2 pb-32 pt-4 sm:px-5">
+      <div className="mx-auto flex w-full max-w-[720px] flex-col items-center gap-4">
       <div className="flex w-full items-end justify-between gap-3 text-left">
         <div className="min-w-0">
           <p className="font-cute text-xs tracking-wide text-ink-soft">MAKE IT YOUR CHARACTER</p>
-          <h1 className="font-cute text-[30px] leading-tight text-ink">{view === 'shop' ? '아바타 상점 🛍️' : '내 옷장 👗'}</h1>
+          <h1 className="font-cute text-[32px] leading-tight text-ink sm:text-4xl">{view === 'shop' ? '아바타 상점 🛍️' : '내 옷장 👗'}</h1>
         </div>
         <div className="shrink-0 rounded-2xl border border-white/80 bg-white/75 px-3 py-2 text-right shadow-sm">
           <p className="font-cute text-[11px] text-ink-soft">내 포인트</p>
@@ -134,7 +134,7 @@ export function AvatarShop() {
       </div>
 
       <div
-        className="flex w-full flex-col items-center gap-3 rounded-[24px] border border-white/80 px-4 py-4 shadow-[0_12px_30px_rgba(108,82,130,0.11)] backdrop-blur"
+        className="flex w-full flex-col items-center gap-3 rounded-[28px] border border-white/80 px-3 py-4 shadow-[0_12px_30px_rgba(108,82,130,0.11)] backdrop-blur sm:px-5"
         style={{ backgroundColor: previewAppearance.backgroundColor ?? 'rgba(255,255,255,0.7)' }}
       >
         {previewItem && (
@@ -149,13 +149,13 @@ export function AvatarShop() {
           <img
             src={previewBanner}
             alt={`${previewItem?.name ?? '스킨'} 남녀 캐릭터와 공부방 미리보기`}
-            className="aspect-[2/1] w-full rounded-2xl object-cover shadow-md"
+            className="aspect-[16/9] w-full rounded-[22px] object-cover shadow-md"
             draggable={false}
             decoding="async"
             onError={() => markImageFailed(previewBanner)}
           />
         )}
-        {!previewBanner && <CharacterView state="happy" gender={gender} appearance={previewAppearance} size={140} />}
+        {!previewBanner && <CharacterView state="happy" gender={gender} appearance={previewAppearance} size={180} />}
         <div
           className="flex w-full items-center justify-center gap-4 font-cute text-xs"
           style={{ color: readableInkColor(previewAppearance.backgroundColor, 'var(--color-ink)') }}
@@ -205,7 +205,7 @@ export function AvatarShop() {
         ))}
       </div>
 
-      <div className="grid w-full grid-cols-2 gap-3">
+      <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
         {visibleItems.map((item) => {
           const owned = ownedItemIds.includes(item.id)
           const isEquipped = equipped[item.category] === item.id
@@ -228,12 +228,12 @@ export function AvatarShop() {
           return (
             <div
               key={item.id}
-              className={`relative flex min-w-0 flex-col items-center gap-2 rounded-[22px] border px-3 py-3 shadow-sm ${
+              className={`relative flex min-w-0 flex-col items-center gap-2.5 rounded-[26px] border px-3 py-3 shadow-sm sm:px-4 sm:py-4 ${
                 isEquipped ? 'border-amber-200 bg-pastel-yellow' : 'border-white/80 bg-white/70'
               }`}
             >
               {(isEquipped || owned) && (
-                <span className={`absolute right-2 top-2 z-10 rounded-full px-2.5 py-1.5 font-cute text-[10px] shadow-sm ${isEquipped ? 'bg-ink text-white' : 'bg-white/90 text-ink'}`}>
+                <span className={`absolute right-3 top-3 z-10 rounded-full px-3 py-2 font-cute text-xs shadow-sm ${isEquipped ? 'bg-ink text-white' : 'bg-white/90 text-ink'}`}>
                   {isEquipped ? '착용중' : '보유'}
                 </span>
               )}
@@ -241,17 +241,17 @@ export function AvatarShop() {
                 <img
                   src={previewImage}
                   alt=""
-                  className="mb-1 aspect-square w-full rounded-[16px] object-cover shadow-md"
+                  className="mb-1 aspect-[16/10] w-full rounded-[20px] object-cover shadow-md"
                   draggable={false}
                   loading="lazy"
                   decoding="async"
                   onError={() => markImageFailed(previewImage)}
                 />
               ) : (
-                <span className="grid aspect-square w-full place-items-center rounded-[16px] bg-white/55 text-6xl shadow-inner">{item.emoji}</span>
+                <span className="grid aspect-[16/10] w-full place-items-center rounded-[20px] bg-white/55 text-8xl shadow-inner">{item.emoji}</span>
               )}
-              <span className="line-clamp-2 min-h-[40px] w-full text-center font-cute text-sm leading-5 text-ink">{item.name}</span>
-              <span className="font-pixel text-xs text-ink-soft">
+              <span className="line-clamp-2 min-h-[44px] w-full text-center font-cute text-base leading-6 text-ink">{item.name}</span>
+              <span className="font-pixel text-sm text-ink-soft">
                 {item.priceType === 'points' ? `${item.price}P` : `₩${item.price.toLocaleString()}`}
               </span>
               {isWholeAvatarItem && (
@@ -270,13 +270,13 @@ export function AvatarShop() {
                 </span>
               )}
 
-              <div className="mt-auto grid w-full grid-cols-2 gap-1.5 pt-1">
+              <div className="mt-auto grid w-full grid-cols-2 gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setPreviewItemId(isPreviewing ? null : item.id)}
                   disabled={!canPreview}
                   aria-pressed={isPreviewing}
-                  className={`min-h-[46px] rounded-xl border px-1.5 py-1 font-cute text-xs disabled:opacity-40 ${
+                  className={`min-h-[52px] rounded-2xl border px-2 py-1 font-cute text-sm disabled:opacity-40 ${
                     isPreviewing ? 'border-ink/20 bg-pastel-yellow text-ink' : 'border-ink/15 bg-white text-ink'
                   }`}
                 >
@@ -302,7 +302,7 @@ export function AvatarShop() {
                     }
                     setPreviewItemId(null)
                   }}
-                  className={`min-h-[46px] rounded-xl px-1.5 py-1 font-cute text-xs ${
+                  className={`min-h-[52px] rounded-2xl px-2 py-1 font-cute text-sm ${
                     isEquipped ? 'bg-ink text-white' : 'bg-white border border-ink/20 text-ink'
                   }`}
                 >
@@ -313,7 +313,7 @@ export function AvatarShop() {
                   type="button"
                   onClick={() => handleBuy(item)}
                   disabled={checkoutLoading || !canPurchase || (item.priceType === 'points' && balance < item.price)}
-                  className="min-h-[46px] rounded-xl bg-pastel-lavender px-1.5 py-1 font-cute text-xs text-ink disabled:opacity-50"
+                  className="min-h-[52px] rounded-2xl bg-pastel-lavender px-2 py-1 font-cute text-sm text-ink disabled:opacity-50"
                 >
                   구매하기
                 </button>
